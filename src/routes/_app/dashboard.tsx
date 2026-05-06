@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useApp as useAppForTip } from "@/lib/store";
 import { useState } from "react";
 import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info } from "lucide-react";
 import { toast } from "sonner";
@@ -178,7 +177,7 @@ function Dashboard() {
 }
 
 function FormulaTip({ label, formula }: { label: string; formula: string }) {
-  const { showDevNote } = useAppForTip();
+  const { showDevNote } = useApp();
   if (!showDevNote) {
     return <div className="text-sm text-muted-foreground">{label}</div>;
   }
