@@ -13,6 +13,31 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppAuditLogRouteImport } from './routes/_app/audit-log'
+import { Route as AppSalesIndexRouteImport } from './routes/_app/sales/index'
+import { Route as AppRoleIndexRouteImport } from './routes/_app/role/index'
+import { Route as AppUserGroupsRouteImport } from './routes/_app/user/groups'
+import { Route as AppUserAccountsRouteImport } from './routes/_app/user/accounts'
+import { Route as AppSettingsOrgRouteImport } from './routes/_app/settings/org'
+import { Route as AppSettingsIpRouteImport } from './routes/_app/settings/ip'
+import { Route as AppSettingsBackupRouteImport } from './routes/_app/settings/backup'
+import { Route as AppSettingsAlertRouteImport } from './routes/_app/settings/alert'
+import { Route as AppServiceSettingsRouteImport } from './routes/_app/service/settings'
+import { Route as AppServiceRecordsRouteImport } from './routes/_app/service/records'
+import { Route as AppServiceAuditRouteImport } from './routes/_app/service/audit'
+import { Route as AppProfitRulesRouteImport } from './routes/_app/profit/rules'
+import { Route as AppProfitDimensionsRouteImport } from './routes/_app/profit/dimensions'
+import { Route as AppProfitAuditRouteImport } from './routes/_app/profit/audit'
+import { Route as AppNotificationWechatRouteImport } from './routes/_app/notification/wechat'
+import { Route as AppNotificationVirtualNoRouteImport } from './routes/_app/notification/virtual-no'
+import { Route as AppNotificationSmsRouteImport } from './routes/_app/notification/sms'
+import { Route as AppNotificationInboxRouteImport } from './routes/_app/notification/inbox'
+import { Route as AppNotificationEmailRouteImport } from './routes/_app/notification/email'
+import { Route as AppLedgerSettledRouteImport } from './routes/_app/ledger/settled'
+import { Route as AppLedgerRefundRouteImport } from './routes/_app/ledger/refund'
+import { Route as AppLedgerPendingRouteImport } from './routes/_app/ledger/pending'
+import { Route as AppLedgerEstimatedRouteImport } from './routes/_app/ledger/estimated'
+import { Route as AppLedgerAbnormalRouteImport } from './routes/_app/ledger/abnormal'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -33,30 +58,317 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAuditLogRoute = AppAuditLogRouteImport.update({
+  id: '/audit-log',
+  path: '/audit-log',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
+  id: '/sales/',
+  path: '/sales/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRoleIndexRoute = AppRoleIndexRouteImport.update({
+  id: '/role/',
+  path: '/role/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUserGroupsRoute = AppUserGroupsRouteImport.update({
+  id: '/user/groups',
+  path: '/user/groups',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUserAccountsRoute = AppUserAccountsRouteImport.update({
+  id: '/user/accounts',
+  path: '/user/accounts',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsOrgRoute = AppSettingsOrgRouteImport.update({
+  id: '/settings/org',
+  path: '/settings/org',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsIpRoute = AppSettingsIpRouteImport.update({
+  id: '/settings/ip',
+  path: '/settings/ip',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsBackupRoute = AppSettingsBackupRouteImport.update({
+  id: '/settings/backup',
+  path: '/settings/backup',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsAlertRoute = AppSettingsAlertRouteImport.update({
+  id: '/settings/alert',
+  path: '/settings/alert',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppServiceSettingsRoute = AppServiceSettingsRouteImport.update({
+  id: '/service/settings',
+  path: '/service/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppServiceRecordsRoute = AppServiceRecordsRouteImport.update({
+  id: '/service/records',
+  path: '/service/records',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppServiceAuditRoute = AppServiceAuditRouteImport.update({
+  id: '/service/audit',
+  path: '/service/audit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfitRulesRoute = AppProfitRulesRouteImport.update({
+  id: '/profit/rules',
+  path: '/profit/rules',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfitDimensionsRoute = AppProfitDimensionsRouteImport.update({
+  id: '/profit/dimensions',
+  path: '/profit/dimensions',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfitAuditRoute = AppProfitAuditRouteImport.update({
+  id: '/profit/audit',
+  path: '/profit/audit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationWechatRoute = AppNotificationWechatRouteImport.update({
+  id: '/notification/wechat',
+  path: '/notification/wechat',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationVirtualNoRoute =
+  AppNotificationVirtualNoRouteImport.update({
+    id: '/notification/virtual-no',
+    path: '/notification/virtual-no',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppNotificationSmsRoute = AppNotificationSmsRouteImport.update({
+  id: '/notification/sms',
+  path: '/notification/sms',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationInboxRoute = AppNotificationInboxRouteImport.update({
+  id: '/notification/inbox',
+  path: '/notification/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationEmailRoute = AppNotificationEmailRouteImport.update({
+  id: '/notification/email',
+  path: '/notification/email',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLedgerSettledRoute = AppLedgerSettledRouteImport.update({
+  id: '/ledger/settled',
+  path: '/ledger/settled',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLedgerRefundRoute = AppLedgerRefundRouteImport.update({
+  id: '/ledger/refund',
+  path: '/ledger/refund',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLedgerPendingRoute = AppLedgerPendingRouteImport.update({
+  id: '/ledger/pending',
+  path: '/ledger/pending',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLedgerEstimatedRoute = AppLedgerEstimatedRouteImport.update({
+  id: '/ledger/estimated',
+  path: '/ledger/estimated',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLedgerAbnormalRoute = AppLedgerAbnormalRouteImport.update({
+  id: '/ledger/abnormal',
+  path: '/ledger/abnormal',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/audit-log': typeof AppAuditLogRoute
   '/dashboard': typeof AppDashboardRoute
+  '/ledger/abnormal': typeof AppLedgerAbnormalRoute
+  '/ledger/estimated': typeof AppLedgerEstimatedRoute
+  '/ledger/pending': typeof AppLedgerPendingRoute
+  '/ledger/refund': typeof AppLedgerRefundRoute
+  '/ledger/settled': typeof AppLedgerSettledRoute
+  '/notification/email': typeof AppNotificationEmailRoute
+  '/notification/inbox': typeof AppNotificationInboxRoute
+  '/notification/sms': typeof AppNotificationSmsRoute
+  '/notification/virtual-no': typeof AppNotificationVirtualNoRoute
+  '/notification/wechat': typeof AppNotificationWechatRoute
+  '/profit/audit': typeof AppProfitAuditRoute
+  '/profit/dimensions': typeof AppProfitDimensionsRoute
+  '/profit/rules': typeof AppProfitRulesRoute
+  '/service/audit': typeof AppServiceAuditRoute
+  '/service/records': typeof AppServiceRecordsRoute
+  '/service/settings': typeof AppServiceSettingsRoute
+  '/settings/alert': typeof AppSettingsAlertRoute
+  '/settings/backup': typeof AppSettingsBackupRoute
+  '/settings/ip': typeof AppSettingsIpRoute
+  '/settings/org': typeof AppSettingsOrgRoute
+  '/user/accounts': typeof AppUserAccountsRoute
+  '/user/groups': typeof AppUserGroupsRoute
+  '/role/': typeof AppRoleIndexRoute
+  '/sales/': typeof AppSalesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/audit-log': typeof AppAuditLogRoute
   '/dashboard': typeof AppDashboardRoute
+  '/ledger/abnormal': typeof AppLedgerAbnormalRoute
+  '/ledger/estimated': typeof AppLedgerEstimatedRoute
+  '/ledger/pending': typeof AppLedgerPendingRoute
+  '/ledger/refund': typeof AppLedgerRefundRoute
+  '/ledger/settled': typeof AppLedgerSettledRoute
+  '/notification/email': typeof AppNotificationEmailRoute
+  '/notification/inbox': typeof AppNotificationInboxRoute
+  '/notification/sms': typeof AppNotificationSmsRoute
+  '/notification/virtual-no': typeof AppNotificationVirtualNoRoute
+  '/notification/wechat': typeof AppNotificationWechatRoute
+  '/profit/audit': typeof AppProfitAuditRoute
+  '/profit/dimensions': typeof AppProfitDimensionsRoute
+  '/profit/rules': typeof AppProfitRulesRoute
+  '/service/audit': typeof AppServiceAuditRoute
+  '/service/records': typeof AppServiceRecordsRoute
+  '/service/settings': typeof AppServiceSettingsRoute
+  '/settings/alert': typeof AppSettingsAlertRoute
+  '/settings/backup': typeof AppSettingsBackupRoute
+  '/settings/ip': typeof AppSettingsIpRoute
+  '/settings/org': typeof AppSettingsOrgRoute
+  '/user/accounts': typeof AppUserAccountsRoute
+  '/user/groups': typeof AppUserGroupsRoute
+  '/role': typeof AppRoleIndexRoute
+  '/sales': typeof AppSalesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/audit-log': typeof AppAuditLogRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/ledger/abnormal': typeof AppLedgerAbnormalRoute
+  '/_app/ledger/estimated': typeof AppLedgerEstimatedRoute
+  '/_app/ledger/pending': typeof AppLedgerPendingRoute
+  '/_app/ledger/refund': typeof AppLedgerRefundRoute
+  '/_app/ledger/settled': typeof AppLedgerSettledRoute
+  '/_app/notification/email': typeof AppNotificationEmailRoute
+  '/_app/notification/inbox': typeof AppNotificationInboxRoute
+  '/_app/notification/sms': typeof AppNotificationSmsRoute
+  '/_app/notification/virtual-no': typeof AppNotificationVirtualNoRoute
+  '/_app/notification/wechat': typeof AppNotificationWechatRoute
+  '/_app/profit/audit': typeof AppProfitAuditRoute
+  '/_app/profit/dimensions': typeof AppProfitDimensionsRoute
+  '/_app/profit/rules': typeof AppProfitRulesRoute
+  '/_app/service/audit': typeof AppServiceAuditRoute
+  '/_app/service/records': typeof AppServiceRecordsRoute
+  '/_app/service/settings': typeof AppServiceSettingsRoute
+  '/_app/settings/alert': typeof AppSettingsAlertRoute
+  '/_app/settings/backup': typeof AppSettingsBackupRoute
+  '/_app/settings/ip': typeof AppSettingsIpRoute
+  '/_app/settings/org': typeof AppSettingsOrgRoute
+  '/_app/user/accounts': typeof AppUserAccountsRoute
+  '/_app/user/groups': typeof AppUserGroupsRoute
+  '/_app/role/': typeof AppRoleIndexRoute
+  '/_app/sales/': typeof AppSalesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/audit-log'
+    | '/dashboard'
+    | '/ledger/abnormal'
+    | '/ledger/estimated'
+    | '/ledger/pending'
+    | '/ledger/refund'
+    | '/ledger/settled'
+    | '/notification/email'
+    | '/notification/inbox'
+    | '/notification/sms'
+    | '/notification/virtual-no'
+    | '/notification/wechat'
+    | '/profit/audit'
+    | '/profit/dimensions'
+    | '/profit/rules'
+    | '/service/audit'
+    | '/service/records'
+    | '/service/settings'
+    | '/settings/alert'
+    | '/settings/backup'
+    | '/settings/ip'
+    | '/settings/org'
+    | '/user/accounts'
+    | '/user/groups'
+    | '/role/'
+    | '/sales/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard'
-  id: '__root__' | '/' | '/_app' | '/login' | '/_app/dashboard'
+  to:
+    | '/'
+    | '/login'
+    | '/audit-log'
+    | '/dashboard'
+    | '/ledger/abnormal'
+    | '/ledger/estimated'
+    | '/ledger/pending'
+    | '/ledger/refund'
+    | '/ledger/settled'
+    | '/notification/email'
+    | '/notification/inbox'
+    | '/notification/sms'
+    | '/notification/virtual-no'
+    | '/notification/wechat'
+    | '/profit/audit'
+    | '/profit/dimensions'
+    | '/profit/rules'
+    | '/service/audit'
+    | '/service/records'
+    | '/service/settings'
+    | '/settings/alert'
+    | '/settings/backup'
+    | '/settings/ip'
+    | '/settings/org'
+    | '/user/accounts'
+    | '/user/groups'
+    | '/role'
+    | '/sales'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/audit-log'
+    | '/_app/dashboard'
+    | '/_app/ledger/abnormal'
+    | '/_app/ledger/estimated'
+    | '/_app/ledger/pending'
+    | '/_app/ledger/refund'
+    | '/_app/ledger/settled'
+    | '/_app/notification/email'
+    | '/_app/notification/inbox'
+    | '/_app/notification/sms'
+    | '/_app/notification/virtual-no'
+    | '/_app/notification/wechat'
+    | '/_app/profit/audit'
+    | '/_app/profit/dimensions'
+    | '/_app/profit/rules'
+    | '/_app/service/audit'
+    | '/_app/service/records'
+    | '/_app/service/settings'
+    | '/_app/settings/alert'
+    | '/_app/settings/backup'
+    | '/_app/settings/ip'
+    | '/_app/settings/org'
+    | '/_app/user/accounts'
+    | '/_app/user/groups'
+    | '/_app/role/'
+    | '/_app/sales/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,15 +407,240 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/audit-log': {
+      id: '/_app/audit-log'
+      path: '/audit-log'
+      fullPath: '/audit-log'
+      preLoaderRoute: typeof AppAuditLogRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales/': {
+      id: '/_app/sales/'
+      path: '/sales'
+      fullPath: '/sales/'
+      preLoaderRoute: typeof AppSalesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/role/': {
+      id: '/_app/role/'
+      path: '/role'
+      fullPath: '/role/'
+      preLoaderRoute: typeof AppRoleIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/user/groups': {
+      id: '/_app/user/groups'
+      path: '/user/groups'
+      fullPath: '/user/groups'
+      preLoaderRoute: typeof AppUserGroupsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/user/accounts': {
+      id: '/_app/user/accounts'
+      path: '/user/accounts'
+      fullPath: '/user/accounts'
+      preLoaderRoute: typeof AppUserAccountsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/org': {
+      id: '/_app/settings/org'
+      path: '/settings/org'
+      fullPath: '/settings/org'
+      preLoaderRoute: typeof AppSettingsOrgRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/ip': {
+      id: '/_app/settings/ip'
+      path: '/settings/ip'
+      fullPath: '/settings/ip'
+      preLoaderRoute: typeof AppSettingsIpRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/backup': {
+      id: '/_app/settings/backup'
+      path: '/settings/backup'
+      fullPath: '/settings/backup'
+      preLoaderRoute: typeof AppSettingsBackupRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/alert': {
+      id: '/_app/settings/alert'
+      path: '/settings/alert'
+      fullPath: '/settings/alert'
+      preLoaderRoute: typeof AppSettingsAlertRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/service/settings': {
+      id: '/_app/service/settings'
+      path: '/service/settings'
+      fullPath: '/service/settings'
+      preLoaderRoute: typeof AppServiceSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/service/records': {
+      id: '/_app/service/records'
+      path: '/service/records'
+      fullPath: '/service/records'
+      preLoaderRoute: typeof AppServiceRecordsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/service/audit': {
+      id: '/_app/service/audit'
+      path: '/service/audit'
+      fullPath: '/service/audit'
+      preLoaderRoute: typeof AppServiceAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profit/rules': {
+      id: '/_app/profit/rules'
+      path: '/profit/rules'
+      fullPath: '/profit/rules'
+      preLoaderRoute: typeof AppProfitRulesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profit/dimensions': {
+      id: '/_app/profit/dimensions'
+      path: '/profit/dimensions'
+      fullPath: '/profit/dimensions'
+      preLoaderRoute: typeof AppProfitDimensionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profit/audit': {
+      id: '/_app/profit/audit'
+      path: '/profit/audit'
+      fullPath: '/profit/audit'
+      preLoaderRoute: typeof AppProfitAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notification/wechat': {
+      id: '/_app/notification/wechat'
+      path: '/notification/wechat'
+      fullPath: '/notification/wechat'
+      preLoaderRoute: typeof AppNotificationWechatRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notification/virtual-no': {
+      id: '/_app/notification/virtual-no'
+      path: '/notification/virtual-no'
+      fullPath: '/notification/virtual-no'
+      preLoaderRoute: typeof AppNotificationVirtualNoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notification/sms': {
+      id: '/_app/notification/sms'
+      path: '/notification/sms'
+      fullPath: '/notification/sms'
+      preLoaderRoute: typeof AppNotificationSmsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notification/inbox': {
+      id: '/_app/notification/inbox'
+      path: '/notification/inbox'
+      fullPath: '/notification/inbox'
+      preLoaderRoute: typeof AppNotificationInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notification/email': {
+      id: '/_app/notification/email'
+      path: '/notification/email'
+      fullPath: '/notification/email'
+      preLoaderRoute: typeof AppNotificationEmailRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ledger/settled': {
+      id: '/_app/ledger/settled'
+      path: '/ledger/settled'
+      fullPath: '/ledger/settled'
+      preLoaderRoute: typeof AppLedgerSettledRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ledger/refund': {
+      id: '/_app/ledger/refund'
+      path: '/ledger/refund'
+      fullPath: '/ledger/refund'
+      preLoaderRoute: typeof AppLedgerRefundRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ledger/pending': {
+      id: '/_app/ledger/pending'
+      path: '/ledger/pending'
+      fullPath: '/ledger/pending'
+      preLoaderRoute: typeof AppLedgerPendingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ledger/estimated': {
+      id: '/_app/ledger/estimated'
+      path: '/ledger/estimated'
+      fullPath: '/ledger/estimated'
+      preLoaderRoute: typeof AppLedgerEstimatedRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ledger/abnormal': {
+      id: '/_app/ledger/abnormal'
+      path: '/ledger/abnormal'
+      fullPath: '/ledger/abnormal'
+      preLoaderRoute: typeof AppLedgerAbnormalRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAuditLogRoute: typeof AppAuditLogRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppLedgerAbnormalRoute: typeof AppLedgerAbnormalRoute
+  AppLedgerEstimatedRoute: typeof AppLedgerEstimatedRoute
+  AppLedgerPendingRoute: typeof AppLedgerPendingRoute
+  AppLedgerRefundRoute: typeof AppLedgerRefundRoute
+  AppLedgerSettledRoute: typeof AppLedgerSettledRoute
+  AppNotificationEmailRoute: typeof AppNotificationEmailRoute
+  AppNotificationInboxRoute: typeof AppNotificationInboxRoute
+  AppNotificationSmsRoute: typeof AppNotificationSmsRoute
+  AppNotificationVirtualNoRoute: typeof AppNotificationVirtualNoRoute
+  AppNotificationWechatRoute: typeof AppNotificationWechatRoute
+  AppProfitAuditRoute: typeof AppProfitAuditRoute
+  AppProfitDimensionsRoute: typeof AppProfitDimensionsRoute
+  AppProfitRulesRoute: typeof AppProfitRulesRoute
+  AppServiceAuditRoute: typeof AppServiceAuditRoute
+  AppServiceRecordsRoute: typeof AppServiceRecordsRoute
+  AppServiceSettingsRoute: typeof AppServiceSettingsRoute
+  AppSettingsAlertRoute: typeof AppSettingsAlertRoute
+  AppSettingsBackupRoute: typeof AppSettingsBackupRoute
+  AppSettingsIpRoute: typeof AppSettingsIpRoute
+  AppSettingsOrgRoute: typeof AppSettingsOrgRoute
+  AppUserAccountsRoute: typeof AppUserAccountsRoute
+  AppUserGroupsRoute: typeof AppUserGroupsRoute
+  AppRoleIndexRoute: typeof AppRoleIndexRoute
+  AppSalesIndexRoute: typeof AppSalesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAuditLogRoute: AppAuditLogRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppLedgerAbnormalRoute: AppLedgerAbnormalRoute,
+  AppLedgerEstimatedRoute: AppLedgerEstimatedRoute,
+  AppLedgerPendingRoute: AppLedgerPendingRoute,
+  AppLedgerRefundRoute: AppLedgerRefundRoute,
+  AppLedgerSettledRoute: AppLedgerSettledRoute,
+  AppNotificationEmailRoute: AppNotificationEmailRoute,
+  AppNotificationInboxRoute: AppNotificationInboxRoute,
+  AppNotificationSmsRoute: AppNotificationSmsRoute,
+  AppNotificationVirtualNoRoute: AppNotificationVirtualNoRoute,
+  AppNotificationWechatRoute: AppNotificationWechatRoute,
+  AppProfitAuditRoute: AppProfitAuditRoute,
+  AppProfitDimensionsRoute: AppProfitDimensionsRoute,
+  AppProfitRulesRoute: AppProfitRulesRoute,
+  AppServiceAuditRoute: AppServiceAuditRoute,
+  AppServiceRecordsRoute: AppServiceRecordsRoute,
+  AppServiceSettingsRoute: AppServiceSettingsRoute,
+  AppSettingsAlertRoute: AppSettingsAlertRoute,
+  AppSettingsBackupRoute: AppSettingsBackupRoute,
+  AppSettingsIpRoute: AppSettingsIpRoute,
+  AppSettingsOrgRoute: AppSettingsOrgRoute,
+  AppUserAccountsRoute: AppUserAccountsRoute,
+  AppUserGroupsRoute: AppUserGroupsRoute,
+  AppRoleIndexRoute: AppRoleIndexRoute,
+  AppSalesIndexRoute: AppSalesIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -116,3 +653,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
