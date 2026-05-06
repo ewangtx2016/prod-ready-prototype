@@ -6,7 +6,17 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const Select = SelectPrimitive.Root;
+function Select(props: React.ComponentProps<typeof SelectPrimitive.Root>) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return <SelectPrimitive.Root {...props} />;
+}
 
 const SelectGroup = SelectPrimitive.Group;
 
