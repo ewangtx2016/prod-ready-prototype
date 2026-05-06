@@ -29,34 +29,31 @@ export const Route = createFileRoute("/_app/dashboard")({
  *  每个模块至少含 1 项核心指标(core=true，默认勾选不可取消) */
 type ModuleKey = "user" | "service" | "conversion" | "profit" | "risk";
 const MODULES: { key: ModuleKey; name: string; desc: string; icon: typeof Users }[] = [
-  { key: "user",       name: "用户总览",   desc: "机构用户规模与活跃度", icon: Users },
-  { key: "service",    name: "服务数据",   desc: "规划师/学管师服务覆盖与频次", icon: Activity },
-  { key: "conversion", name: "业务转化",   desc: "学科课订单与老用户转化", icon: TrendingUp },
-  { key: "profit",     name: "分成数据",   desc: "订单金额、已结算 / 待结算 / 预估", icon: Wallet },
-  { key: "risk",       name: "风险预警",   desc: "敏感操作预警与异常账款", icon: ShieldAlert },
+  { key: "user",       name: "用户总览",   desc: "总用户 / 活跃 / 规划师服务 / 转化", icon: Users },
+  { key: "conversion", name: "转化数据",   desc: "学科课订单数、订单金额、转化率", icon: TrendingUp },
+  { key: "profit",     name: "分成数据",   desc: "已结算 / 待结算 / 预估收入", icon: Wallet },
+  { key: "service",    name: "服务数据",   desc: "规划师服务次数、学管督学完成率", icon: Activity },
+  { key: "risk",       name: "风险预警",   desc: "敏感操作预警 (超量导出 / 批量查看 / 越权访问)", icon: ShieldAlert },
 ];
 const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: string; trend?: string; core?: boolean; icon?: typeof Users; formula: string }[] = [
-  // M1 用户概览
-  { key: "total_user",    module: "user", label: "机构总用户数",   value: "1,248", icon: Users,         formula: "归属当前机构、状态为正常或停用的全部用户数（不含已删除）。" },
-  { key: "active_user",   module: "user", label: "活跃用户数",     value: "892",   trend: "+8.4%", core: true, icon: Users, formula: "近 30 天内有过登录、上课或服务记录的去重用户数。活跃用户=登录∪上课∪服务记录。" },
-  { key: "new_user",      module: "user", label: "周期新增用户",   value: "126",   icon: Users,         formula: "周期内首次注册或首次付费的用户数（取较早者）。" },
-  // M2 服务概览
-  { key: "service_ratio", module: "service", label: "规划师服务用户占比", value: "78.5%", trend: "+5.2%", core: true, icon: Activity, formula: "周期内有过规划师 1V1 服务记录的用户数 / 机构活跃用户数 × 100%。活跃用户口径：近 30 天有登录或上课。" },
-  { key: "service_freq",  module: "service", label: "服务频次与续报关联度", value: "+15pp", trend: "高频续报率领先 15pp", core: true, icon: Activity, formula: "高频服务用户(周期内服务≥4次)的续报率 − 低频服务用户(<4次)的续报率，单位为百分点(pp)。" },
-  { key: "group_active",  module: "service", label: "社群回复率", value: "76%", icon: Activity, formula: "周期内学员/家长在社群发问后 24 小时内被服务人员回复的会话数 / 总发问会话数 × 100%。" },
-  // M3 业务转化
-  { key: "old_user_conv", module: "conversion", label: "学科课转化中老用户占比", value: "62.3%", trend: "+3.1%", core: true, icon: TrendingUp, formula: "周期内学科课订单中，下单人为老用户的订单数 / 学科课总订单数 × 100%。老用户：首次付费距今 ≥30 天。" },
-  { key: "order_count",   module: "conversion", label: "学科课订单数", value: "156", icon: TrendingUp, formula: "周期内课程类型为「学科课」且订单状态非「已取消」的订单数量。" },
-  { key: "pass_rate",     module: "conversion", label: "艺考等级通过率", value: "85%", icon: GraduationCap, formula: "周期内通过艺考等级考试的学员数 / 报考学员数 × 100%。" },
-  // M4 分成财务
-  { key: "order_amount",  module: "profit", label: "订单总金额", value: "¥328,400", core: true, icon: Wallet, formula: "周期内全部有效订单的应收金额合计（含未结算部分，不扣退款）。" },
-  { key: "settled",       module: "profit", label: "已结算金额", value: "¥186,300", icon: Wallet, formula: "周期内已完成结算流程并入账的金额合计。结算口径：T+N 到账且对账无异常。" },
-  { key: "pending",       module: "profit", label: "待结算金额", value: "¥98,200",  icon: Wallet, formula: "已确认收入但尚未完成结算流程的金额合计（已上课/已确权但未到结算日）。" },
-  { key: "estimated",     module: "profit", label: "预估收入",   value: "¥43,800",  icon: Wallet, formula: "按当前规则对未确权订单(如未上课/试听)估算的潜在分成，仅用于预测，不计入财务。" },
-  // M5 风险合规
-  { key: "alert_count",   module: "risk", label: "敏感操作预警次数", value: "3",  trend: "本月", core: true, icon: ShieldAlert, formula: "周期内触发敏感操作风控规则的次数（含批量导出、越权访问、IP 异常、验证码失败超阈值等）。" },
-  { key: "abnormal",      module: "risk", label: "异常账款笔数",     value: "5",  icon: ShieldAlert, formula: "周期内被标记为「异常」的账款笔数（金额不一致 / 重复支付 / 退款争议等）。" },
-  { key: "refund_rate",   module: "risk", label: "退款率",           value: "1.8%", icon: ShieldAlert, formula: "周期内退款订单数 / 周期内全部订单数 × 100%。" },
+  // M1 用户总览
+  { key: "total_user",     module: "user", label: "总用户数",       value: "1,248", core: true, icon: Users, formula: "归属当前机构、状态为正常或停用的全部用户数（不含已删除）。" },
+  { key: "active_user",    module: "user", label: "活跃用户数",     value: "892",   trend: "+8.4%", core: true, icon: Users, formula: "近 30 天内有过登录、上课或服务记录的去重用户数。活跃=登录∪上课∪服务记录。" },
+  { key: "served_user",    module: "user", label: "规划师服务用户数", value: "701",  trend: "覆盖 78.5%", icon: Activity, formula: "周期内被规划师提供过 1V1 服务记录的去重用户数。" },
+  { key: "converted_user", module: "user", label: "转化用户数",     value: "286",   trend: "转化率 22.9%", icon: TrendingUp, formula: "周期内由意向 / 体验状态成功转为已付费学员的去重用户数。" },
+  // M2 转化数据
+  { key: "order_count",    module: "conversion", label: "学科课订单数", value: "156", icon: TrendingUp, formula: "周期内课程类型为「学科课」且订单状态非「已取消」的订单数量。" },
+  { key: "order_amount",   module: "conversion", label: "订单金额",     value: "¥328,400", icon: Wallet, formula: "周期内全部有效订单的应收金额合计（含未结算部分，不扣退款）。" },
+  { key: "conv_rate",      module: "conversion", label: "转化率",       value: "22.9%", trend: "+3.1pp", core: true, icon: TrendingUp, formula: "周期内转化用户数 / 周期内进入服务流程的意向用户数 × 100%。" },
+  // M3 分成数据
+  { key: "settled",        module: "profit", label: "已结算金额", value: "¥186,300", trend: "+12.6%", core: true, icon: Wallet, formula: "周期内已完成结算流程并入账的金额合计。结算口径：T+N 到账且对账无异常。" },
+  { key: "pending",        module: "profit", label: "待结算金额", value: "¥98,200",  icon: Wallet, formula: "已确认收入但尚未完成结算流程的金额合计（已上课/已确权但未到结算日）。" },
+  { key: "estimated",      module: "profit", label: "预估收入",   value: "¥43,800",  icon: Wallet, formula: "按当前规则对未确权订单(如未上课/试听)估算的潜在分成，仅用于预测，不计入财务。" },
+  // M4 服务数据
+  { key: "service_count",  module: "service", label: "规划师服务次数",   value: "2,184", trend: "+9.3%", icon: Activity, formula: "周期内规划师产生的有效 1V1 服务记录条数（含面谈、电话、回访）。" },
+  { key: "tutor_complete", module: "service", label: "学管督学完成率", value: "91.4%", trend: "+2.1pp", icon: GraduationCap, formula: "周期内学管师按计划完成的督学任务数 / 应完成任务总数 × 100%。" },
+  // M5 风险预警
+  { key: "alert_count",    module: "risk", label: "敏感操作预警次数", value: "12",  trend: "本月", core: true, icon: ShieldAlert, formula: "周期内触发风控规则的次数合计：超量导出、批量查看、越权访问、IP 异常、验证码失败超阈值等。" },
 ];
 
 function Dashboard() {
