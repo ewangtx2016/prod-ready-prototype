@@ -315,29 +315,9 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
       const v = 78.5;
       const data = [{ name: "覆盖", value: v, fill: "var(--color-primary)" }];
       return (
-        <RadialBarChart innerRadius="72%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
-          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={12} />
-          <text
-            x="50%"
-            y="46%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-foreground"
-            style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", fontFeatureSettings: '"tnum"' }}
-          >
-            {v}
-            <tspan style={{ fontSize: 14, fontWeight: 600 }} dx="2">%</tspan>
-          </text>
-          <text
-            x="50%"
-            y="62%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-muted-foreground"
-            style={{ fontSize: 11, letterSpacing: "0.05em" }}
-          >
-            服务覆盖率
-          </text>
+        <RadialBarChart innerRadius="65%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
+          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={8} />
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>覆盖 {v}%</text>
         </RadialBarChart>
       );
     }
