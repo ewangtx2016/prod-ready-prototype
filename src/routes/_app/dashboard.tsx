@@ -129,65 +129,59 @@ function Dashboard() {
       </div>
 
       <TooltipProvider delayDuration={150}>
-        <div className="space-y-6">
+        {/* 顶部：4 张核心指标卡片 */}
+        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {ALL_METRICS.filter((m) => m.core).slice(0, 4).map((m) => {
+            const Icon = m.icon || BookOpen;
+            return (
+              <Card key={m.key} className="relative overflow-hidden p-5">
+                <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/5" />
+                <div className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Icon className="h-4.5 w-4.5" />
+                </div>
+                <FormulaTip label={m.label} formula={m.formula} />
+                <div className="mt-2 text-3xl font-semibold tracking-tight">{m.value}</div>
+                {m.trend && <div className="mt-1 text-xs text-success">{m.trend}</div>}
+                <div className="mt-3 h-10">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={SPARK[m.key] || SPARK._default}>
+                      <defs>
+                        <linearGradient id={`sp-${m.key}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} fill={`url(#sp-${m.key})`} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* 五大模块 · 每个指标独立图表卡片 */}
+        <div className="space-y-8">
           {MODULES.map((mod, idx) => {
             const items = visible.filter((m) => m.module === mod.key);
             if (items.length === 0) return null;
             const ModIcon = mod.icon;
             return (
               <section key={mod.key}>
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-[11px] font-medium text-primary">M{idx + 1}</span>
+                <div className="mb-3 flex items-center gap-2 border-l-2 border-primary pl-3">
+                  <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-primary/10 px-1.5 text-[11px] font-medium text-primary">M{idx + 1}</span>
                   <ModIcon className="h-4 w-4 text-primary" />
-                  <h2 className="text-sm font-semibold">{mod.name}</h2>
+                  <h2 className="text-base font-semibold">{mod.name}</h2>
                   <span className="text-xs text-muted-foreground">· {mod.desc}</span>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  {items.map((m) => {
-                    const Icon = m.icon || BookOpen;
-                    return (
-                      <Card key={m.key} className="p-4">
-                        <div className="flex items-start justify-between">
-                          <FormulaTip label={m.label} formula={m.formula} />
-                          <Icon className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="mt-2 text-2xl font-semibold">{m.value}</div>
-                        {m.trend && <div className="mt-1 text-xs text-success">{m.trend}</div>}
-                        {m.core && <div className="mt-1 inline-block rounded bg-primary/10 px-1.5 text-[10px] text-primary">核心指标</div>}
-                      </Card>
-                    );
-                  })}
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {items.map((m) => <MetricChartCard key={m.key} metric={m} />)}
                 </div>
               </section>
             );
           })}
         </div>
       </TooltipProvider>
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card className="p-4">
-          <h3 className="mb-3 font-medium">用户总览 · 趋势图</h3>
-          <div className="flex h-48 items-end gap-2">
-            {[42, 58, 65, 71, 80, 92, 88, 105, 112, 128, 134, 156].map((v, i) => (
-              <div key={i} className="flex-1 rounded-t bg-primary/70 transition-all hover:bg-primary" style={{ height: `${v / 1.6}%` }} title={`第${i + 1}周: ${v}`} />
-            ))}
-          </div>
-          <div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>1月</span><span>12月</span></div>
-        </Card>
-        <Card className="p-4">
-          <h3 className="mb-3 font-medium">分成数据 · 分布</h3>
-          <div className="space-y-3">
-            {[{ k: "已结算金额", v: 186300, c: "bg-success" }, { k: "待结算金额", v: 98200, c: "bg-info" }, { k: "预估收入", v: 43800, c: "bg-warning" }].map((x) => (
-              <div key={x.k}>
-                <div className="mb-1 flex justify-between text-sm"><span>{x.k}</span><span className="font-medium">¥{x.v.toLocaleString()}</span></div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div className={`h-full rounded-full ${x.c}`} style={{ width: `${(x.v / 200000) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
