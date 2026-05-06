@@ -244,11 +244,10 @@ function FormulaTip({ label, formula }: { label: string; formula: string }) {
 const SPARK: Record<string, { x: string; v: number }[]> = {
   _default: [3,5,4,6,7,6,8,9,8,10,11,13].map((v,i)=>({x:`${i+1}`,v})),
   active_user:    [620,640,680,700,720,750,770,800,820,850,870,892].map((v,i)=>({x:`${i+1}`,v})),
-  service_ratio:  [62,64,66,68,70,71,73,74,75,76,77,78.5].map((v,i)=>({x:`${i+1}`,v})),
-  service_freq:   [6,7,8,9,10,11,12,12,13,14,14,15].map((v,i)=>({x:`${i+1}`,v})),
-  old_user_conv:  [55,56,57,58,59,60,60,61,61,62,62,62.3].map((v,i)=>({x:`${i+1}`,v})),
+  total_user:     [980,1010,1040,1070,1090,1120,1140,1160,1180,1210,1230,1248].map((v,i)=>({x:`${i+1}`,v})),
+  conv_rate:      [16,17,18,18.5,19,20,20.5,21,21.5,22,22.5,22.9].map((v,i)=>({x:`${i+1}`,v})),
   order_amount:   [180,200,220,240,260,270,280,290,300,310,320,328.4].map((v,i)=>({x:`${i+1}`,v})),
-  alert_count:    [1,2,1,3,2,4,2,3,5,2,3,3].map((v,i)=>({x:`${i+1}`,v})),
+  alert_count:    [4,6,5,8,7,9,11,10,12,9,11,12].map((v,i)=>({x:`${i+1}`,v})),
 };
 
 const TREND_12M = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
@@ -290,10 +289,9 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
 
   // ---- 按指标性质选图表 ----
   switch (m.key) {
-    // M1 用户
+    // M1 用户总览
     case "total_user":
-    case "active_user":
-    case "new_user": {
+    case "active_user": {
       const data = TREND_12M.map((x, i) => ({ x, v: (SPARK[m.key] || SPARK._default)[i]?.v ?? 0 }));
       return (
         <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -311,22 +309,21 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
         </AreaChart>
       );
     }
-    // M2 服务
-    case "service_ratio": {
+    case "served_user": {
       const v = 78.5;
       const data = [{ name: "覆盖", value: v, fill: "var(--color-primary)" }];
       return (
         <RadialBarChart innerRadius="65%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
           <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={8} />
-          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>{v}%</text>
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>覆盖 {v}%</text>
         </RadialBarChart>
       );
     }
-    case "service_freq": {
+    case "converted_user": {
       const data = [
-        { name: "低频(<4次)", v: 38 },
-        { name: "中频(4-7)", v: 46 },
-        { name: "高频(≥8)", v: 53 },
+        { name: "意向", v: 1248 },
+        { name: "服务", v: 701 },
+        { name: "转化", v: 286 },
       ];
       return (
         <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -342,33 +339,7 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
         </BarChart>
       );
     }
-    case "group_active": {
-      const data = TREND_12M.slice(-7).map((x, i) => ({ x, v: [68, 70, 72, 71, 74, 75, 76][i] }));
-      return (
-        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-          {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
-          <YAxis tick={axis} tickLine={false} axisLine={false} domain={[60, 80]} />
-          {tip}
-          <Line type="monotone" dataKey="v" stroke="var(--color-info)" strokeWidth={2} dot={{ r: 3 }} />
-        </LineChart>
-      );
-    }
-    // M3 转化
-    case "old_user_conv": {
-      const data = [
-        { name: "老用户", value: 62.3, fill: "var(--color-primary)" },
-        { name: "新用户", value: 37.7, fill: "var(--color-muted)" },
-      ];
-      return (
-        <PieChart>
-          <Pie data={data} dataKey="value" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
-            {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
-          </Pie>
-          {tip}
-        </PieChart>
-      );
-    }
+    // M2 转化数据
     case "order_count": {
       const data = TREND_12M.map((x, i) => ({ x, v: [80, 92, 105, 110, 118, 122, 130, 138, 142, 148, 152, 156][i] }));
       return (
@@ -381,16 +352,6 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
         </BarChart>
       );
     }
-    case "pass_rate": {
-      const data = [{ name: "通过率", value: 85, fill: "var(--color-success)" }];
-      return (
-        <RadialBarChart innerRadius="65%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
-          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={8} />
-          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>85%</text>
-        </RadialBarChart>
-      );
-    }
-    // M4 分成
     case "order_amount": {
       const data = TREND_12M.map((x, i) => ({ x, v: [180, 200, 220, 240, 260, 270, 280, 290, 300, 310, 320, 328.4][i] }));
       return (
@@ -409,6 +370,19 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
         </AreaChart>
       );
     }
+    case "conv_rate": {
+      const data = TREND_12M.map((x, i) => ({ x, v: (SPARK.conv_rate)[i].v }));
+      return (
+        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} domain={[10, 30]} />
+          {tip}
+          <Line type="monotone" dataKey="v" stroke="var(--color-success)" strokeWidth={2} dot={{ r: 3 }} />
+        </LineChart>
+      );
+    }
+    // M3 分成数据
     case "settled":
     case "pending":
     case "estimated": {
@@ -433,44 +407,43 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
         </BarChart>
       );
     }
-    // M5 风险
-    case "alert_count": {
-      const data = TREND_12M.map((x, i) => ({ x, v: [1,2,1,3,2,4,2,3,5,2,3,3][i] }));
+    // M4 服务数据
+    case "service_count": {
+      const data = TREND_12M.map((x, i) => ({ x, v: [120,140,150,170,180,190,195,200,205,210,215,219][i] * 10 }));
       return (
         <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
           {grid}
           <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
-          <YAxis tick={axis} tickLine={false} axisLine={false} allowDecimals={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
           {tip}
-          <Bar dataKey="v" fill="var(--color-destructive)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="v" fill="var(--color-info)" radius={[4, 4, 0, 0]} />
         </BarChart>
       );
     }
-    case "abnormal": {
+    case "tutor_complete": {
+      const data = [{ name: "完成率", value: 91.4, fill: "var(--color-success)" }];
+      return (
+        <RadialBarChart innerRadius="65%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
+          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={8} />
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>91.4%</text>
+        </RadialBarChart>
+      );
+    }
+    // M5 风险预警
+    case "alert_count": {
       const data = [
-        { name: "金额不一致", value: 2, fill: "var(--color-destructive)" },
-        { name: "重复支付", value: 1, fill: "var(--color-warning)" },
-        { name: "退款争议", value: 2, fill: "var(--color-info)" },
+        { name: "超量导出", value: 4, fill: "var(--color-destructive)" },
+        { name: "批量查看", value: 5, fill: "var(--color-warning)" },
+        { name: "越权访问", value: 2, fill: "var(--color-chart-4)" },
+        { name: "IP 异常",  value: 1, fill: "var(--color-info)" },
       ];
       return (
         <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="85%" paddingAngle={2}>
+          <Pie data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
             {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
           </Pie>
           {tip}
         </PieChart>
-      );
-    }
-    case "refund_rate": {
-      const data = TREND_12M.slice(-7).map((x, i) => ({ x, v: [2.4, 2.2, 2.1, 2.0, 1.9, 1.85, 1.8][i] }));
-      return (
-        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-          {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
-          <YAxis tick={axis} tickLine={false} axisLine={false} domain={[1, 3]} />
-          {tip}
-          <Line type="monotone" dataKey="v" stroke="var(--color-destructive)" strokeWidth={2} dot={{ r: 3 }} />
-        </LineChart>
       );
     }
     default: {
