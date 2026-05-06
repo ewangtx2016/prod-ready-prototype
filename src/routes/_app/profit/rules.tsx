@@ -43,6 +43,7 @@ function Page() {
   const refresh = () => setRules(db.rules());
 
   const filtered = rules.filter((r) => tab === "all" ? true : r.status === tab);
+  const pendingCount = rules.filter((r) => r.status === "pending_audit").length;
 
   const onSmsSuccess = () => {
     if (!smsScene) return;
@@ -97,7 +98,10 @@ function Page() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="all">全部</TabsTrigger>
-          <TabsTrigger value="pending_audit">待审核</TabsTrigger>
+          <TabsTrigger value="pending_audit" className="gap-1.5">
+            待审核
+            {pendingCount > 0 && <Badge className="bg-warning text-warning-foreground h-4 px-1.5 text-[10px]">{pendingCount}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="ready">待使用</TabsTrigger>
           <TabsTrigger value="active">使用中</TabsTrigger>
           <TabsTrigger value="disabled">已停用</TabsTrigger>

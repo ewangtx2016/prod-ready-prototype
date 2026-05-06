@@ -29,7 +29,6 @@ const GROUPS: Group[] = [
   { key: "profit", label: "分成管理", icon: PieChart, children: [
     { to: "/profit/rules", label: "分成规则", icon: PieChart, key: "profit" },
     { to: "/profit/dimensions", label: "维度配置", icon: PieChart, key: "profit" },
-    { to: "/profit/audit", label: "规则审核", icon: ShieldCheck, key: "profit" },
   ] },
   { key: "ledger", label: "台账管理", icon: BookOpen, children: [
     { to: "/ledger/settled", label: "已结算", icon: BookOpen, key: "ledger" },
@@ -69,7 +68,7 @@ export function AppSidebar() {
         ))}
       </nav>
       <div className="border-t p-3 text-[10px] text-muted-foreground">
-        v1.3 · 高保真原型
+        v1.0 · 高保真原型
       </div>
     </aside>
   );
