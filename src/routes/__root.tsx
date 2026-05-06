@@ -36,10 +36,14 @@ export const Route = createRootRoute({
       { title: "机构用户全生命周期管理系统" },
       { name: "description", content: "机构用户资产保险柜 + 规划师服务展示台 — 高保真原型" },
       { property: "og:title", content: "机构用户全生命周期管理系统" },
-      { property: "og:description", content: "高保真交互原型 v1.3" },
+      { property: "og:description", content: "机构用户资产保险柜 + 规划师服务展示台 — 高保真原型" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "机构用户全生命周期管理系统" },
+      { name: "twitter:description", content: "机构用户资产保险柜 + 规划师服务展示台 — 高保真原型" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/31e1c3ee-2edf-431e-b711-a23b2d4925f8/id-preview-49e99799--a6fd31a4-ab7c-4b87-8cee-3927fd4a7b39.lovable.app-1778048269939.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/31e1c3ee-2edf-431e-b711-a23b2d4925f8/id-preview-49e99799--a6fd31a4-ab7c-4b87-8cee-3927fd4a7b39.lovable.app-1778048269939.png" },
     ],
     links: [
       {
