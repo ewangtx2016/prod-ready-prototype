@@ -14,6 +14,11 @@ import { useState } from "react";
 import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info, Wallet, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/mock";
+import {
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart,
+  Pie, PieChart, RadialBar, RadialBarChart, ResponsiveContainer,
+  Tooltip as RTooltip, XAxis, YAxis,
+} from "recharts";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -24,11 +29,11 @@ export const Route = createFileRoute("/_app/dashboard")({
  *  每个模块至少含 1 项核心指标(core=true，默认勾选不可取消) */
 type ModuleKey = "user" | "service" | "conversion" | "profit" | "risk";
 const MODULES: { key: ModuleKey; name: string; desc: string; icon: typeof Users }[] = [
-  { key: "user",       name: "用户概览",   desc: "机构用户规模与活跃度", icon: Users },
-  { key: "service",    name: "服务概览",   desc: "规划师/学管师服务覆盖与频次", icon: Activity },
+  { key: "user",       name: "用户总览",   desc: "机构用户规模与活跃度", icon: Users },
+  { key: "service",    name: "服务数据",   desc: "规划师/学管师服务覆盖与频次", icon: Activity },
   { key: "conversion", name: "业务转化",   desc: "学科课订单与老用户转化", icon: TrendingUp },
-  { key: "profit",     name: "分成财务",   desc: "订单金额、已结算 / 待结算 / 预估", icon: Wallet },
-  { key: "risk",       name: "风险合规",   desc: "敏感操作预警与异常账款", icon: ShieldAlert },
+  { key: "profit",     name: "分成数据",   desc: "订单金额、已结算 / 待结算 / 预估", icon: Wallet },
+  { key: "risk",       name: "风险预警",   desc: "敏感操作预警与异常账款", icon: ShieldAlert },
 ];
 const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: string; trend?: string; core?: boolean; icon?: typeof Users; formula: string }[] = [
   // M1 用户概览
