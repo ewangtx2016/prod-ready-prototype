@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { db, type ProfitRule } from "@/lib/mock";
 import { useApp } from "@/lib/store";
@@ -38,14 +38,8 @@ function Page() {
   const [auditing, setAuditing] = useState<ProfitRule | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [rejecting, setRejecting] = useState<ProfitRule | null>(null);
-  const [dimCfg, setDimCfg] = useState<{ w1: number; w2: number; w3: number } | null>(null);
 
-  useEffect(() => {
-    setRules(db.rules());
-    const raw = localStorage.getItem("demo.dim.cfg");
-    if (raw) { try { const c = JSON.parse(raw); setDimCfg({ w1: c.w1, w2: c.w2, w3: c.w3 }); } catch {} }
-    if (!raw) setDimCfg({ w1: 0.4, w2: 0.3, w3: 0.3 });
-  }, []);
+  useEffect(() => { setRules(db.rules()); }, []);
   const refresh = () => setRules(db.rules());
 
   const filtered = rules.filter((r) => tab === "all" ? true : r.status === tab);
@@ -100,13 +94,6 @@ function Page() {
         <div>· 演示提示：以「鼎校超管」身份新增规则 → 切到「机构管理员」完成短信验证与审核 → 切回鼎校启用 → 再切机构验证</div>
         <div>· 短信验证码：任意 6 位数字均通过；输入 000000 模拟错误</div>
       </DevNote>
-      {dimCfg && (
-        <div className="mb-3 rounded-md border border-info/40 bg-info/10 px-3 py-2 text-xs text-info-foreground/90 flex items-center gap-2">
-          <span className="font-medium text-info">当前维度权重（来自「分成维度配置」§9.2）</span>
-          <span className="font-mono">W₁={dimCfg.w1}（课程类型） · W₂={dimCfg.w2}（用户来源） · W₃={dimCfg.w3}（转化阶段）</span>
-          <span className="ml-auto text-muted-foreground">规则仅可覆盖三方比例，不重复定义权重</span>
-        </div>
-      )}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="all">全部</TabsTrigger>
@@ -164,7 +151,7 @@ function Page() {
       <Dialog open={creating} onOpenChange={setCreating}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>新增分成规则</DialogTitle></DialogHeader>
-          <CreateRuleForm dimCfg={dimCfg} onClose={(submit, rule) => {
+          <CreateRuleForm onClose={(submit, rule) => {
             setCreating(false);
             if (submit && rule) {
               const list = [rule, ...db.rules()];
@@ -224,11 +211,11 @@ function Page() {
   );
 }
 
-function CreateRuleForm({ dimCfg, onClose }: { dimCfg: { w1: number; w2: number; w3: number } | null; onClose: (submit: boolean, rule?: ProfitRule) => void }) {
+function CreateRuleForm({ onClose }: { onClose: (submit: boolean, rule?: ProfitRule) => void }) {
   const [name, setName] = useState("");
-  const w1 = dimCfg?.w1 ?? 0.4;
-  const w2 = dimCfg?.w2 ?? 0.3;
-  const w3 = dimCfg?.w3 ?? 0.3;
+  const [w1, setW1] = useState(0.4);
+  const [w2, setW2] = useState(0.3);
+  const [w3, setW3] = useState(0.3);
   const sum = +(w1 + w2 + w3).toFixed(2);
   const submit = () => {
     if (!name.trim()) { toast.error("请填写规则名称"); return; }
@@ -250,17 +237,13 @@ function CreateRuleForm({ dimCfg, onClose }: { dimCfg: { w1: number; w2: number;
       <div className="space-y-3">
         <div><Label>规则名称 *</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如：2026 Q4 暑期活动规则" /></div>
         <div className="rounded-md border p-3 space-y-2 text-sm">
-          <div className="font-medium flex items-center justify-between">
-            <span>三维度权重（只读，来自「分成维度配置」）</span>
-            <Link to="/profit/dimensions" className="text-xs text-info hover:underline">修改维度配置 →</Link>
-          </div>
+          <div className="font-medium">三维度权重配置（约束 W₁ + W₂ + W₃ = 1）</div>
           <div className="grid grid-cols-3 gap-2">
-            <div><Label className="text-xs">课程类型 W₁</Label><Input type="number" value={w1} disabled /></div>
-            <div><Label className="text-xs">用户来源 W₂</Label><Input type="number" value={w2} disabled /></div>
-            <div><Label className="text-xs">转化阶段 W₃</Label><Input type="number" value={w3} disabled /></div>
+            <div><Label className="text-xs">课程类型 W₁</Label><Input type="number" step="0.1" value={w1} onChange={(e) => setW1(+e.target.value)} /></div>
+            <div><Label className="text-xs">用户来源 W₂</Label><Input type="number" step="0.1" value={w2} onChange={(e) => setW2(+e.target.value)} /></div>
+            <div><Label className="text-xs">转化阶段 W₃</Label><Input type="number" step="0.1" value={w3} onChange={(e) => setW3(+e.target.value)} /></div>
           </div>
-          <div className={`text-xs ${sum === 1 ? "text-success" : "text-destructive"}`}>当前权重和：{sum} {sum === 1 ? "✓ 来自维度配置" : "✗ 维度配置非法，请先修复"}</div>
-          <div className="text-xs text-muted-foreground">本规则仅覆盖三方比例（机构/规划师/平台），权重以维度配置为准，避免双重定义。</div>
+          <div className={`text-xs ${sum === 1 ? "text-success" : "text-destructive"}`}>当前权重和：{sum} {sum === 1 ? "✓" : "✗"}</div>
         </div>
         <div className="rounded-md bg-info/10 p-2 text-xs text-info">提交后将向机构管理员发送短信验证码，验证通过规则进入待审核状态。</div>
       </div>

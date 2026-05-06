@@ -13,7 +13,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { GitCompare } from "lucide-react";
 
 export const Route = createFileRoute("/_app/profit/audit")({ component: Page });
 
@@ -22,13 +21,7 @@ function Page() {
   const [list, setList] = useState<ProfitRule[]>([]);
   const [rejecting, setRejecting] = useState<ProfitRule | null>(null);
   const [reason, setReason] = useState("");
-  const [comparing, setComparing] = useState<ProfitRule | null>(null);
-  const [dimDefault, setDimDefault] = useState<any>(null);
-  useEffect(() => {
-    setList(db.rules().filter(r => r.status === "pending_audit"));
-    const raw = localStorage.getItem("demo.dim.cfg");
-    if (raw) { try { setDimDefault(JSON.parse(raw)); } catch {} }
-  }, []);
+  useEffect(() => { setList(db.rules().filter(r => r.status === "pending_audit")); }, []);
   const refresh = () => setList(db.rules().filter(r => r.status === "pending_audit"));
 
   const approve = (r: ProfitRule) => {
@@ -61,7 +54,6 @@ function Page() {
                 <TableCell className="text-xs">{r.createdAt}</TableCell>
                 <TableCell><Badge className="bg-warning text-warning-foreground">待审核</Badge></TableCell>
                 <TableCell className="text-right space-x-1">
-                  <Button size="sm" variant="ghost" onClick={() => setComparing(r)}><GitCompare className="h-3.5 w-3.5" /> 对比</Button>
                   <PermissionTip action="审核通过" prd="§9.3" allow={["org_admin"]}><Button size="sm" disabled={role !== "org_admin"} onClick={() => approve(r)}>通过</Button></PermissionTip>
                   <PermissionTip action="审核驳回" prd="§9.3" allow={["org_admin"]}><Button size="sm" variant="outline" disabled={role !== "org_admin"} onClick={() => setRejecting(r)}>驳回</Button></PermissionTip>
                 </TableCell>
@@ -78,66 +70,6 @@ function Page() {
           <DialogFooter><Button variant="outline" onClick={() => setRejecting(null)}>取消</Button><Button variant="destructive" onClick={doReject}>确认驳回</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={!!comparing} onOpenChange={(v) => !v && setComparing(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader><DialogTitle>对比 — {comparing?.name}</DialogTitle></DialogHeader>
-          {comparing && <CompareView rule={comparing} dimDefault={dimDefault} />}
-          <DialogFooter><Button onClick={() => setComparing(null)}>关闭</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function CompareView({ rule, dimDefault }: { rule: ProfitRule; dimDefault: any }) {
-  const dimMap: Record<string, { label: string; defKey: string }> = {
-    courseType: { label: "课程类型", defKey: "courseType" },
-    userSource: { label: "用户来源", defKey: "userSource" },
-    convStage: { label: "转化阶段", defKey: "convStage" },
-  };
-  const weightInfo = dimDefault ? `W₁=${dimDefault.w1} W₂=${dimDefault.w2} W₃=${dimDefault.w3}` : "未读取到维度配置默认值";
-  return (
-    <div className="space-y-3 text-sm max-h-[60vh] overflow-auto">
-      <div className="rounded-md bg-info/10 p-2 text-xs">
-        <b>维度权重（来自 §9.2 配置，规则不覆盖）：</b>{weightInfo}
-      </div>
-      {Object.entries(rule.dims).map(([k, v]: any) => {
-        const meta = dimMap[k]; if (!meta || !v) return null;
-        const def = dimDefault?.[meta.defKey] ?? {};
-        return (
-          <div key={k} className="rounded-md border">
-            <div className="border-b bg-muted/50 px-3 py-2 font-medium">{meta.label}（W={v.weight}）</div>
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>分类</TableHead>
-                <TableHead>默认（机构/规划师/平台）</TableHead>
-                <TableHead>规则覆盖（机构/规划师/平台）</TableHead>
-                <TableHead>差异</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {Object.entries(v.ratios).map(([cat, val]: any) => {
-                  const d = def[cat] as [number, number, number] | undefined;
-                  const newArr = [val.org, val.planner, val.platform];
-                  const diff = d ? newArr.map((n, i) => n - d[i]) : null;
-                  const changed = diff && diff.some(x => x !== 0);
-                  return (
-                    <TableRow key={cat}>
-                      <TableCell className="font-medium">{cat}</TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{d ? `${d[0]} / ${d[1]} / ${d[2]}` : "—"}</TableCell>
-                      <TableCell className="font-mono text-xs">{newArr.join(" / ")}</TableCell>
-                      <TableCell>
-                        {!d ? <span className="text-muted-foreground">无默认</span> :
-                          changed ? <span className="text-warning font-mono text-xs">{diff!.map(x => (x > 0 ? `+${x}` : x)).join(" / ")}</span> :
-                          <span className="text-success text-xs">一致</span>}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        );
-      })}
     </div>
   );
 }
