@@ -15,7 +15,6 @@ const GROUPS: Group[] = [
   { key: "dashboard", label: "数据看板", icon: LayoutDashboard, children: [{ to: "/dashboard", label: "数据看板", icon: LayoutDashboard, key: "dashboard" }] },
   { key: "service", label: "服务记录", icon: FileText, children: [
     { to: "/service/records", label: "服务列表", icon: FileText, key: "service" },
-    { to: "/service/audit", label: "服务审核", icon: ShieldCheck, key: "service" },
     { to: "/service/settings", label: "审核模式", icon: Settings, key: "service" },
   ] },
   { key: "notification", label: "通知管理", icon: Bell, children: [

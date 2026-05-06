@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, Eye, Plus, Download } from "lucide-react";
+import { Edit, Eye, Plus, Download, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
 
@@ -35,6 +35,10 @@ function Page() {
   const [editing, setEditing] = useState<ServiceRecord | null>(null);
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
   const [creating, setCreating] = useState(false);
+  const [rejecting, setRejecting] = useState<ServiceRecord | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [approving, setApproving] = useState<ServiceRecord | null>(null);
+  const isAdmin = role === "org_admin";
 
   useEffect(() => { setRecords(db.services()); }, []);
 
@@ -44,6 +48,34 @@ function Page() {
     if (role === "tutor") return r.createdByRole === "tutor";
     return true;
   }).filter((r) => tab === "all" ? true : r.status === tab);
+
+  const pendingCount = records.filter((r) => {
+    if (role === "planner") return r.createdByRole === "planner" && r.status === "pending_audit";
+    if (role === "tutor") return r.createdByRole === "tutor" && r.status === "pending_audit";
+    return r.status === "pending_audit";
+  }).length;
+
+  const approve = (r: ServiceRecord) => {
+    const list = db.services();
+    const idx = list.findIndex((x) => x.id === r.id);
+    list[idx] = { ...list[idx], status: "approved", content: list[idx].pendingChange?.newContent ?? list[idx].content, pendingChange: undefined };
+    db.setServices(list);
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "审核通过", detail: `#${r.id}` });
+    toast.success("审核通过");
+    refresh();
+    setApproving(null);
+  };
+  const doReject = () => {
+    if (!rejectReason.trim()) { toast.error("请填写驳回原因"); return; }
+    if (!rejecting) return;
+    const list = db.services();
+    const idx = list.findIndex((x) => x.id === rejecting.id);
+    list[idx] = { ...list[idx], status: "rejected", rejectReason, pendingChange: undefined };
+    db.setServices(list);
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "审核驳回", detail: `#${rejecting.id} - ${rejectReason}` });
+    toast.success("已驳回");
+    setRejecting(null); setRejectReason(""); refresh();
+  };
 
   return (
     <div>
@@ -69,15 +101,20 @@ function Page() {
       <DevNote prd="§6.2 §6.5" title="服务列表 + 修改申请">
         <div>· 提交即锁定：原记录不可直接编辑/删除，只能"提交修改申请"</div>
         <div>· 数据范围：管理员=全量；规划师=本人创建；学管师=本人创建</div>
+        <div>· <b>审核流</b>（PRD §6.3 / §14）：仅机构管理员在「待审核」tab 可执行通过/驳回；行内展示「原内容 → 新内容」对比与修改原因</div>
         <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
-        <div>· <b>待确认</b>：学管师服务记录字段范围（PRD Q6）</div>
+        <div>· 当前待审核：{pendingCount} 条{!isAdmin && "（仅管理员可审核）"}</div>
       </DevNote>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="all">全部</TabsTrigger>
           <TabsTrigger value="submitted">已填写</TabsTrigger>
-          <TabsTrigger value="pending_audit">待审核</TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="pending_audit">
+              待审核{pendingCount > 0 && <span className="ml-1 rounded-full bg-warning px-1.5 text-[10px] text-warning-foreground">{pendingCount}</span>}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="approved">已通过</TabsTrigger>
           <TabsTrigger value="rejected">未通过</TabsTrigger>
         </TabsList>
@@ -88,7 +125,7 @@ function Page() {
                 <TableHead>用户</TableHead>
                 <TableHead>手机号</TableHead>
                 <TableHead>类型</TableHead>
-                <TableHead>内容</TableHead>
+                <TableHead>内容{tab === "pending_audit" && "（原 → 新）"}</TableHead>
                 <TableHead>时长</TableHead>
                 <TableHead>提交人</TableHead>
                 <TableHead>提交时间</TableHead>
@@ -102,7 +139,20 @@ function Page() {
                   <TableCell>{maskName(r.userName, role)}</TableCell>
                   <TableCell className="font-mono text-xs">{maskPhone(r.userPhone, role)}</TableCell>
                   <TableCell>{r.serviceType}</TableCell>
-                  <TableCell className="max-w-xs truncate">{r.content}</TableCell>
+                  <TableCell className="max-w-xs text-xs">
+                    {r.pendingChange ? (
+                      <div className="space-y-0.5">
+                        <div className="line-through text-muted-foreground truncate">{r.content}</div>
+                        <div className="text-foreground truncate">→ {r.pendingChange.newContent}</div>
+                        <div className="text-info text-[11px]">原因：{r.pendingChange.reason}</div>
+                      </div>
+                    ) : (
+                      <div className="truncate">{r.content}</div>
+                    )}
+                    {r.status === "rejected" && r.rejectReason && (
+                      <div className="mt-1 text-[11px] text-destructive">驳回：{r.rejectReason}</div>
+                    )}
+                  </TableCell>
                   <TableCell>{r.duration} 分钟</TableCell>
                   <TableCell>{r.createdBy}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.createdAt}</TableCell>
@@ -113,6 +163,16 @@ function Page() {
                       <PermissionTip action="提交修改申请" prd="§6.5" allow={["planner", "tutor"]} desc="原记录锁定，必须走申请流">
                         <Button variant="ghost" size="sm" onClick={() => setEditing(r)}><Edit className="h-3.5 w-3.5" /></Button>
                       </PermissionTip>
+                    )}
+                    {isAdmin && r.status === "pending_audit" && (
+                      <>
+                        <PermissionTip action="审核通过" prd="§6.3" allow={["org_admin"]}>
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-success" onClick={() => setApproving(r)}><Check className="h-3.5 w-3.5" /> 通过</Button>
+                        </PermissionTip>
+                        <PermissionTip action="审核驳回" prd="§6.3" allow={["org_admin"]}>
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-destructive" onClick={() => setRejecting(r)}><X className="h-3.5 w-3.5" /> 驳回</Button>
+                        </PermissionTip>
+                      </>
                     )}
                   </TableCell>
                 </TableRow>
@@ -161,6 +221,48 @@ function Page() {
         <DialogContent>
           <DialogHeader><DialogTitle>新增服务记录</DialogTitle></DialogHeader>
           <CreateForm onClose={(submit) => { setCreating(false); if (submit) refresh(); }} />
+        </DialogContent>
+      </Dialog>
+
+      {/* 驳回 */}
+      <Dialog open={!!rejecting} onOpenChange={(v) => { if (!v) { setRejecting(null); setRejectReason(""); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>驳回服务记录</DialogTitle></DialogHeader>
+          <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="请填写驳回原因（必填）" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRejecting(null); setRejectReason(""); }}>取消</Button>
+            <Button variant="destructive" onClick={doReject}>确认驳回</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 通过确认 */}
+      <Dialog open={!!approving} onOpenChange={(v) => !v && setApproving(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>确认审核通过</DialogTitle></DialogHeader>
+          {approving && (
+            <div className="space-y-2 text-sm">
+              <div>确认通过以下服务记录的审核？</div>
+              <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
+                <div><b>用户：</b>{maskName(approving.userName, role)} · <b>类型：</b>{approving.serviceType}</div>
+                <div><b>提交人：</b>{approving.createdBy}</div>
+                {approving.pendingChange ? (
+                  <>
+                    <div className="line-through text-muted-foreground">原：{approving.content}</div>
+                    <div>新：{approving.pendingChange.newContent}</div>
+                    <div className="text-info">原因：{approving.pendingChange.reason}</div>
+                  </>
+                ) : (
+                  <div>内容：{approving.content}</div>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">通过后记录将锁定为「已通过」状态，且修改申请的新内容将覆盖原内容。</div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproving(null)}>取消</Button>
+            <Button onClick={() => approving && approve(approving)}>确认通过</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

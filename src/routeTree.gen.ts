@@ -24,7 +24,6 @@ import { Route as AppSettingsBackupRouteImport } from './routes/_app/settings/ba
 import { Route as AppSettingsAlertRouteImport } from './routes/_app/settings/alert'
 import { Route as AppServiceSettingsRouteImport } from './routes/_app/service/settings'
 import { Route as AppServiceRecordsRouteImport } from './routes/_app/service/records'
-import { Route as AppServiceAuditRouteImport } from './routes/_app/service/audit'
 import { Route as AppProfitRulesRouteImport } from './routes/_app/profit/rules'
 import { Route as AppProfitDimensionsRouteImport } from './routes/_app/profit/dimensions'
 import { Route as AppNotificationWechatRouteImport } from './routes/_app/notification/wechat'
@@ -112,11 +111,6 @@ const AppServiceRecordsRoute = AppServiceRecordsRouteImport.update({
   path: '/service/records',
   getParentRoute: () => AppRoute,
 } as any)
-const AppServiceAuditRoute = AppServiceAuditRouteImport.update({
-  id: '/service/audit',
-  path: '/service/audit',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppProfitRulesRoute = AppProfitRulesRouteImport.update({
   id: '/profit/rules',
   path: '/profit/rules',
@@ -196,7 +190,6 @@ export interface FileRoutesByFullPath {
   '/notification/wechat': typeof AppNotificationWechatRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
   '/profit/rules': typeof AppProfitRulesRoute
-  '/service/audit': typeof AppServiceAuditRoute
   '/service/records': typeof AppServiceRecordsRoute
   '/service/settings': typeof AppServiceSettingsRoute
   '/settings/alert': typeof AppSettingsAlertRoute
@@ -225,7 +218,6 @@ export interface FileRoutesByTo {
   '/notification/wechat': typeof AppNotificationWechatRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
   '/profit/rules': typeof AppProfitRulesRoute
-  '/service/audit': typeof AppServiceAuditRoute
   '/service/records': typeof AppServiceRecordsRoute
   '/service/settings': typeof AppServiceSettingsRoute
   '/settings/alert': typeof AppSettingsAlertRoute
@@ -256,7 +248,6 @@ export interface FileRoutesById {
   '/_app/notification/wechat': typeof AppNotificationWechatRoute
   '/_app/profit/dimensions': typeof AppProfitDimensionsRoute
   '/_app/profit/rules': typeof AppProfitRulesRoute
-  '/_app/service/audit': typeof AppServiceAuditRoute
   '/_app/service/records': typeof AppServiceRecordsRoute
   '/_app/service/settings': typeof AppServiceSettingsRoute
   '/_app/settings/alert': typeof AppSettingsAlertRoute
@@ -287,7 +278,6 @@ export interface FileRouteTypes {
     | '/notification/wechat'
     | '/profit/dimensions'
     | '/profit/rules'
-    | '/service/audit'
     | '/service/records'
     | '/service/settings'
     | '/settings/alert'
@@ -316,7 +306,6 @@ export interface FileRouteTypes {
     | '/notification/wechat'
     | '/profit/dimensions'
     | '/profit/rules'
-    | '/service/audit'
     | '/service/records'
     | '/service/settings'
     | '/settings/alert'
@@ -346,7 +335,6 @@ export interface FileRouteTypes {
     | '/_app/notification/wechat'
     | '/_app/profit/dimensions'
     | '/_app/profit/rules'
-    | '/_app/service/audit'
     | '/_app/service/records'
     | '/_app/service/settings'
     | '/_app/settings/alert'
@@ -472,13 +460,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppServiceRecordsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/service/audit': {
-      id: '/_app/service/audit'
-      path: '/service/audit'
-      fullPath: '/service/audit'
-      preLoaderRoute: typeof AppServiceAuditRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/profit/rules': {
       id: '/_app/profit/rules'
       path: '/profit/rules'
@@ -581,7 +562,6 @@ interface AppRouteChildren {
   AppNotificationWechatRoute: typeof AppNotificationWechatRoute
   AppProfitDimensionsRoute: typeof AppProfitDimensionsRoute
   AppProfitRulesRoute: typeof AppProfitRulesRoute
-  AppServiceAuditRoute: typeof AppServiceAuditRoute
   AppServiceRecordsRoute: typeof AppServiceRecordsRoute
   AppServiceSettingsRoute: typeof AppServiceSettingsRoute
   AppSettingsAlertRoute: typeof AppSettingsAlertRoute
@@ -609,7 +589,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationWechatRoute: AppNotificationWechatRoute,
   AppProfitDimensionsRoute: AppProfitDimensionsRoute,
   AppProfitRulesRoute: AppProfitRulesRoute,
-  AppServiceAuditRoute: AppServiceAuditRoute,
   AppServiceRecordsRoute: AppServiceRecordsRoute,
   AppServiceSettingsRoute: AppServiceSettingsRoute,
   AppSettingsAlertRoute: AppSettingsAlertRoute,
