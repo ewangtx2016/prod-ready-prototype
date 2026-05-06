@@ -10,10 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info, Wallet, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/mock";
+import {
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart,
+  Pie, PieChart, RadialBar, RadialBarChart, ResponsiveContainer,
+  Tooltip as RTooltip, XAxis, YAxis,
+} from "recharts";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -24,11 +29,11 @@ export const Route = createFileRoute("/_app/dashboard")({
  *  每个模块至少含 1 项核心指标(core=true，默认勾选不可取消) */
 type ModuleKey = "user" | "service" | "conversion" | "profit" | "risk";
 const MODULES: { key: ModuleKey; name: string; desc: string; icon: typeof Users }[] = [
-  { key: "user",       name: "用户概览",   desc: "机构用户规模与活跃度", icon: Users },
-  { key: "service",    name: "服务概览",   desc: "规划师/学管师服务覆盖与频次", icon: Activity },
+  { key: "user",       name: "用户总览",   desc: "机构用户规模与活跃度", icon: Users },
+  { key: "service",    name: "服务数据",   desc: "规划师/学管师服务覆盖与频次", icon: Activity },
   { key: "conversion", name: "业务转化",   desc: "学科课订单与老用户转化", icon: TrendingUp },
-  { key: "profit",     name: "分成财务",   desc: "订单金额、已结算 / 待结算 / 预估", icon: Wallet },
-  { key: "risk",       name: "风险合规",   desc: "敏感操作预警与异常账款", icon: ShieldAlert },
+  { key: "profit",     name: "分成数据",   desc: "订单金额、已结算 / 待结算 / 预估", icon: Wallet },
+  { key: "risk",       name: "风险预警",   desc: "敏感操作预警与异常账款", icon: ShieldAlert },
 ];
 const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: string; trend?: string; core?: boolean; icon?: typeof Users; formula: string }[] = [
   // M1 用户概览
@@ -124,65 +129,59 @@ function Dashboard() {
       </div>
 
       <TooltipProvider delayDuration={150}>
-        <div className="space-y-6">
+        {/* 顶部：4 张核心指标卡片 */}
+        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {ALL_METRICS.filter((m) => m.core).slice(0, 4).map((m) => {
+            const Icon = m.icon || BookOpen;
+            return (
+              <Card key={m.key} className="relative overflow-hidden p-5">
+                <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/5" />
+                <div className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Icon className="h-4.5 w-4.5" />
+                </div>
+                <FormulaTip label={m.label} formula={m.formula} />
+                <div className="mt-2 text-3xl font-semibold tracking-tight">{m.value}</div>
+                {m.trend && <div className="mt-1 text-xs text-success">{m.trend}</div>}
+                <div className="mt-3 h-10">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={SPARK[m.key] || SPARK._default}>
+                      <defs>
+                        <linearGradient id={`sp-${m.key}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} fill={`url(#sp-${m.key})`} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* 五大模块 · 每个指标独立图表卡片 */}
+        <div className="space-y-8">
           {MODULES.map((mod, idx) => {
             const items = visible.filter((m) => m.module === mod.key);
             if (items.length === 0) return null;
             const ModIcon = mod.icon;
             return (
               <section key={mod.key}>
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-[11px] font-medium text-primary">M{idx + 1}</span>
+                <div className="mb-3 flex items-center gap-2 border-l-2 border-primary pl-3">
+                  <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-primary/10 px-1.5 text-[11px] font-medium text-primary">M{idx + 1}</span>
                   <ModIcon className="h-4 w-4 text-primary" />
-                  <h2 className="text-sm font-semibold">{mod.name}</h2>
+                  <h2 className="text-base font-semibold">{mod.name}</h2>
                   <span className="text-xs text-muted-foreground">· {mod.desc}</span>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  {items.map((m) => {
-                    const Icon = m.icon || BookOpen;
-                    return (
-                      <Card key={m.key} className="p-4">
-                        <div className="flex items-start justify-between">
-                          <FormulaTip label={m.label} formula={m.formula} />
-                          <Icon className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="mt-2 text-2xl font-semibold">{m.value}</div>
-                        {m.trend && <div className="mt-1 text-xs text-success">{m.trend}</div>}
-                        {m.core && <div className="mt-1 inline-block rounded bg-primary/10 px-1.5 text-[10px] text-primary">核心指标</div>}
-                      </Card>
-                    );
-                  })}
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {items.map((m) => <MetricChartCard key={m.key} metric={m} />)}
                 </div>
               </section>
             );
           })}
         </div>
       </TooltipProvider>
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card className="p-4">
-          <h3 className="mb-3 font-medium">用户总览 · 趋势图</h3>
-          <div className="flex h-48 items-end gap-2">
-            {[42, 58, 65, 71, 80, 92, 88, 105, 112, 128, 134, 156].map((v, i) => (
-              <div key={i} className="flex-1 rounded-t bg-primary/70 transition-all hover:bg-primary" style={{ height: `${v / 1.6}%` }} title={`第${i + 1}周: ${v}`} />
-            ))}
-          </div>
-          <div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>1月</span><span>12月</span></div>
-        </Card>
-        <Card className="p-4">
-          <h3 className="mb-3 font-medium">分成数据 · 分布</h3>
-          <div className="space-y-3">
-            {[{ k: "已结算金额", v: 186300, c: "bg-success" }, { k: "待结算金额", v: 98200, c: "bg-info" }, { k: "预估收入", v: 43800, c: "bg-warning" }].map((x) => (
-              <div key={x.k}>
-                <div className="mb-1 flex justify-between text-sm"><span>{x.k}</span><span className="font-medium">¥{x.v.toLocaleString()}</span></div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div className={`h-full rounded-full ${x.c}`} style={{ width: `${(x.v / 200000) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -242,4 +241,252 @@ function FormulaTip({ label, formula }: { label: string; formula: string }) {
       </TooltipContent>
     </Tooltip>
   );
+}
+
+/* ---------------- 图表数据 (mock) ---------------- */
+const SPARK: Record<string, { x: string; v: number }[]> = {
+  _default: [3,5,4,6,7,6,8,9,8,10,11,13].map((v,i)=>({x:`${i+1}`,v})),
+  active_user:    [620,640,680,700,720,750,770,800,820,850,870,892].map((v,i)=>({x:`${i+1}`,v})),
+  service_ratio:  [62,64,66,68,70,71,73,74,75,76,77,78.5].map((v,i)=>({x:`${i+1}`,v})),
+  service_freq:   [6,7,8,9,10,11,12,12,13,14,14,15].map((v,i)=>({x:`${i+1}`,v})),
+  old_user_conv:  [55,56,57,58,59,60,60,61,61,62,62,62.3].map((v,i)=>({x:`${i+1}`,v})),
+  order_amount:   [180,200,220,240,260,270,280,290,300,310,320,328.4].map((v,i)=>({x:`${i+1}`,v})),
+  alert_count:    [1,2,1,3,2,4,2,3,5,2,3,3].map((v,i)=>({x:`${i+1}`,v})),
+};
+
+const TREND_12M = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+
+function MetricChartCard({ metric }: { metric: typeof ALL_METRICS[number] }) {
+  const Icon = metric.icon || BookOpen;
+  return (
+    <Card className="p-4 transition-shadow hover:shadow-md">
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Icon className="h-3.5 w-3.5" />
+            </span>
+            <FormulaTip label={metric.label} formula={metric.formula} />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <div className="text-2xl font-semibold tracking-tight">{metric.value}</div>
+            {metric.trend && <span className="text-xs text-success">{metric.trend}</span>}
+          </div>
+        </div>
+        {metric.core && (
+          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">核心</span>
+        )}
+      </div>
+      <div className="mt-3 h-36">
+        <ResponsiveContainer width="100%" height="100%">
+          {renderChart(metric)}
+        </ResponsiveContainer>
+      </div>
+    </Card>
+  );
+}
+
+function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
+  const axis = { fontSize: 10, stroke: "var(--color-muted-foreground)" };
+  const grid = <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />;
+  const tip = <RTooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "var(--color-accent)", opacity: 0.3 }} />;
+
+  // ---- 按指标性质选图表 ----
+  switch (m.key) {
+    // M1 用户
+    case "total_user":
+    case "active_user":
+    case "new_user": {
+      const data = TREND_12M.map((x, i) => ({ x, v: (SPARK[m.key] || SPARK._default)[i]?.v ?? 0 }));
+      return (
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id={`g-${m.key}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Area type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} fill={`url(#g-${m.key})`} />
+        </AreaChart>
+      );
+    }
+    // M2 服务
+    case "service_ratio": {
+      const v = 78.5;
+      const data = [{ name: "覆盖", value: v, fill: "var(--color-primary)" }];
+      return (
+        <RadialBarChart innerRadius="65%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
+          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={8} />
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>{v}%</text>
+        </RadialBarChart>
+      );
+    }
+    case "service_freq": {
+      const data = [
+        { name: "低频(<4次)", v: 38 },
+        { name: "中频(4-7)", v: 46 },
+        { name: "高频(≥8)", v: 53 },
+      ];
+      return (
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="name" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Bar dataKey="v" radius={[6, 6, 0, 0]}>
+            <Cell fill="var(--color-chart-2)" />
+            <Cell fill="var(--color-info)" />
+            <Cell fill="var(--color-primary)" />
+          </Bar>
+        </BarChart>
+      );
+    }
+    case "group_active": {
+      const data = TREND_12M.slice(-7).map((x, i) => ({ x, v: [68, 70, 72, 71, 74, 75, 76][i] }));
+      return (
+        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} domain={[60, 80]} />
+          {tip}
+          <Line type="monotone" dataKey="v" stroke="var(--color-info)" strokeWidth={2} dot={{ r: 3 }} />
+        </LineChart>
+      );
+    }
+    // M3 转化
+    case "old_user_conv": {
+      const data = [
+        { name: "老用户", value: 62.3, fill: "var(--color-primary)" },
+        { name: "新用户", value: 37.7, fill: "var(--color-muted)" },
+      ];
+      return (
+        <PieChart>
+          <Pie data={data} dataKey="value" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
+            {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          </Pie>
+          {tip}
+        </PieChart>
+      );
+    }
+    case "order_count": {
+      const data = TREND_12M.map((x, i) => ({ x, v: [80, 92, 105, 110, 118, 122, 130, 138, 142, 148, 152, 156][i] }));
+      return (
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Bar dataKey="v" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      );
+    }
+    case "pass_rate": {
+      const data = [{ name: "通过率", value: 85, fill: "var(--color-success)" }];
+      return (
+        <RadialBarChart innerRadius="65%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
+          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={8} />
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>85%</text>
+        </RadialBarChart>
+      );
+    }
+    // M4 分成
+    case "order_amount": {
+      const data = TREND_12M.map((x, i) => ({ x, v: [180, 200, 220, 240, 260, 270, 280, 290, 300, 310, 320, 328.4][i] }));
+      return (
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-order" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-warning)" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="var(--color-warning)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Area type="monotone" dataKey="v" stroke="var(--color-warning)" strokeWidth={2} fill="url(#g-order)" />
+        </AreaChart>
+      );
+    }
+    case "settled":
+    case "pending":
+    case "estimated": {
+      const palette: Record<string, string> = {
+        settled: "var(--color-success)",
+        pending: "var(--color-info)",
+        estimated: "var(--color-warning)",
+      };
+      const data = TREND_12M.slice(-6).map((x, i) => ({
+        x,
+        v: m.key === "settled" ? [120, 135, 150, 162, 175, 186.3][i]
+          : m.key === "pending" ? [70, 78, 84, 90, 94, 98.2][i]
+          : [22, 28, 32, 36, 40, 43.8][i],
+      }));
+      return (
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Bar dataKey="v" fill={palette[m.key]} radius={[4, 4, 0, 0]} />
+        </BarChart>
+      );
+    }
+    // M5 风险
+    case "alert_count": {
+      const data = TREND_12M.map((x, i) => ({ x, v: [1,2,1,3,2,4,2,3,5,2,3,3][i] }));
+      return (
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} allowDecimals={false} />
+          {tip}
+          <Bar dataKey="v" fill="var(--color-destructive)" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      );
+    }
+    case "abnormal": {
+      const data = [
+        { name: "金额不一致", value: 2, fill: "var(--color-destructive)" },
+        { name: "重复支付", value: 1, fill: "var(--color-warning)" },
+        { name: "退款争议", value: 2, fill: "var(--color-info)" },
+      ];
+      return (
+        <PieChart>
+          <Pie data={data} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="85%" paddingAngle={2}>
+            {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          </Pie>
+          {tip}
+        </PieChart>
+      );
+    }
+    case "refund_rate": {
+      const data = TREND_12M.slice(-7).map((x, i) => ({ x, v: [2.4, 2.2, 2.1, 2.0, 1.9, 1.85, 1.8][i] }));
+      return (
+        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} domain={[1, 3]} />
+          {tip}
+          <Line type="monotone" dataKey="v" stroke="var(--color-destructive)" strokeWidth={2} dot={{ r: 3 }} />
+        </LineChart>
+      );
+    }
+    default: {
+      const data = (SPARK[m.key] || SPARK._default).map((d) => ({ ...d }));
+      return (
+        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Line type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} dot={false} />
+        </LineChart>
+      );
+    }
+  }
 }
