@@ -242,3 +242,251 @@ function FormulaTip({ label, formula }: { label: string; formula: string }) {
     </Tooltip>
   );
 }
+
+/* ---------------- 图表数据 (mock) ---------------- */
+const SPARK: Record<string, { x: string; v: number }[]> = {
+  _default: [3,5,4,6,7,6,8,9,8,10,11,13].map((v,i)=>({x:`${i+1}`,v})),
+  active_user:    [620,640,680,700,720,750,770,800,820,850,870,892].map((v,i)=>({x:`${i+1}`,v})),
+  service_ratio:  [62,64,66,68,70,71,73,74,75,76,77,78.5].map((v,i)=>({x:`${i+1}`,v})),
+  service_freq:   [6,7,8,9,10,11,12,12,13,14,14,15].map((v,i)=>({x:`${i+1}`,v})),
+  old_user_conv:  [55,56,57,58,59,60,60,61,61,62,62,62.3].map((v,i)=>({x:`${i+1}`,v})),
+  order_amount:   [180,200,220,240,260,270,280,290,300,310,320,328.4].map((v,i)=>({x:`${i+1}`,v})),
+  alert_count:    [1,2,1,3,2,4,2,3,5,2,3,3].map((v,i)=>({x:`${i+1}`,v})),
+};
+
+const TREND_12M = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+
+function MetricChartCard({ metric }: { metric: typeof ALL_METRICS[number] }) {
+  const Icon = metric.icon || BookOpen;
+  return (
+    <Card className="p-4 transition-shadow hover:shadow-md">
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Icon className="h-3.5 w-3.5" />
+            </span>
+            <FormulaTip label={metric.label} formula={metric.formula} />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <div className="text-2xl font-semibold tracking-tight">{metric.value}</div>
+            {metric.trend && <span className="text-xs text-success">{metric.trend}</span>}
+          </div>
+        </div>
+        {metric.core && (
+          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">核心</span>
+        )}
+      </div>
+      <div className="mt-3 h-36">
+        <ResponsiveContainer width="100%" height="100%">
+          {renderChart(metric)}
+        </ResponsiveContainer>
+      </div>
+    </Card>
+  );
+}
+
+function renderChart(m: typeof ALL_METRICS[number]): React.ReactElement {
+  const axis = { fontSize: 10, stroke: "var(--color-muted-foreground)" };
+  const grid = <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />;
+  const tip = <RTooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "var(--color-accent)", opacity: 0.3 }} />;
+
+  // ---- 按指标性质选图表 ----
+  switch (m.key) {
+    // M1 用户
+    case "total_user":
+    case "active_user":
+    case "new_user": {
+      const data = TREND_12M.map((x, i) => ({ x, v: (SPARK[m.key] || SPARK._default)[i]?.v ?? 0 }));
+      return (
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id={`g-${m.key}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Area type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} fill={`url(#g-${m.key})`} />
+        </AreaChart>
+      );
+    }
+    // M2 服务
+    case "service_ratio": {
+      const v = 78.5;
+      const data = [{ name: "覆盖", value: v, fill: "var(--color-primary)" }];
+      return (
+        <RadialBarChart innerRadius="65%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
+          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={8} />
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>{v}%</text>
+        </RadialBarChart>
+      );
+    }
+    case "service_freq": {
+      const data = [
+        { name: "低频(<4次)", v: 38 },
+        { name: "中频(4-7)", v: 46 },
+        { name: "高频(≥8)", v: 53 },
+      ];
+      return (
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="name" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Bar dataKey="v" radius={[6, 6, 0, 0]}>
+            <Cell fill="var(--color-chart-2)" />
+            <Cell fill="var(--color-info)" />
+            <Cell fill="var(--color-primary)" />
+          </Bar>
+        </BarChart>
+      );
+    }
+    case "group_active": {
+      const data = TREND_12M.slice(-7).map((x, i) => ({ x, v: [68, 70, 72, 71, 74, 75, 76][i] }));
+      return (
+        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} domain={[60, 80]} />
+          {tip}
+          <Line type="monotone" dataKey="v" stroke="var(--color-info)" strokeWidth={2} dot={{ r: 3 }} />
+        </LineChart>
+      );
+    }
+    // M3 转化
+    case "old_user_conv": {
+      const data = [
+        { name: "老用户", value: 62.3, fill: "var(--color-primary)" },
+        { name: "新用户", value: 37.7, fill: "var(--color-muted)" },
+      ];
+      return (
+        <PieChart>
+          <Pie data={data} dataKey="value" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
+            {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          </Pie>
+          {tip}
+        </PieChart>
+      );
+    }
+    case "order_count": {
+      const data = TREND_12M.map((x, i) => ({ x, v: [80, 92, 105, 110, 118, 122, 130, 138, 142, 148, 152, 156][i] }));
+      return (
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Bar dataKey="v" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      );
+    }
+    case "pass_rate": {
+      const data = [{ name: "通过率", value: 85, fill: "var(--color-success)" }];
+      return (
+        <RadialBarChart innerRadius="65%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
+          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={8} />
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>85%</text>
+        </RadialBarChart>
+      );
+    }
+    // M4 分成
+    case "order_amount": {
+      const data = TREND_12M.map((x, i) => ({ x, v: [180, 200, 220, 240, 260, 270, 280, 290, 300, 310, 320, 328.4][i] }));
+      return (
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-order" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-warning)" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="var(--color-warning)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Area type="monotone" dataKey="v" stroke="var(--color-warning)" strokeWidth={2} fill="url(#g-order)" />
+        </AreaChart>
+      );
+    }
+    case "settled":
+    case "pending":
+    case "estimated": {
+      const palette: Record<string, string> = {
+        settled: "var(--color-success)",
+        pending: "var(--color-info)",
+        estimated: "var(--color-warning)",
+      };
+      const data = TREND_12M.slice(-6).map((x, i) => ({
+        x,
+        v: m.key === "settled" ? [120, 135, 150, 162, 175, 186.3][i]
+          : m.key === "pending" ? [70, 78, 84, 90, 94, 98.2][i]
+          : [22, 28, 32, 36, 40, 43.8][i],
+      }));
+      return (
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Bar dataKey="v" fill={palette[m.key]} radius={[4, 4, 0, 0]} />
+        </BarChart>
+      );
+    }
+    // M5 风险
+    case "alert_count": {
+      const data = TREND_12M.map((x, i) => ({ x, v: [1,2,1,3,2,4,2,3,5,2,3,3][i] }));
+      return (
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} allowDecimals={false} />
+          {tip}
+          <Bar dataKey="v" fill="var(--color-destructive)" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      );
+    }
+    case "abnormal": {
+      const data = [
+        { name: "金额不一致", value: 2, fill: "var(--color-destructive)" },
+        { name: "重复支付", value: 1, fill: "var(--color-warning)" },
+        { name: "退款争议", value: 2, fill: "var(--color-info)" },
+      ];
+      return (
+        <PieChart>
+          <Pie data={data} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="85%" paddingAngle={2}>
+            {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          </Pie>
+          {tip}
+        </PieChart>
+      );
+    }
+    case "refund_rate": {
+      const data = TREND_12M.slice(-7).map((x, i) => ({ x, v: [2.4, 2.2, 2.1, 2.0, 1.9, 1.85, 1.8][i] }));
+      return (
+        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} domain={[1, 3]} />
+          {tip}
+          <Line type="monotone" dataKey="v" stroke="var(--color-destructive)" strokeWidth={2} dot={{ r: 3 }} />
+        </LineChart>
+      );
+    }
+    default: {
+      const data = (SPARK[m.key] || SPARK._default).map((d) => ({ ...d }));
+      return (
+        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Line type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} dot={false} />
+        </LineChart>
+      );
+    }
+  }
+}
