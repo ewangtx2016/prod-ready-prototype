@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, Eye, Plus, Download } from "lucide-react";
+import { Edit, Eye, Plus, Download, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
 
@@ -35,6 +35,9 @@ function Page() {
   const [editing, setEditing] = useState<ServiceRecord | null>(null);
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
   const [creating, setCreating] = useState(false);
+  const [rejecting, setRejecting] = useState<ServiceRecord | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const isAdmin = role === "org_admin";
 
   useEffect(() => { setRecords(db.services()); }, []);
 
@@ -44,6 +47,33 @@ function Page() {
     if (role === "tutor") return r.createdByRole === "tutor";
     return true;
   }).filter((r) => tab === "all" ? true : r.status === tab);
+
+  const pendingCount = records.filter((r) => {
+    if (role === "planner") return r.createdByRole === "planner" && r.status === "pending_audit";
+    if (role === "tutor") return r.createdByRole === "tutor" && r.status === "pending_audit";
+    return r.status === "pending_audit";
+  }).length;
+
+  const approve = (r: ServiceRecord) => {
+    const list = db.services();
+    const idx = list.findIndex((x) => x.id === r.id);
+    list[idx] = { ...list[idx], status: "approved", content: list[idx].pendingChange?.newContent ?? list[idx].content, pendingChange: undefined };
+    db.setServices(list);
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "审核通过", detail: `#${r.id}` });
+    toast.success("审核通过");
+    refresh();
+  };
+  const doReject = () => {
+    if (!rejectReason.trim()) { toast.error("请填写驳回原因"); return; }
+    if (!rejecting) return;
+    const list = db.services();
+    const idx = list.findIndex((x) => x.id === rejecting.id);
+    list[idx] = { ...list[idx], status: "rejected", rejectReason, pendingChange: undefined };
+    db.setServices(list);
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "审核驳回", detail: `#${rejecting.id} - ${rejectReason}` });
+    toast.success("已驳回");
+    setRejecting(null); setRejectReason(""); refresh();
+  };
 
   return (
     <div>
