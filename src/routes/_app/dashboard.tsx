@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useApp as useAppForTip } from "@/lib/store";
 import { useState } from "react";
 import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info } from "lucide-react";
 import { toast } from "sonner";
@@ -107,20 +108,7 @@ function Dashboard() {
           return (
             <Card key={m.key} className="p-4">
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <span>{m.label}</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button type="button" className="inline-flex text-muted-foreground/70 hover:text-primary" aria-label="计算方式">
-                        <Info className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
-                      <div className="mb-1 font-medium">计算方式</div>
-                      <div>{m.formula}</div>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                <FormulaTip label={m.label} formula={m.formula} />
                 <Icon className="h-4 w-4 text-primary" />
               </div>
               <div className="mt-2 text-2xl font-semibold">{m.value}</div>
@@ -186,5 +174,26 @@ function Dashboard() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function FormulaTip({ label, formula }: { label: string; formula: string }) {
+  const { showDevNote } = useAppForTip();
+  if (!showDevNote) {
+    return <div className="text-sm text-muted-foreground">{label}</div>;
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="relative inline-flex cursor-help text-sm text-muted-foreground">
+          {label}
+          <Info className="pointer-events-none absolute -right-3 -top-1 h-3 w-3 rounded-full bg-info text-info-foreground p-[1px]" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs space-y-1">
+        <div className="font-medium">计算方式</div>
+        <div className="text-xs leading-relaxed">{formula}</div>
+      </TooltipContent>
+    </Tooltip>
   );
 }
