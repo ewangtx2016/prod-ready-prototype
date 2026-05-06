@@ -45,7 +45,7 @@ function Login() {
               原型演示说明
             </div>
             <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-              <li>本系统为 PRD v1.3 的高保真可交互原型</li>
+              <li>本系统为 PRD v1.0 的高保真可交互原型</li>
               <li>请通过右侧选择角色一键登录，登录后顶栏可随时切换身份</li>
               <li>所有按钮带「权限注释」鼠标悬停查看</li>
               <li>短信验证码输入任意 6 位数字即通过</li>
