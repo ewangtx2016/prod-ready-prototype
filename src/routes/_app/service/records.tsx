@@ -167,7 +167,7 @@ function Page() {
                     {isAdmin && r.status === "pending_audit" && (
                       <>
                         <PermissionTip action="审核通过" prd="§6.3" allow={["org_admin"]}>
-                          <Button size="sm" variant="outline" className="h-7 px-2 text-success" onClick={() => approve(r)}><Check className="h-3.5 w-3.5" /> 通过</Button>
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-success" onClick={() => setApproving(r)}><Check className="h-3.5 w-3.5" /> 通过</Button>
                         </PermissionTip>
                         <PermissionTip action="审核驳回" prd="§6.3" allow={["org_admin"]}>
                           <Button size="sm" variant="outline" className="h-7 px-2 text-destructive" onClick={() => setRejecting(r)}><X className="h-3.5 w-3.5" /> 驳回</Button>
@@ -232,6 +232,36 @@ function Page() {
           <DialogFooter>
             <Button variant="outline" onClick={() => { setRejecting(null); setRejectReason(""); }}>取消</Button>
             <Button variant="destructive" onClick={doReject}>确认驳回</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 通过确认 */}
+      <Dialog open={!!approving} onOpenChange={(v) => !v && setApproving(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>确认审核通过</DialogTitle></DialogHeader>
+          {approving && (
+            <div className="space-y-2 text-sm">
+              <div>确认通过以下服务记录的审核？</div>
+              <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
+                <div><b>用户：</b>{maskName(approving.userName, role)} · <b>类型：</b>{approving.serviceType}</div>
+                <div><b>提交人：</b>{approving.createdBy}</div>
+                {approving.pendingChange ? (
+                  <>
+                    <div className="line-through text-muted-foreground">原：{approving.content}</div>
+                    <div>新：{approving.pendingChange.newContent}</div>
+                    <div className="text-info">原因：{approving.pendingChange.reason}</div>
+                  </>
+                ) : (
+                  <div>内容：{approving.content}</div>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">通过后记录将锁定为「已通过」状态，且修改申请的新内容将覆盖原内容。</div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproving(null)}>取消</Button>
+            <Button onClick={() => approving && approve(approving)}>确认通过</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
