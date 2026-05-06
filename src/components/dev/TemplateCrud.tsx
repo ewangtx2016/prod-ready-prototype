@@ -15,10 +15,17 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Edit, Trash2, Send } from "lucide-react";
+import { Plus, Edit, Trash2, Send, Copy } from "lucide-react";
 import { toast } from "sonner";
 
-type Tpl = { id: string; name: string; content: string; channel: string; auto: boolean; createdAt: string };
+type Tpl = { id: string; key: string; name: string; content: string; channel: string; auto: boolean; createdAt: string };
+
+const KEY_RE = /^[a-z][a-z0-9_]{2,39}$/;
+const autoKey = (name: string) => {
+  const ascii = name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const base = ascii && /^[a-z]/.test(ascii) ? ascii.slice(0, 32) : "tpl_" + Math.random().toString(36).slice(2, 8);
+  return base;
+};
 
 export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle, helpers }: { storageKey: string; channel: string; sample: Tpl[]; prd: string; title: string; subtitle: string; helpers: string[] }) {
   const { role } = useApp();
@@ -38,7 +45,11 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
 
   const save = (t: Tpl) => {
     const exists = list.find(x => x.id === t.id);
-    const v = exists ? list.map(x => x.id === t.id ? t : x) : [t, ...list];
+    const finalKey = (t.key || autoKey(t.name)).trim();
+    if (!KEY_RE.test(finalKey)) { toast.error("Key 需以小写字母开头，仅允许小写字母/数字/下划线，长度 3-40"); return; }
+    if (list.some(x => x.id !== t.id && x.key === finalKey)) { toast.error(`Key「${finalKey}」已存在`); return; }
+    const next = { ...t, key: finalKey };
+    const v = exists ? list.map(x => x.id === t.id ? next : x) : [next, ...list];
     persist(v);
     db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: title, action: exists ? "编辑" : "新增", detail: t.name });
     toast.success(exists ? "已保存" : "已新增");
@@ -62,12 +73,13 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
   };
 
   const canEdit = role === "org_admin" || role === "super_admin";
+  const copyKey = (k: string) => { navigator.clipboard?.writeText(k); toast.success(`已复制 Key：${k}`); };
 
   return (
     <div>
       <PageHeader title={title} subtitle={subtitle} actions={
         <PermissionTip action={`新增${title}`} prd={prd} allow={["org_admin", "super_admin"]}>
-          <Button size="sm" disabled={!canEdit} onClick={() => setEditing({ id: "T" + Math.random().toString(36).slice(2, 8), name: "", content: "", channel, auto: true, createdAt: new Date().toLocaleString("zh-CN") })}><Plus className="h-4 w-4" /> 新增模板</Button>
+          <Button size="sm" disabled={!canEdit} onClick={() => setEditing({ id: "T" + Math.random().toString(36).slice(2, 8), key: "", name: "", content: "", channel, auto: true, createdAt: new Date().toLocaleString("zh-CN") })}><Plus className="h-4 w-4" /> 新增模板</Button>
         </PermissionTip>
       } />
       <DevNote prd={prd} title={title}>
@@ -75,14 +87,20 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
         <div>· 占位符示例：{helpers.join(" / ")}</div>
         <div>· 自动发送：业务事件触发；手动发送：列表测试发送或在用户详情页</div>
         <div>· 触达内容/时间/结果均留痕（审核日志）</div>
+        <div>· <b>模板 Key</b>：英文短标识（如 <code>renewal_reminder</code>），后端按 Key 调用，<b>创建后不可修改</b>；运营改名/改文案不影响触发。系统内置模板使用 <code>sys_</code> 前缀</div>
       </DevNote>
       <Card>
         <Table>
-          <TableHeader><TableRow><TableHead>模板名称</TableHead><TableHead>内容预览</TableHead><TableHead>自动发送</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>模板名称</TableHead><TableHead>模板 Key</TableHead><TableHead>内容预览</TableHead><TableHead>自动发送</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
             {list.map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.name}</TableCell>
+                <TableCell>
+                  <button onClick={() => copyKey(t.key)} className="group inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 font-mono text-xs hover:bg-muted/70" title="点击复制">
+                    <code>{t.key}</code><Copy className="h-3 w-3 opacity-50 group-hover:opacity-100" />
+                  </button>
+                </TableCell>
                 <TableCell className="max-w-md truncate text-sm text-muted-foreground">{t.content}</TableCell>
                 <TableCell>{t.auto ? <Badge className="bg-success text-success-foreground">已开启</Badge> : <Badge variant="outline">关闭</Badge>}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{t.createdAt}</TableCell>
@@ -93,7 +111,7 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
                 </TableCell>
               </TableRow>
             ))}
-            {list.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">暂无模板</TableCell></TableRow>}
+            {list.length === 0 && <TableRow><TableCell colSpan={6} className="py-12 text-center text-muted-foreground">暂无模板</TableCell></TableRow>}
           </TableBody>
         </Table>
       </Card>
@@ -104,6 +122,11 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
           {editing && (
             <div className="space-y-3">
               <div><Label>模板名称 *</Label><Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="如：续报提醒" /></div>
+              <div>
+                <Label>模板 Key {list.find(x => x.id === editing.id) ? <span className="ml-1 text-xs text-muted-foreground">（创建后不可修改）</span> : <span className="ml-1 text-xs text-muted-foreground">（留空将根据名称自动生成）</span>}</Label>
+                <Input value={editing.key} disabled={!!list.find(x => x.id === editing.id)} onChange={(e) => setEditing({ ...editing, key: e.target.value })} placeholder="如：renewal_reminder" className="font-mono" />
+                <p className="mt-1 text-xs text-muted-foreground">小写字母开头，仅允许 a-z 0-9 _，长度 3-40，全局唯一。后端按此 Key 调用模板。</p>
+              </div>
               <div><Label>模板内容 *</Label><Textarea rows={5} value={editing.content} onChange={(e) => setEditing({ ...editing, content: e.target.value })} placeholder={`如：${helpers[0]} 您好，您的课程将于 ${helpers[1] || "{date}"} 开始...`} /></div>
               <div className="flex items-center gap-2"><Switch checked={editing.auto} onCheckedChange={(v) => setEditing({ ...editing, auto: v })} /><Label>开启自动发送</Label></div>
             </div>
