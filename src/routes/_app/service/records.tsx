@@ -99,15 +99,20 @@ function Page() {
       <DevNote prd="§6.2 §6.5" title="服务列表 + 修改申请">
         <div>· 提交即锁定：原记录不可直接编辑/删除，只能"提交修改申请"</div>
         <div>· 数据范围：管理员=全量；规划师=本人创建；学管师=本人创建</div>
+        <div>· <b>审核流</b>（PRD §6.3 / §14）：仅机构管理员在「待审核」tab 可执行通过/驳回；行内展示「原内容 → 新内容」对比与修改原因</div>
         <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
-        <div>· <b>待确认</b>：学管师服务记录字段范围（PRD Q6）</div>
+        <div>· 当前待审核：{pendingCount} 条{!isAdmin && "（仅管理员可审核）"}</div>
       </DevNote>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="all">全部</TabsTrigger>
           <TabsTrigger value="submitted">已填写</TabsTrigger>
-          <TabsTrigger value="pending_audit">待审核</TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="pending_audit">
+              待审核{pendingCount > 0 && <span className="ml-1 rounded-full bg-warning px-1.5 text-[10px] text-warning-foreground">{pendingCount}</span>}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="approved">已通过</TabsTrigger>
           <TabsTrigger value="rejected">未通过</TabsTrigger>
         </TabsList>
@@ -118,7 +123,7 @@ function Page() {
                 <TableHead>用户</TableHead>
                 <TableHead>手机号</TableHead>
                 <TableHead>类型</TableHead>
-                <TableHead>内容</TableHead>
+                <TableHead>内容{tab === "pending_audit" && "（原 → 新）"}</TableHead>
                 <TableHead>时长</TableHead>
                 <TableHead>提交人</TableHead>
                 <TableHead>提交时间</TableHead>
@@ -132,7 +137,20 @@ function Page() {
                   <TableCell>{maskName(r.userName, role)}</TableCell>
                   <TableCell className="font-mono text-xs">{maskPhone(r.userPhone, role)}</TableCell>
                   <TableCell>{r.serviceType}</TableCell>
-                  <TableCell className="max-w-xs truncate">{r.content}</TableCell>
+                  <TableCell className="max-w-xs text-xs">
+                    {r.pendingChange ? (
+                      <div className="space-y-0.5">
+                        <div className="line-through text-muted-foreground truncate">{r.content}</div>
+                        <div className="text-foreground truncate">→ {r.pendingChange.newContent}</div>
+                        <div className="text-info text-[11px]">原因：{r.pendingChange.reason}</div>
+                      </div>
+                    ) : (
+                      <div className="truncate">{r.content}</div>
+                    )}
+                    {r.status === "rejected" && r.rejectReason && (
+                      <div className="mt-1 text-[11px] text-destructive">驳回：{r.rejectReason}</div>
+                    )}
+                  </TableCell>
                   <TableCell>{r.duration} 分钟</TableCell>
                   <TableCell>{r.createdBy}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.createdAt}</TableCell>
@@ -143,6 +161,16 @@ function Page() {
                       <PermissionTip action="提交修改申请" prd="§6.5" allow={["planner", "tutor"]} desc="原记录锁定，必须走申请流">
                         <Button variant="ghost" size="sm" onClick={() => setEditing(r)}><Edit className="h-3.5 w-3.5" /></Button>
                       </PermissionTip>
+                    )}
+                    {isAdmin && r.status === "pending_audit" && (
+                      <>
+                        <PermissionTip action="审核通过" prd="§6.3" allow={["org_admin"]}>
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-success" onClick={() => approve(r)}><Check className="h-3.5 w-3.5" /> 通过</Button>
+                        </PermissionTip>
+                        <PermissionTip action="审核驳回" prd="§6.3" allow={["org_admin"]}>
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-destructive" onClick={() => setRejecting(r)}><X className="h-3.5 w-3.5" /> 驳回</Button>
+                        </PermissionTip>
+                      </>
                     )}
                   </TableCell>
                 </TableRow>
