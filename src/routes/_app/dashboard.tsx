@@ -286,7 +286,7 @@ function MetricChartCard({ metric }: { metric: typeof ALL_METRICS[number] }) {
   );
 }
 
-function renderChart(m: typeof ALL_METRICS[number]): React.ReactElement {
+function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
   const axis = { fontSize: 10, stroke: "var(--color-muted-foreground)" };
   const grid = <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />;
   const tip = <RTooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "var(--color-accent)", opacity: 0.3 }} />;
