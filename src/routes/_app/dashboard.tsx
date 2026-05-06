@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
-import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity } from "lucide-react";
+import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/mock";
 
@@ -19,18 +20,18 @@ export const Route = createFileRoute("/_app/dashboard")({
 });
 
 const ALL_METRICS = [
-  { key: "service_ratio", label: "规划师服务用户占比", value: "78.5%", trend: "+5.2%", core: true, icon: Users },
-  { key: "old_user_conv", label: "学科课转化中老用户占比", value: "62.3%", trend: "+3.1%", core: true, icon: TrendingUp },
-  { key: "service_freq", label: "服务频次与续报关联度", value: "+15%", trend: "高频续报率领先 15pp", core: true, icon: Activity },
-  { key: "alert_count", label: "敏感操作预警次数", value: "3", trend: "本月", core: true, icon: ShieldAlert },
-  { key: "total_user", label: "机构总用户数", value: "1,248" },
-  { key: "active_user", label: "活跃用户数", value: "892" },
-  { key: "order_count", label: "学科课订单数", value: "156" },
-  { key: "order_amount", label: "订单总金额", value: "¥328,400" },
-  { key: "settled", label: "已结算金额", value: "¥186,300" },
-  { key: "pending", label: "待结算金额", value: "¥98,200" },
-  { key: "pass_rate", label: "艺考等级通过率", value: "85%" },
-  { key: "group_active", label: "社群回复率", value: "76%" },
+  { key: "service_ratio", label: "规划师服务用户占比", value: "78.5%", trend: "+5.2%", core: true, icon: Users, formula: "周期内有过规划师 1V1 服务记录的用户数 / 机构活跃用户数 × 100%。活跃用户口径：近 30 天有登录或上课。" },
+  { key: "old_user_conv", label: "学科课转化中老用户占比", value: "62.3%", trend: "+3.1%", core: true, icon: TrendingUp, formula: "周期内学科课订单中，下单人为老用户的订单数 / 学科课总订单数 × 100%。老用户：首次付费距今 ≥30 天。" },
+  { key: "service_freq", label: "服务频次与续报关联度", value: "+15%", trend: "高频续报率领先 15pp", core: true, icon: Activity, formula: "高频服务用户(周期内服务≥4次)的续报率 − 低频服务用户(<4次)的续报率，单位为百分点(pp)。" },
+  { key: "alert_count", label: "敏感操作预警次数", value: "3", trend: "本月", core: true, icon: ShieldAlert, formula: "周期内触发敏感操作风控规则的次数（含批量导出、越权访问、IP 异常、验证码失败超阈值等）。" },
+  { key: "total_user", label: "机构总用户数", value: "1,248", formula: "归属当前机构、状态为正常或停用的全部用户数（不含已删除）。" },
+  { key: "active_user", label: "活跃用户数", value: "892", formula: "近 30 天内有过登录、上课或服务记录的用户数。" },
+  { key: "order_count", label: "学科课订单数", value: "156", formula: "周期内课程类型为「学科课」且订单状态非「已取消」的订单数量。" },
+  { key: "order_amount", label: "订单总金额", value: "¥328,400", formula: "周期内全部有效订单的应收金额合计（含未结算部分，不扣退款）。" },
+  { key: "settled", label: "已结算金额", value: "¥186,300", formula: "周期内已完成结算流程并入账的金额合计。" },
+  { key: "pending", label: "待结算金额", value: "¥98,200", formula: "已确认收入但尚未完成结算流程的金额合计。" },
+  { key: "pass_rate", label: "艺考等级通过率", value: "85%", formula: "周期内通过艺考等级考试的学员数 / 报考学员数 × 100%。" },
+  { key: "group_active", label: "社群回复率", value: "76%", formula: "周期内学员/家长在社群发问后 24 小时内被服务人员回复的会话数 / 总发问会话数 × 100%。" },
 ];
 
 function Dashboard() {
@@ -100,12 +101,26 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <TooltipProvider delayDuration={150}>
         {visible.map((m) => {
           const Icon = m.icon || BookOpen;
           return (
             <Card key={m.key} className="p-4">
               <div className="flex items-start justify-between">
-                <div className="text-sm text-muted-foreground">{m.label}</div>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <span>{m.label}</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="inline-flex text-muted-foreground/70 hover:text-primary" aria-label="计算方式">
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                      <div className="mb-1 font-medium">计算方式</div>
+                      <div>{m.formula}</div>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <Icon className="h-4 w-4 text-primary" />
               </div>
               <div className="mt-2 text-2xl font-semibold">{m.value}</div>
@@ -114,6 +129,7 @@ function Dashboard() {
             </Card>
           );
         })}
+        </TooltipProvider>
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
