@@ -221,6 +221,18 @@ function Page() {
           <CreateForm onClose={(submit) => { setCreating(false); if (submit) refresh(); }} />
         </DialogContent>
       </Dialog>
+
+      {/* 驳回 */}
+      <Dialog open={!!rejecting} onOpenChange={(v) => { if (!v) { setRejecting(null); setRejectReason(""); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>驳回服务记录</DialogTitle></DialogHeader>
+          <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="请填写驳回原因（必填）" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRejecting(null); setRejectReason(""); }}>取消</Button>
+            <Button variant="destructive" onClick={doReject}>确认驳回</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
