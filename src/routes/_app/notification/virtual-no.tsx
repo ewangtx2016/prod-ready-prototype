@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ const sample: Pool[] = [
   { id: "P1", range: "170-9000-0000 ~ 170-9000-0099", total: 100, used: 23, expireDays: 30, binding: "规划师", callLimit: 50, createdAt: "2026-03-01" },
   { id: "P2", range: "171-8800-0000 ~ 171-8800-0049", total: 50, used: 5, expireDays: 7, binding: "学管师", callLimit: 30, createdAt: "2026-04-01" },
 ];
+const ROLE_OPTIONS = ["规划师", "学管师", "机构管理员", "鼎校超管"];
 
 function Page() {
   const { role } = useApp();
@@ -89,7 +91,12 @@ function Page() {
                 <div><Label>有效期(天)</Label><Input type="number" value={editing.expireDays} onChange={(e) => setEditing({ ...editing, expireDays: +e.target.value })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div><Label>绑定角色</Label><Input value={editing.binding} onChange={(e) => setEditing({ ...editing, binding: e.target.value })} /></div>
+                <div><Label>绑定角色</Label>
+                  <Select value={editing.binding} onValueChange={(v) => setEditing({ ...editing, binding: v })}>
+                    <SelectTrigger><SelectValue placeholder="请选择角色" /></SelectTrigger>
+                    <SelectContent>{ROLE_OPTIONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
                 <div><Label>呼叫上限/日</Label><Input type="number" value={editing.callLimit} onChange={(e) => setEditing({ ...editing, callLimit: +e.target.value })} /></div>
               </div>
             </div>
