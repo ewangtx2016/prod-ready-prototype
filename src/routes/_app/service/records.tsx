@@ -37,6 +37,7 @@ function Page() {
   const [creating, setCreating] = useState(false);
   const [rejecting, setRejecting] = useState<ServiceRecord | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [approving, setApproving] = useState<ServiceRecord | null>(null);
   const isAdmin = role === "org_admin";
 
   useEffect(() => { setRecords(db.services()); }, []);
@@ -62,6 +63,7 @@ function Page() {
     db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "审核通过", detail: `#${r.id}` });
     toast.success("审核通过");
     refresh();
+    setApproving(null);
   };
   const doReject = () => {
     if (!rejectReason.trim()) { toast.error("请填写驳回原因"); return; }
