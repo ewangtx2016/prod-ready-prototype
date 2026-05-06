@@ -1,0 +1,134 @@
+import { useState, useEffect } from "react";
+import { useApp } from "@/lib/store";
+import { ROLE_META } from "@/lib/roles";
+import { db } from "@/lib/mock";
+import { PageHeader } from "./PageHeader";
+import { DevNote } from "./DevNote";
+import { PermissionTip } from "./PermissionTip";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Plus, Edit, Trash2, Send } from "lucide-react";
+import { toast } from "sonner";
+
+type Tpl = { id: string; name: string; content: string; channel: string; auto: boolean; createdAt: string };
+
+export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle, helpers }: { storageKey: string; channel: string; sample: Tpl[]; prd: string; title: string; subtitle: string; helpers: string[] }) {
+  const { role } = useApp();
+  const [list, setList] = useState<Tpl[]>([]);
+  const [editing, setEditing] = useState<Tpl | null>(null);
+  const [deleting, setDeleting] = useState<Tpl | null>(null);
+  const [testing, setTesting] = useState<Tpl | null>(null);
+  const [testTo, setTestTo] = useState("");
+
+  useEffect(() => {
+    const raw = localStorage.getItem(storageKey);
+    if (raw) setList(JSON.parse(raw));
+    else { localStorage.setItem(storageKey, JSON.stringify(sample)); setList(sample); }
+  }, [storageKey]);
+
+  const persist = (v: Tpl[]) => { setList(v); localStorage.setItem(storageKey, JSON.stringify(v)); };
+
+  const save = (t: Tpl) => {
+    const exists = list.find(x => x.id === t.id);
+    const v = exists ? list.map(x => x.id === t.id ? t : x) : [t, ...list];
+    persist(v);
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: title, action: exists ? "编辑" : "新增", detail: t.name });
+    toast.success(exists ? "已保存" : "已新增");
+    setEditing(null);
+  };
+
+  const onDelete = () => {
+    if (!deleting) return;
+    persist(list.filter(x => x.id !== deleting.id));
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: title, action: "删除", detail: deleting.name });
+    toast.success("已删除");
+    setDeleting(null);
+  };
+
+  const sendTest = () => {
+    if (!testing) return;
+    if (!testTo.trim()) { toast.error("请填写接收方"); return; }
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: title, action: "测试发送", detail: `${testing.name} → ${testTo}` });
+    toast.success(`测试${channel}已发送至 ${testTo} (mock)`);
+    setTesting(null); setTestTo("");
+  };
+
+  const canEdit = role === "org_admin" || role === "super_admin";
+
+  return (
+    <div>
+      <PageHeader title={title} subtitle={subtitle} actions={
+        <PermissionTip action={`新增${title}`} prd={prd} allow={["org_admin", "super_admin"]}>
+          <Button size="sm" disabled={!canEdit} onClick={() => setEditing({ id: "T" + Math.random().toString(36).slice(2, 8), name: "", content: "", channel, auto: true, createdAt: new Date().toLocaleString("zh-CN") })}><Plus className="h-4 w-4" /> 新增模板</Button>
+        </PermissionTip>
+      } />
+      <DevNote prd={prd} title={title}>
+        <div>· 触达通道：{channel}</div>
+        <div>· 占位符示例：{helpers.join(" / ")}</div>
+        <div>· 自动发送：业务事件触发；手动发送：列表测试发送或在用户详情页</div>
+        <div>· 触达内容/时间/结果均留痕（审核日志）</div>
+      </DevNote>
+      <Card>
+        <Table>
+          <TableHeader><TableRow><TableHead>模板名称</TableHead><TableHead>内容预览</TableHead><TableHead>自动发送</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {list.map(t => (
+              <TableRow key={t.id}>
+                <TableCell className="font-medium">{t.name}</TableCell>
+                <TableCell className="max-w-md truncate text-sm text-muted-foreground">{t.content}</TableCell>
+                <TableCell>{t.auto ? <Badge className="bg-success text-success-foreground">已开启</Badge> : <Badge variant="outline">关闭</Badge>}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{t.createdAt}</TableCell>
+                <TableCell className="text-right space-x-1">
+                  <Button size="sm" variant="ghost" onClick={() => setTesting(t)}><Send className="h-3.5 w-3.5" /></Button>
+                  <PermissionTip action="编辑" prd={prd} allow={["org_admin", "super_admin"]}><Button size="sm" variant="ghost" disabled={!canEdit} onClick={() => setEditing(t)}><Edit className="h-3.5 w-3.5" /></Button></PermissionTip>
+                  <PermissionTip action="删除" prd={prd} allow={["org_admin", "super_admin"]}><Button size="sm" variant="ghost" disabled={!canEdit} onClick={() => setDeleting(t)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button></PermissionTip>
+                </TableCell>
+              </TableRow>
+            ))}
+            {list.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">暂无模板</TableCell></TableRow>}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editing && list.find(x => x.id === editing.id) ? "编辑" : "新增"}{title}</DialogTitle><DialogDescription>支持占位符：{helpers.join(" / ")}</DialogDescription></DialogHeader>
+          {editing && (
+            <div className="space-y-3">
+              <div><Label>模板名称 *</Label><Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="如：续报提醒" /></div>
+              <div><Label>模板内容 *</Label><Textarea rows={5} value={editing.content} onChange={(e) => setEditing({ ...editing, content: e.target.value })} placeholder={`如：${helpers[0]} 您好，您的课程将于 ${helpers[1] || "{date}"} 开始...`} /></div>
+              <div className="flex items-center gap-2"><Switch checked={editing.auto} onCheckedChange={(v) => setEditing({ ...editing, auto: v })} /><Label>开启自动发送</Label></div>
+            </div>
+          )}
+          <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>取消</Button><Button onClick={() => editing && (editing.name && editing.content ? save(editing) : toast.error("名称与内容必填"))}>保存</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleting} onOpenChange={(v) => !v && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>确认删除？</AlertDialogTitle><AlertDialogDescription>将删除模板「{deleting?.name}」，删除后无法恢复，已配置自动触发的事件将停止使用该模板。</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>取消</AlertDialogCancel><AlertDialogAction onClick={onDelete}>确认删除</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={!!testing} onOpenChange={(v) => !v && setTesting(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>测试发送 — {testing?.name}</DialogTitle><DialogDescription>占位符将不被替换，仅用于校验通道是否可达</DialogDescription></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>接收方 *</Label><Input value={testTo} onChange={(e) => setTestTo(e.target.value)} placeholder={channel === "邮件" ? "test@example.com" : channel === "短信" ? "13800138000" : "微信 OpenID"} /></div>
+            <div className="rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">{testing?.content}</div>
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setTesting(null)}>取消</Button><Button onClick={sendTest}>发送测试</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
