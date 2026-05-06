@@ -56,6 +56,17 @@ const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: strin
   { key: "alert_count",    module: "risk", label: "敏感操作预警次数", value: "12",  trend: "本月", core: true, icon: ShieldAlert, formula: "周期内触发风控规则的次数合计：超量导出、批量查看、越权访问、IP 异常、验证码失败超阈值等。" },
 ];
 
+/* ---------------- 图表数据 (mock) — 必须定义在使用组件之前 ---------------- */
+const SPARK: Record<string, { x: string; v: number }[]> = {
+  _default: [3,5,4,6,7,6,8,9,8,10,11,13].map((v,i)=>({x:`${i+1}`,v})),
+  active_user:    [620,640,680,700,720,750,770,800,820,850,870,892].map((v,i)=>({x:`${i+1}`,v})),
+  total_user:     [980,1010,1040,1070,1090,1120,1140,1160,1180,1210,1230,1248].map((v,i)=>({x:`${i+1}`,v})),
+  conv_rate:      [16,17,18,18.5,19,20,20.5,21,21.5,22,22.5,22.9].map((v,i)=>({x:`${i+1}`,v})),
+  order_amount:   [180,200,220,240,260,270,280,290,300,310,320,328.4].map((v,i)=>({x:`${i+1}`,v})),
+  alert_count:    [4,6,5,8,7,9,11,10,12,9,11,12].map((v,i)=>({x:`${i+1}`,v})),
+};
+const TREND_12M = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+
 function Dashboard() {
   const { role } = useApp();
   const [open, setOpen] = useState(false);
@@ -242,18 +253,6 @@ function FormulaTip({ label, formula }: { label: string; formula: string }) {
   );
 }
 
-/* ---------------- 图表数据 (mock) ---------------- */
-const SPARK: Record<string, { x: string; v: number }[]> = {
-  _default: [3,5,4,6,7,6,8,9,8,10,11,13].map((v,i)=>({x:`${i+1}`,v})),
-  active_user:    [620,640,680,700,720,750,770,800,820,850,870,892].map((v,i)=>({x:`${i+1}`,v})),
-  total_user:     [980,1010,1040,1070,1090,1120,1140,1160,1180,1210,1230,1248].map((v,i)=>({x:`${i+1}`,v})),
-  conv_rate:      [16,17,18,18.5,19,20,20.5,21,21.5,22,22.5,22.9].map((v,i)=>({x:`${i+1}`,v})),
-  order_amount:   [180,200,220,240,260,270,280,290,300,310,320,328.4].map((v,i)=>({x:`${i+1}`,v})),
-  alert_count:    [4,6,5,8,7,9,11,10,12,9,11,12].map((v,i)=>({x:`${i+1}`,v})),
-};
-
-const TREND_12M = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
-
 function MetricChartCard({ metric }: { metric: typeof ALL_METRICS[number] }) {
   const Icon = metric.icon || BookOpen;
   return (
@@ -315,29 +314,9 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
       const v = 78.5;
       const data = [{ name: "覆盖", value: v, fill: "var(--color-primary)" }];
       return (
-        <RadialBarChart innerRadius="72%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
-          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={12} />
-          <text
-            x="50%"
-            y="46%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-foreground"
-            style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", fontFeatureSettings: '"tnum"' }}
-          >
-            {v}
-            <tspan style={{ fontSize: 14, fontWeight: 600 }} dx="2">%</tspan>
-          </text>
-          <text
-            x="50%"
-            y="62%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-muted-foreground"
-            style={{ fontSize: 11, letterSpacing: "0.05em" }}
-          >
-            服务覆盖率
-          </text>
+        <RadialBarChart innerRadius="65%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
+          <RadialBar background={{ fill: "var(--color-muted)" } as any} dataKey="value" cornerRadius={8} />
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 18, fontWeight: 600 }}>覆盖 {v}%</text>
         </RadialBarChart>
       );
     }
