@@ -1,4 +1,8 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Toaster } from "@/components/ui/sonner";
+import { AppStateProvider } from "@/lib/store";
+import { useEffect } from "react";
+import { seedIfNeeded } from "@/lib/mock";
 
 import appCss from "../styles.css?url";
 
@@ -29,11 +33,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "机构用户全生命周期管理系统" },
+      { name: "description", content: "机构用户资产保险柜 + 规划师服务展示台 — 高保真原型" },
+      { property: "og:title", content: "机构用户全生命周期管理系统" },
+      { property: "og:description", content: "高保真交互原型 v1.3" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -65,5 +68,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  useEffect(() => {
+    seedIfNeeded();
+  }, []);
+  return (
+    <AppStateProvider>
+      <Outlet />
+      <Toaster richColors position="top-center" />
+    </AppStateProvider>
+  );
 }
