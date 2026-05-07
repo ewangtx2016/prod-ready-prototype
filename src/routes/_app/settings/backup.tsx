@@ -57,10 +57,6 @@ type Strategy = {
   enabled: boolean;
   period: "daily" | "weekly" | "monthly";
   time: string; // HH:mm
-  keepCount: number;
-  keepDays: number;
-  encrypt: boolean;
-  preCheck: boolean;
 };
 
 const K_TARGETS = "demo.backup.targets";
@@ -80,7 +76,7 @@ const sampleBackups: Backup[] = [
   { id: "B4", size: "1.20 GB", time: "2026-04-28 18:30", type: "manual", duration: "3m05s", targets: ["T1"], status: "success", checksum: "117b8f30a2…ee29" },
 ];
 
-const defaultStrategy: Strategy = { enabled: true, period: "daily", time: "02:00", keepCount: 14, keepDays: 90, encrypt: true, preCheck: true };
+const defaultStrategy: Strategy = { enabled: true, period: "daily", time: "02:00" };
 
 const TYPE_META: Record<TargetType, { label: string; icon: typeof HardDrive }> = {
   local: { label: "本地磁盘", icon: HardDrive },
@@ -268,31 +264,8 @@ function Page() {
               <Label>执行时间</Label>
               <Input type="time" value={strategy.time} disabled={!canEdit} onChange={e => setStrategy({ ...strategy, time: e.target.value })} />
             </div>
-            <div>
-              <Label>保留份数（最近 N 份）</Label>
-              <Input type="number" min={1} max={365} value={strategy.keepCount} disabled={!canEdit} onChange={e => setStrategy({ ...strategy, keepCount: +e.target.value })} />
-            </div>
-            <div>
-              <Label>保留天数（最长 N 天）</Label>
-              <Input type="number" min={1} max={3650} value={strategy.keepDays} disabled={!canEdit} onChange={e => setStrategy({ ...strategy, keepDays: +e.target.value })} />
-              <div className="text-xs text-muted-foreground mt-1">两条件先到先删</div>
-            </div>
-            <div className="flex items-center justify-between border rounded-md px-3 py-2">
-              <div>
-                <div className="text-sm font-medium">备份加密 (AES-256)</div>
-                <div className="text-xs text-muted-foreground">密钥由机构托管，遗失将无法恢复</div>
-              </div>
-              <Switch checked={strategy.encrypt} disabled={!canEdit} onCheckedChange={v => setStrategy({ ...strategy, encrypt: v })} />
-            </div>
-            <div className="flex items-center justify-between border rounded-md px-3 py-2">
-              <div>
-                <div className="text-sm font-medium">备份前一致性校验</div>
-                <div className="text-xs text-muted-foreground">略增耗时，可避免坏块</div>
-              </div>
-              <Switch checked={strategy.preCheck} disabled={!canEdit} onCheckedChange={v => setStrategy({ ...strategy, preCheck: v })} />
-            </div>
             <div className="md:col-span-2 flex justify-end">
-              <Button size="sm" disabled={!canEdit} onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "备份", action: "更新策略", detail: `${strategy.period}/${strategy.time}/keep ${strategy.keepCount} ${strategy.keepDays}d` }); toast.success("策略已保存"); }}>保存策略</Button>
+              <Button size="sm" disabled={!canEdit} onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "备份", action: "更新策略", detail: `${strategy.period}/${strategy.time}` }); toast.success("策略已保存"); }}>保存策略</Button>
             </div>
           </Card>
         </TabsContent>
