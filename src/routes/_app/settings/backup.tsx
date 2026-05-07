@@ -322,31 +322,26 @@ function Page() {
         {/* Tab3：告警 */}
         <TabsContent value="alert">
           <Card className="p-4 space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <div className="font-medium">备份失败时通知</div>
-                <div className="text-xs text-muted-foreground mt-1">任意目标写入失败立即推送</div>
-              </div>
-              <Switch checked={alertCfg.notifyOnFail} disabled={!canEdit} onCheckedChange={v => setAlertCfg({ ...alertCfg, notifyOnFail: v })} />
-            </div>
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <div className="font-medium">容量阈值告警</div>
-                <div className="text-xs text-muted-foreground mt-1">任一目标占用超过阈值时推送</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Input type="number" min={50} max={99} className="w-20" value={alertCfg.capacityThreshold} disabled={!canEdit} onChange={e => setAlertCfg({ ...alertCfg, capacityThreshold: +e.target.value })} />
-                <span className="text-sm text-muted-foreground">%</span>
-                <Switch checked={alertCfg.notifyOnCapacity} disabled={!canEdit} onCheckedChange={v => setAlertCfg({ ...alertCfg, notifyOnCapacity: v })} />
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-md bg-primary/10"><Bell className="h-5 w-5 text-primary" /></div>
+              <div className="flex-1">
+                <div className="font-medium">备份相关告警已统一在「通知事件」中管理</div>
+                <div className="text-xs text-muted-foreground mt-1">阈值在「操作预警」中配置，渠道（站内信/短信/邮件/社群）、模板与接收人在「通知事件」中配置。这样所有业务告警拥有一致的配置入口和审计记录。</div>
               </div>
             </div>
-            <div>
-              <Label>通知收件人（邮箱，逗号分隔）</Label>
-              <Textarea rows={2} value={alertCfg.recipients} disabled={!canEdit} onChange={e => setAlertCfg({ ...alertCfg, recipients: e.target.value })} />
-              <div className="text-xs text-muted-foreground mt-1">同时也会发送站内信至「机构管理员」角色</div>
+            <div className="rounded-md border divide-y">
+              <div className="p-3">
+                <div className="text-sm font-medium mb-2">备份失败</div>
+                <EventBindingHint eventKey="alert.backup.failed" />
+              </div>
+              <div className="p-3">
+                <div className="text-sm font-medium mb-2">备份目标容量超阈值</div>
+                <EventBindingHint eventKey="alert.backup.capacity" />
+              </div>
             </div>
-            <div className="flex justify-end">
-              <Button size="sm" disabled={!canEdit} onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "备份", action: "更新告警配置", detail: alertCfg.recipients }); toast.success("告警配置已保存"); }}>保存配置</Button>
+            <div className="flex gap-2">
+              <Link to="/settings/alert"><Button size="sm" variant="outline"><AlertTriangle className="h-4 w-4" /> 前往「操作预警」配置阈值</Button></Link>
+              <Link to="/settings/notification-events"><Button size="sm" variant="outline"><Bell className="h-4 w-4" /> 前往「通知事件」配置渠道</Button></Link>
             </div>
           </Card>
         </TabsContent>
