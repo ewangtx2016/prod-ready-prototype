@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
@@ -20,8 +20,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
-import { ShieldAlert, Database, Download, RotateCw, Trash2, HardDrive, Cloud, Server, Plus, Pencil, CheckCircle2, AlertTriangle, XCircle, Clock, Star, Activity, Copy, FileText } from "lucide-react";
+import { ShieldAlert, Database, Download, RotateCw, Trash2, HardDrive, Cloud, Server, Plus, Pencil, CheckCircle2, AlertTriangle, XCircle, Clock, Star, Activity, Copy, FileText, Bell } from "lucide-react";
+import { EventBindingHint } from "./notification-events";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/settings/backup")({ component: Page });
