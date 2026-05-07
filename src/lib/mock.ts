@@ -116,7 +116,7 @@ export type NotifyChannelKey = "inbox" | "sms" | "group" | "email";
 export type NotifyEvent = {
   key: string;            // 业务代码引用，唯一
   name: string;           // 中文名
-  category: "服务审核" | "操作预警" | "续报提醒" | "财务结算" | "账号安全";
+  category: "服务审核" | "操作预警" | "续报提醒" | "财务结算" | "账号安全" | "数据备份";
   description: string;
   recipients: string[];   // 角色 key 列表
   channels: Record<NotifyChannelKey, { enabled: boolean; templateId?: string }>;
@@ -135,7 +135,7 @@ const KEYS = {
   rule: "demo.rules",
   ledger: "demo.ledger",
   log: "demo.logs",
-  seeded: "demo.seeded.v5",
+  seeded: "demo.seeded.v6",
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
   notifyEvent: "demo.notifyEvents",
@@ -253,8 +253,10 @@ export function seedIfNeeded(force = false) {
     { key: "alert.split.abnormal", name: "操作预警 · 异常分账", category: "操作预警", description: "异常分账次数超阈值。", recipients: ["org_admin", "super_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 3, unit: "次/日" } },
     { key: "alert.audit.reject_rate", name: "操作预警 · 服务记录驳回率", category: "操作预警", description: "服务记录驳回率超阈值。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: false, threshold: { value: 30, unit: "%" } },
     { key: "alert.login.failure", name: "操作预警 · 登录失败次数", category: "操作预警", description: "登录失败次数超阈值。", recipients: ["org_admin"], channels: { inbox: { enabled: false }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: true, threshold: { value: 5, unit: "次/小时" } },
-    { key: "alert.backup.failed", name: "操作预警 · 备份失败", category: "操作预警", description: "任意备份目标写入失败时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 1, unit: "次/日" } },
-    { key: "alert.backup.capacity", name: "操作预警 · 备份目标容量超阈值", category: "操作预警", description: "任一备份目标占用空间超过阈值时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 80, unit: "%" } },
+    { key: "backup.failed", name: "数据备份 · 备份失败", category: "数据备份", description: "任意备份目标写入失败时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 1, unit: "次/日" } },
+    { key: "backup.capacity", name: "数据备份 · 目标容量超阈值", category: "数据备份", description: "任一备份目标占用空间超过阈值时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 80, unit: "%" } },
+    { key: "backup.success", name: "数据备份 · 备份成功", category: "数据备份", description: "自动/手动备份成功完成时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: false },
+    { key: "backup.restore", name: "数据备份 · 数据恢复", category: "数据备份", description: "管理员发起或完成数据恢复（覆盖当前数据库）时触发。", recipients: ["org_admin", "super_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true },
     { key: "renewal.expiring.7d", name: "续报提醒 · 7 天到期", category: "续报提醒", description: "课程将于 7 天内到期，提醒家长续报。", recipients: ["planner"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: true }, email: { enabled: false } }, system: true },
     { key: "settlement.arrived", name: "财务 · 分润到账", category: "财务结算", description: "结算款到账后通知规划师。", recipients: ["planner"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true },
     { key: "ledger.abnormal", name: "财务 · 异常台账", category: "财务结算", description: "出现异常台账时通知机构管理员。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: true } }, system: true },
