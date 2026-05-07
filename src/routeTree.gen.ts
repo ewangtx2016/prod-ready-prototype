@@ -26,11 +26,7 @@ import { Route as AppServiceSettingsRouteImport } from './routes/_app/service/se
 import { Route as AppServiceRecordsRouteImport } from './routes/_app/service/records'
 import { Route as AppProfitRulesRouteImport } from './routes/_app/profit/rules'
 import { Route as AppProfitDimensionsRouteImport } from './routes/_app/profit/dimensions'
-import { Route as AppNotificationWechatRouteImport } from './routes/_app/notification/wechat'
-import { Route as AppNotificationVirtualNoRouteImport } from './routes/_app/notification/virtual-no'
-import { Route as AppNotificationSmsRouteImport } from './routes/_app/notification/sms'
-import { Route as AppNotificationInboxRouteImport } from './routes/_app/notification/inbox'
-import { Route as AppNotificationEmailRouteImport } from './routes/_app/notification/email'
+import { Route as AppNotificationTemplatesRouteImport } from './routes/_app/notification/templates'
 import { Route as AppLedgerSettledRouteImport } from './routes/_app/ledger/settled'
 import { Route as AppLedgerRefundRouteImport } from './routes/_app/ledger/refund'
 import { Route as AppLedgerPendingRouteImport } from './routes/_app/ledger/pending'
@@ -122,32 +118,12 @@ const AppProfitDimensionsRoute = AppProfitDimensionsRouteImport.update({
   path: '/profit/dimensions',
   getParentRoute: () => AppRoute,
 } as any)
-const AppNotificationWechatRoute = AppNotificationWechatRouteImport.update({
-  id: '/notification/wechat',
-  path: '/notification/wechat',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNotificationVirtualNoRoute =
-  AppNotificationVirtualNoRouteImport.update({
-    id: '/notification/virtual-no',
-    path: '/notification/virtual-no',
+const AppNotificationTemplatesRoute =
+  AppNotificationTemplatesRouteImport.update({
+    id: '/notification/templates',
+    path: '/notification/templates',
     getParentRoute: () => AppRoute,
   } as any)
-const AppNotificationSmsRoute = AppNotificationSmsRouteImport.update({
-  id: '/notification/sms',
-  path: '/notification/sms',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNotificationInboxRoute = AppNotificationInboxRouteImport.update({
-  id: '/notification/inbox',
-  path: '/notification/inbox',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNotificationEmailRoute = AppNotificationEmailRouteImport.update({
-  id: '/notification/email',
-  path: '/notification/email',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppLedgerSettledRoute = AppLedgerSettledRouteImport.update({
   id: '/ledger/settled',
   path: '/ledger/settled',
@@ -185,11 +161,7 @@ export interface FileRoutesByFullPath {
   '/ledger/pending': typeof AppLedgerPendingRoute
   '/ledger/refund': typeof AppLedgerRefundRoute
   '/ledger/settled': typeof AppLedgerSettledRoute
-  '/notification/email': typeof AppNotificationEmailRoute
-  '/notification/inbox': typeof AppNotificationInboxRoute
-  '/notification/sms': typeof AppNotificationSmsRoute
-  '/notification/virtual-no': typeof AppNotificationVirtualNoRoute
-  '/notification/wechat': typeof AppNotificationWechatRoute
+  '/notification/templates': typeof AppNotificationTemplatesRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
   '/profit/rules': typeof AppProfitRulesRoute
   '/service/records': typeof AppServiceRecordsRoute
@@ -213,11 +185,7 @@ export interface FileRoutesByTo {
   '/ledger/pending': typeof AppLedgerPendingRoute
   '/ledger/refund': typeof AppLedgerRefundRoute
   '/ledger/settled': typeof AppLedgerSettledRoute
-  '/notification/email': typeof AppNotificationEmailRoute
-  '/notification/inbox': typeof AppNotificationInboxRoute
-  '/notification/sms': typeof AppNotificationSmsRoute
-  '/notification/virtual-no': typeof AppNotificationVirtualNoRoute
-  '/notification/wechat': typeof AppNotificationWechatRoute
+  '/notification/templates': typeof AppNotificationTemplatesRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
   '/profit/rules': typeof AppProfitRulesRoute
   '/service/records': typeof AppServiceRecordsRoute
@@ -243,11 +211,7 @@ export interface FileRoutesById {
   '/_app/ledger/pending': typeof AppLedgerPendingRoute
   '/_app/ledger/refund': typeof AppLedgerRefundRoute
   '/_app/ledger/settled': typeof AppLedgerSettledRoute
-  '/_app/notification/email': typeof AppNotificationEmailRoute
-  '/_app/notification/inbox': typeof AppNotificationInboxRoute
-  '/_app/notification/sms': typeof AppNotificationSmsRoute
-  '/_app/notification/virtual-no': typeof AppNotificationVirtualNoRoute
-  '/_app/notification/wechat': typeof AppNotificationWechatRoute
+  '/_app/notification/templates': typeof AppNotificationTemplatesRoute
   '/_app/profit/dimensions': typeof AppProfitDimensionsRoute
   '/_app/profit/rules': typeof AppProfitRulesRoute
   '/_app/service/records': typeof AppServiceRecordsRoute
@@ -273,11 +237,7 @@ export interface FileRouteTypes {
     | '/ledger/pending'
     | '/ledger/refund'
     | '/ledger/settled'
-    | '/notification/email'
-    | '/notification/inbox'
-    | '/notification/sms'
-    | '/notification/virtual-no'
-    | '/notification/wechat'
+    | '/notification/templates'
     | '/profit/dimensions'
     | '/profit/rules'
     | '/service/records'
@@ -301,11 +261,7 @@ export interface FileRouteTypes {
     | '/ledger/pending'
     | '/ledger/refund'
     | '/ledger/settled'
-    | '/notification/email'
-    | '/notification/inbox'
-    | '/notification/sms'
-    | '/notification/virtual-no'
-    | '/notification/wechat'
+    | '/notification/templates'
     | '/profit/dimensions'
     | '/profit/rules'
     | '/service/records'
@@ -330,11 +286,7 @@ export interface FileRouteTypes {
     | '/_app/ledger/pending'
     | '/_app/ledger/refund'
     | '/_app/ledger/settled'
-    | '/_app/notification/email'
-    | '/_app/notification/inbox'
-    | '/_app/notification/sms'
-    | '/_app/notification/virtual-no'
-    | '/_app/notification/wechat'
+    | '/_app/notification/templates'
     | '/_app/profit/dimensions'
     | '/_app/profit/rules'
     | '/_app/service/records'
@@ -475,39 +427,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfitDimensionsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/notification/wechat': {
-      id: '/_app/notification/wechat'
-      path: '/notification/wechat'
-      fullPath: '/notification/wechat'
-      preLoaderRoute: typeof AppNotificationWechatRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/notification/virtual-no': {
-      id: '/_app/notification/virtual-no'
-      path: '/notification/virtual-no'
-      fullPath: '/notification/virtual-no'
-      preLoaderRoute: typeof AppNotificationVirtualNoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/notification/sms': {
-      id: '/_app/notification/sms'
-      path: '/notification/sms'
-      fullPath: '/notification/sms'
-      preLoaderRoute: typeof AppNotificationSmsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/notification/inbox': {
-      id: '/_app/notification/inbox'
-      path: '/notification/inbox'
-      fullPath: '/notification/inbox'
-      preLoaderRoute: typeof AppNotificationInboxRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/notification/email': {
-      id: '/_app/notification/email'
-      path: '/notification/email'
-      fullPath: '/notification/email'
-      preLoaderRoute: typeof AppNotificationEmailRouteImport
+    '/_app/notification/templates': {
+      id: '/_app/notification/templates'
+      path: '/notification/templates'
+      fullPath: '/notification/templates'
+      preLoaderRoute: typeof AppNotificationTemplatesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/ledger/settled': {
@@ -557,11 +481,7 @@ interface AppRouteChildren {
   AppLedgerPendingRoute: typeof AppLedgerPendingRoute
   AppLedgerRefundRoute: typeof AppLedgerRefundRoute
   AppLedgerSettledRoute: typeof AppLedgerSettledRoute
-  AppNotificationEmailRoute: typeof AppNotificationEmailRoute
-  AppNotificationInboxRoute: typeof AppNotificationInboxRoute
-  AppNotificationSmsRoute: typeof AppNotificationSmsRoute
-  AppNotificationVirtualNoRoute: typeof AppNotificationVirtualNoRoute
-  AppNotificationWechatRoute: typeof AppNotificationWechatRoute
+  AppNotificationTemplatesRoute: typeof AppNotificationTemplatesRoute
   AppProfitDimensionsRoute: typeof AppProfitDimensionsRoute
   AppProfitRulesRoute: typeof AppProfitRulesRoute
   AppServiceRecordsRoute: typeof AppServiceRecordsRoute
@@ -584,11 +504,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLedgerPendingRoute: AppLedgerPendingRoute,
   AppLedgerRefundRoute: AppLedgerRefundRoute,
   AppLedgerSettledRoute: AppLedgerSettledRoute,
-  AppNotificationEmailRoute: AppNotificationEmailRoute,
-  AppNotificationInboxRoute: AppNotificationInboxRoute,
-  AppNotificationSmsRoute: AppNotificationSmsRoute,
-  AppNotificationVirtualNoRoute: AppNotificationVirtualNoRoute,
-  AppNotificationWechatRoute: AppNotificationWechatRoute,
+  AppNotificationTemplatesRoute: AppNotificationTemplatesRoute,
   AppProfitDimensionsRoute: AppProfitDimensionsRoute,
   AppProfitRulesRoute: AppProfitRulesRoute,
   AppServiceRecordsRoute: AppServiceRecordsRoute,
