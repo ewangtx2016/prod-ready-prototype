@@ -340,8 +340,7 @@ function Page() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Link to="/settings/alert"><Button size="sm" variant="outline"><AlertTriangle className="h-4 w-4" /> 前往「操作预警」配置阈值</Button></Link>
-              <Link to="/settings/notification-events"><Button size="sm" variant="outline"><Bell className="h-4 w-4" /> 前往「通知事件」配置渠道</Button></Link>
+              <Link to="/settings/notification-events"><Button size="sm" variant="outline"><Bell className="h-4 w-4" /> 前往「通知事件」配置阈值与渠道</Button></Link>
             </div>
           </Card>
         </TabsContent>
