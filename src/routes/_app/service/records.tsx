@@ -13,11 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, Eye, Plus, Download, Check, X } from "lucide-react";
+import { Eye, Download, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
 
@@ -32,9 +29,7 @@ function Page() {
   const { role } = useApp();
   const [records, setRecords] = useState<ServiceRecord[]>([]);
   const [tab, setTab] = useState("all");
-  const [editing, setEditing] = useState<ServiceRecord | null>(null);
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
-  const [creating, setCreating] = useState(false);
   const [rejecting, setRejecting] = useState<ServiceRecord | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [approving, setApproving] = useState<ServiceRecord | null>(null);
@@ -81,14 +76,9 @@ function Page() {
     <div>
       <PageHeader
         title="服务记录"
-        subtitle="规划师/学管师与用户交互的全程留痕。提交即锁定，修改走申请审核流。"
+        subtitle="规划师/学管师与用户交互的全程留痕（由外部系统同步）。机构管理员可在此审核/驳回。"
         actions={
           <>
-            <PermissionTip action="新增服务记录" prd="§6.2 / §14" allow={["planner", "tutor"]}>
-              <Button size="sm" disabled={role !== "planner" && role !== "tutor"} onClick={() => setCreating(true)}>
-                <Plus className="h-4 w-4" /> 新增
-              </Button>
-            </PermissionTip>
             <PermissionTip action="导出" prd="§14" allow={["org_admin"]}>
               <Button size="sm" variant="outline" disabled={role !== "org_admin"} onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "导出", detail: `导出 ${filtered.length} 条 (脱敏)` }); toast.success("已导出 services.xlsx (mock)"); }}>
                 <Download className="h-4 w-4" /> 导出
@@ -99,7 +89,7 @@ function Page() {
       />
 
       <DevNote prd="§6.2 §6.5" title="服务列表 + 修改申请">
-        <div>· 提交即锁定：原记录不可直接编辑/删除，只能"提交修改申请"</div>
+        <div>· 规划师/学管师不在本系统新增或修改记录，记录由外部系统同步</div>
         <div>· 数据范围：管理员=全量；规划师=本人创建；学管师=本人创建</div>
         <div>· <b>审核流</b>（PRD §6.3 / §14）：仅机构管理员在「待审核」tab 可执行通过/驳回；行内展示「原内容 → 新内容」对比与修改原因</div>
         <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
@@ -159,11 +149,6 @@ function Page() {
                   <TableCell><Badge className={STATUS_LABEL[r.status].color}>{STATUS_LABEL[r.status].label}</Badge></TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button variant="ghost" size="sm" onClick={() => setViewing(r)}><Eye className="h-3.5 w-3.5" /></Button>
-                    {(role === "planner" || role === "tutor") && r.status !== "pending_audit" && (
-                      <PermissionTip action="提交修改申请" prd="§6.5" allow={["planner", "tutor"]} desc="原记录锁定，必须走申请流">
-                        <Button variant="ghost" size="sm" onClick={() => setEditing(r)}><Edit className="h-3.5 w-3.5" /></Button>
-                      </PermissionTip>
-                    )}
                     {isAdmin && r.status === "pending_audit" && (
                       <>
                         <PermissionTip action="审核通过" prd="§6.3" allow={["org_admin"]}>
@@ -205,22 +190,6 @@ function Page() {
             </div>
           )}
           <DialogFooter><Button onClick={() => setViewing(null)}>关闭</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 修改申请 */}
-      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>提交修改申请</DialogTitle></DialogHeader>
-          {editing && <EditForm record={editing} onClose={(submit) => { setEditing(null); if (submit) refresh(); }} />}
-        </DialogContent>
-      </Dialog>
-
-      {/* 新增 */}
-      <Dialog open={creating} onOpenChange={setCreating}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>新增服务记录</DialogTitle></DialogHeader>
-          <CreateForm onClose={(submit) => { setCreating(false); if (submit) refresh(); }} />
         </DialogContent>
       </Dialog>
 
@@ -266,70 +235,5 @@ function Page() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function EditForm({ record, onClose }: { record: ServiceRecord; onClose: (submit: boolean) => void }) {
-  const { role } = useApp();
-  const [reason, setReason] = useState("");
-  const [content, setContent] = useState(record.content);
-  const submit = () => {
-    if (!reason.trim()) { toast.error("请填写修改原因"); return; }
-    const list = db.services();
-    const idx = list.findIndex((x) => x.id === record.id);
-    list[idx] = { ...list[idx], status: "pending_audit", pendingChange: { reason, newContent: content, submittedAt: new Date().toLocaleString("zh-CN") } };
-    db.setServices(list);
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "提交修改申请", detail: `#${record.id} - ${reason}` });
-    toast.success("修改申请已提交，等待机构管理员审核");
-    onClose(true);
-  };
-  return (
-    <>
-      <div className="space-y-3">
-        <div><Label>修改原因 *</Label><Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="请说明为什么需要修改..." /></div>
-        <div><Label>新的服务内容</Label><Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={4} /></div>
-      </div>
-      <DialogFooter><Button variant="outline" onClick={() => onClose(false)}>取消</Button><Button onClick={submit}>提交申请</Button></DialogFooter>
-    </>
-  );
-}
-
-function CreateForm({ onClose }: { onClose: (submit: boolean) => void }) {
-  const { role } = useApp();
-  const [form, setForm] = useState({ userName: "", userPhone: "", serviceType: "沟通", content: "", duration: 30 });
-  const submit = () => {
-    if (!form.userName || !form.userPhone || !form.content) { toast.error("请填写完整信息"); return; }
-    const list = db.services();
-    const newRec: ServiceRecord = {
-      id: db.rid(), ...form, createdBy: role === "planner" ? "李规划" : "陈学管",
-      createdByRole: role === "planner" ? "planner" : "tutor",
-      createdAt: new Date().toLocaleString("zh-CN"),
-      status: db.auditMode() === "review" ? "pending_audit" : "submitted",
-    };
-    db.setServices([newRec, ...list]);
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "新增", detail: `#${newRec.id}` });
-    toast.success(db.auditMode() === "review" ? "已提交，等待审核" : "服务记录已提交（实时监控模式）");
-    onClose(true);
-  };
-  return (
-    <>
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          <div><Label>用户姓名 *</Label><Input value={form.userName} onChange={(e) => setForm({ ...form, userName: e.target.value })} /></div>
-          <div><Label>手机号 *</Label><Input value={form.userPhone} onChange={(e) => setForm({ ...form, userPhone: e.target.value })} placeholder="13800000000" /></div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div><Label>服务类型</Label>
-            <Select value={form.serviceType} onValueChange={(v) => setForm({ ...form, serviceType: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{["沟通", "督学", "答疑", "打卡", "社群"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div><Label>时长(分钟)</Label><Input type="number" value={form.duration} onChange={(e) => setForm({ ...form, duration: +e.target.value })} /></div>
-        </div>
-        <div><Label>服务内容 *</Label><Textarea rows={4} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
-      </div>
-      <DialogFooter><Button variant="outline" onClick={() => onClose(false)}>取消</Button><Button onClick={submit}>提交</Button></DialogFooter>
-    </>
   );
 }
