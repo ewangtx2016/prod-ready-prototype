@@ -73,6 +73,10 @@ export type AuditLog = {
   module: string;
   action: string;
   detail: string;
+  /** 操作前快照（JSON），可选 */
+  before?: any;
+  /** 操作后快照（JSON），可选 */
+  after?: any;
 };
 
 const KEYS = {
@@ -170,9 +174,9 @@ export function seedIfNeeded(force = false) {
   ];
 
   const logs: AuditLog[] = [
-    { id: rid(), time: "2026-04-28 10:00", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "服务记录", action: "新增", detail: "新增服务记录 #" + services[0].id },
-    { id: rid(), time: "2026-04-28 11:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "分成规则", action: "短信验证通过", detail: "Q3 续报激励规则" },
-    { id: rid(), time: "2026-04-28 18:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "台账", action: "导出", detail: "导出 4 月已结算明细 (脱敏)" },
+    { id: rid(), time: "2026-04-28 10:00", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "服务记录", action: "新增", detail: "新增服务记录 #" + services[0].id, before: null, after: { id: services[0].id, userName: "张明轩", serviceType: "沟通", duration: 30 } },
+    { id: rid(), time: "2026-04-28 11:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "分成规则", action: "短信验证通过", detail: "Q3 续报激励规则", before: { status: "draft" }, after: { status: "pending_audit" } },
+    { id: rid(), time: "2026-04-28 18:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "台账", action: "导出", detail: "导出 4 月已结算明细 (脱敏)", before: null, after: { exportType: "已结算", month: "2026-04", rows: 128, masked: true } },
   ];
 
   write(KEYS.service, services);
