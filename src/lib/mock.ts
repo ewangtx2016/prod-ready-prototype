@@ -135,7 +135,7 @@ const KEYS = {
   rule: "demo.rules",
   ledger: "demo.ledger",
   log: "demo.logs",
-  seeded: "demo.seeded.v4",
+  seeded: "demo.seeded.v5",
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
   notifyEvent: "demo.notifyEvents",
