@@ -28,6 +28,7 @@ import { Route as AppProfitRulesRouteImport } from './routes/_app/profit/rules'
 import { Route as AppProfitDimensionsRouteImport } from './routes/_app/profit/dimensions'
 import { Route as AppNotificationWechatRouteImport } from './routes/_app/notification/wechat'
 import { Route as AppNotificationVirtualNoRouteImport } from './routes/_app/notification/virtual-no'
+import { Route as AppNotificationTemplatesRouteImport } from './routes/_app/notification/templates'
 import { Route as AppNotificationSmsRouteImport } from './routes/_app/notification/sms'
 import { Route as AppNotificationInboxRouteImport } from './routes/_app/notification/inbox'
 import { Route as AppNotificationEmailRouteImport } from './routes/_app/notification/email'
@@ -133,6 +134,12 @@ const AppNotificationVirtualNoRoute =
     path: '/notification/virtual-no',
     getParentRoute: () => AppRoute,
   } as any)
+const AppNotificationTemplatesRoute =
+  AppNotificationTemplatesRouteImport.update({
+    id: '/notification/templates',
+    path: '/notification/templates',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppNotificationSmsRoute = AppNotificationSmsRouteImport.update({
   id: '/notification/sms',
   path: '/notification/sms',
@@ -188,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/notification/email': typeof AppNotificationEmailRoute
   '/notification/inbox': typeof AppNotificationInboxRoute
   '/notification/sms': typeof AppNotificationSmsRoute
+  '/notification/templates': typeof AppNotificationTemplatesRoute
   '/notification/virtual-no': typeof AppNotificationVirtualNoRoute
   '/notification/wechat': typeof AppNotificationWechatRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
@@ -216,6 +224,7 @@ export interface FileRoutesByTo {
   '/notification/email': typeof AppNotificationEmailRoute
   '/notification/inbox': typeof AppNotificationInboxRoute
   '/notification/sms': typeof AppNotificationSmsRoute
+  '/notification/templates': typeof AppNotificationTemplatesRoute
   '/notification/virtual-no': typeof AppNotificationVirtualNoRoute
   '/notification/wechat': typeof AppNotificationWechatRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
@@ -246,6 +255,7 @@ export interface FileRoutesById {
   '/_app/notification/email': typeof AppNotificationEmailRoute
   '/_app/notification/inbox': typeof AppNotificationInboxRoute
   '/_app/notification/sms': typeof AppNotificationSmsRoute
+  '/_app/notification/templates': typeof AppNotificationTemplatesRoute
   '/_app/notification/virtual-no': typeof AppNotificationVirtualNoRoute
   '/_app/notification/wechat': typeof AppNotificationWechatRoute
   '/_app/profit/dimensions': typeof AppProfitDimensionsRoute
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/notification/email'
     | '/notification/inbox'
     | '/notification/sms'
+    | '/notification/templates'
     | '/notification/virtual-no'
     | '/notification/wechat'
     | '/profit/dimensions'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/notification/email'
     | '/notification/inbox'
     | '/notification/sms'
+    | '/notification/templates'
     | '/notification/virtual-no'
     | '/notification/wechat'
     | '/profit/dimensions'
@@ -333,6 +345,7 @@ export interface FileRouteTypes {
     | '/_app/notification/email'
     | '/_app/notification/inbox'
     | '/_app/notification/sms'
+    | '/_app/notification/templates'
     | '/_app/notification/virtual-no'
     | '/_app/notification/wechat'
     | '/_app/profit/dimensions'
@@ -489,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotificationVirtualNoRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/notification/templates': {
+      id: '/_app/notification/templates'
+      path: '/notification/templates'
+      fullPath: '/notification/templates'
+      preLoaderRoute: typeof AppNotificationTemplatesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/notification/sms': {
       id: '/_app/notification/sms'
       path: '/notification/sms'
@@ -560,6 +580,7 @@ interface AppRouteChildren {
   AppNotificationEmailRoute: typeof AppNotificationEmailRoute
   AppNotificationInboxRoute: typeof AppNotificationInboxRoute
   AppNotificationSmsRoute: typeof AppNotificationSmsRoute
+  AppNotificationTemplatesRoute: typeof AppNotificationTemplatesRoute
   AppNotificationVirtualNoRoute: typeof AppNotificationVirtualNoRoute
   AppNotificationWechatRoute: typeof AppNotificationWechatRoute
   AppProfitDimensionsRoute: typeof AppProfitDimensionsRoute
@@ -587,6 +608,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationEmailRoute: AppNotificationEmailRoute,
   AppNotificationInboxRoute: AppNotificationInboxRoute,
   AppNotificationSmsRoute: AppNotificationSmsRoute,
+  AppNotificationTemplatesRoute: AppNotificationTemplatesRoute,
   AppNotificationVirtualNoRoute: AppNotificationVirtualNoRoute,
   AppNotificationWechatRoute: AppNotificationWechatRoute,
   AppProfitDimensionsRoute: AppProfitDimensionsRoute,
