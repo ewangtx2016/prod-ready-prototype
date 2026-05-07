@@ -18,11 +18,8 @@ const GROUPS: Group[] = [
     { to: "/service/settings", label: "审核模式", icon: Settings, key: "service" },
   ] },
   { key: "notification", label: "通知管理", icon: Bell, children: [
-    { to: "/notification/virtual-no", label: "虚拟号", icon: Bell, key: "notification" },
-    { to: "/notification/sms", label: "短信模板", icon: Bell, key: "notification" },
-    { to: "/notification/wechat", label: "社群模板", icon: Bell, key: "notification" },
-    { to: "/notification/email", label: "邮件模板", icon: Bell, key: "notification" },
-    { to: "/notification/inbox", label: "站内信", icon: Bell, key: "notification" },
+    { to: "/notification/templates", label: "通知模板", icon: Bell, key: "notification" },
+    { to: "/settings/notification-events", label: "通知事件", icon: Bell, key: "notification" },
   ] },
   { key: "sales", label: "销售管理", icon: ShoppingCart, children: [{ to: "/sales", label: "销售明细", icon: ShoppingCart, key: "sales" }] },
   { key: "profit", label: "分成管理", icon: PieChart, children: [
@@ -40,7 +37,6 @@ const GROUPS: Group[] = [
     { to: "/settings/org", label: "机构信息", icon: Settings, key: "settings" },
     { to: "/settings/ip", label: "IP 白名单", icon: Settings, key: "settings" },
     { to: "/settings/backup", label: "备份设置", icon: Settings, key: "settings" },
-    { to: "/settings/notification-events", label: "通知事件", icon: Settings, key: "settings" },
   ] },
   { key: "role", label: "角色管理", icon: ShieldCheck, children: [{ to: "/role", label: "角色管理", icon: ShieldCheck, key: "role" }] },
   { key: "user", label: "用户管理", icon: Users, children: [
