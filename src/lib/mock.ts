@@ -117,7 +117,7 @@ const KEYS = {
   rule: "demo.rules",
   ledger: "demo.ledger",
   log: "demo.logs",
-  seeded: "demo.seeded.v2",
+  seeded: "demo.seeded.v3",
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
 };
