@@ -4,7 +4,7 @@ import {
   Settings, ShieldCheck, Users, History, ChevronDown,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { MENU_PERMS } from "@/lib/roles";
+import { MENU_PERMS, SUBMENU_PERMS } from "@/lib/roles";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +45,6 @@ const GROUPS: Group[] = [
   { key: "role", label: "角色管理", icon: ShieldCheck, children: [{ to: "/role", label: "角色管理", icon: ShieldCheck, key: "role" }] },
   { key: "user", label: "用户管理", icon: Users, children: [
     { to: "/user/accounts", label: "后台账号", icon: Users, key: "user" },
-    { to: "/user/groups", label: "用户组", icon: Users, key: "user" },
   ] },
   { key: "audit", label: "审计日志", icon: History, children: [{ to: "/audit-log", label: "审计日志", icon: History, key: "audit" }] },
 ];
@@ -53,7 +52,16 @@ const GROUPS: Group[] = [
 export function AppSidebar() {
   const { role } = useApp();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const visible = GROUPS.filter((g) => MENU_PERMS[g.key]?.includes(role));
+  const visible = GROUPS
+    .filter((g) => MENU_PERMS[g.key]?.includes(role))
+    .map((g) => ({
+      ...g,
+      children: g.children.filter((c) => {
+        const perms = SUBMENU_PERMS[c.to];
+        return perms ? perms.includes(role) : true;
+      }),
+    }))
+    .filter((g) => g.children.length > 0);
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r bg-card">
