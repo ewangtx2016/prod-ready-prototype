@@ -79,19 +79,14 @@ export type AuditLog = {
   after?: any;
 };
 
-/** 服务记录预警规则 */
-export type AlertRuleType = "sensitive_word" | "duration" | "frequency" | "amount";
-export type AlertSeverity = "warn" | "block"; // 黄标 / 红标
-export type AlertScope = "global" | "org"; // 平台级 / 机构级
+/** 服务记录审核规则（仅在「需要审核」模式下生效） */
+export type ReviewRuleType = "sensitive_word" | "duration" | "frequency" | "amount";
 
-export type AlertRule = {
+export type ReviewRule = {
   id: string;
-  type: AlertRuleType;
+  type: ReviewRuleType;
   name: string;
   enabled: boolean;
-  severity: AlertSeverity;
-  scope: AlertScope;
-  orgName?: string; // 机构级覆盖时的机构名
   /** 类型化配置（按 type 解释） */
   config: {
     /** sensitive_word: 词列表 */
@@ -106,10 +101,15 @@ export type AlertRule = {
     minAmount?: number;
     maxAmount?: number;
   };
-  notify: { inbox: boolean; sms: boolean };
+  /** 命中后通知方式：站内信 / 短信 / 社群（企业微信、飞书群等） */
+  notify: { inbox: boolean; sms: boolean; group: boolean };
   updatedBy: string;
   updatedAt: string;
 };
+
+// 兼容旧引用
+export type AlertRule = ReviewRule;
+export type AlertRuleType = ReviewRuleType;
 
 const KEYS = {
   service: "demo.services",
