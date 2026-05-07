@@ -179,6 +179,31 @@ function EventEditor({ event, onClose, onSave }: { event: NotifyEvent; onClose: 
         </SheetHeader>
 
         <div className="mt-5 space-y-5">
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <div className="text-sm font-medium">启用此事件</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">关闭后所有渠道都不会发送通知</div>
+            </div>
+            <Switch checked={form.enabled !== false} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
+          </div>
+
+          {form.category === "操作预警" && (
+            <div>
+              <Label className="mb-2 block text-sm">触发阈值</Label>
+              <div className="flex items-center gap-2">
+                <Input type="number" className="w-32" value={form.threshold?.value ?? 0}
+                  onChange={(e) => setForm({ ...form, threshold: { value: +e.target.value, unit: form.threshold?.unit || "次/日" } })} />
+                <Select value={form.threshold?.unit || "次/日"} onValueChange={(v) => setForm({ ...form, threshold: { value: form.threshold?.value ?? 0, unit: v } })}>
+                  <SelectTrigger className="h-9 w-32"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["次/日", "次/小时", "%", "分钟", "次"].map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">达到该阈值时触发本事件并按下方渠道发送通知</div>
+            </div>
+          )}
+
           <div>
             <Label className="mb-2 block text-sm">接收人角色</Label>
             <div className="flex flex-wrap gap-3">
