@@ -121,6 +121,10 @@ export type NotifyEvent = {
   recipients: string[];   // 角色 key 列表
   channels: Record<NotifyChannelKey, { enabled: boolean; templateId?: string }>;
   system: boolean;        // 系统预设（不可删除，可改）
+  /** 事件总开关：关闭后所有渠道都不发送 */
+  enabled?: boolean;
+  /** 触发阈值（仅"操作预警"类事件使用） */
+  threshold?: { value: number; unit: string };
   updatedBy?: string;
   updatedAt?: string;
 };
