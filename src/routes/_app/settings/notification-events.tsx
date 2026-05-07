@@ -242,7 +242,7 @@ function EventEditor({ event, onClose, onSave }: { event: NotifyEvent; onClose: 
                             {tpls.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                           </SelectContent>
                         </Select>
-                        <Link to={meta.tplRoute} className="text-xs text-primary hover:underline">管理模板</Link>
+                        <Link to="/notification/templates" search={{ tab: meta.tplTab }} className="text-xs text-primary hover:underline">管理模板</Link>
                       </div>
                     )}
                   </div>
