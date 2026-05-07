@@ -96,69 +96,35 @@ export function SplitDetailSheet({
               <div className="flex justify-between"><span className="text-muted-foreground">订单金额</span><span className="font-semibold">¥{item.amount.toLocaleString()}</span></div>
             </Card>
 
-            {/* ② 命中规则 + 权重归一 */}
-            <div>
-              <div className="text-xs text-muted-foreground mb-2">命中分成规则</div>
-              {rule && calc ? (
-                <Card className="p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{rule.name}</span>
-                    <Badge variant="secondary" className="font-mono text-[10px]">{rule.version}</Badge>
-                    <Badge className="bg-success text-success-foreground text-[10px]">生效中</Badge>
-                  </div>
-                  <div className="mt-2 space-y-1.5 text-xs">
-                    {calc.dims.map((d) => (
-                      <HitLine
-                        key={d.label}
-                        ok={d.hit}
-                        label={`${d.label}（原始权重 ${(d.rawWeight * 100).toFixed(0)}%${d.hit ? ` → 归一 ${(d.normWeight * 100).toFixed(1)}%` : "，未命中不参与"}）`}
-                        detail={
-                          d.hit
-                            ? `命中「${d.hitKey}」 → 机构 ${d.ratios!.org}% / 规划师 ${d.ratios!.planner}% / 平台 ${d.ratios!.platform}%`
-                            : d.reason || "无匹配项"
-                        }
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-2 rounded bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground">
-                    归一化：剔除未命中维度后，剩余权重按比例放大至合计 100%。
-                  </div>
-                </Card>
-              ) : (
-                <Card className="p-3 text-xs text-warning flex items-center gap-2">
-                  <AlertTriangle className="h-3.5 w-3.5" /> 未匹配生效中的分成规则
-                </Card>
-              )}
-            </div>
-
-            {/* ③ 加权计算过程 */}
+            {/* ② 分成计算（数据来源：鼎团团等第三方分账系统） */}
             {calc && (
               <div>
-                <div className="text-xs text-muted-foreground mb-2">加权计算过程</div>
-                <Card className="p-3 text-sm">
-                  <div className="text-xs text-muted-foreground mb-1.5">
-                    最终比例 = Σ(归一权重 × 该维度比例)
+                <div className="text-xs text-muted-foreground mb-2">分成计算</div>
+                <Card className="p-3 text-sm space-y-2">
+                  <div className="rounded bg-info/5 border border-info/20 px-2 py-1.5 text-[11px] text-muted-foreground">
+                    数据由<span className="text-foreground font-medium">鼎团团</span>等第三方分账系统同步，本系统仅做展示与对账。
                   </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                    <span>订单金额</span>
+                    <span className="font-mono">¥{item.amount.toLocaleString()}</span>
+                  </div>
+                  <Separator />
                   {(["org", "planner", "platform"] as const).map((k) => {
                     const meta = { org: { name: "机构", accent: "info" as const }, planner: { name: "规划师", accent: "success" as const }, platform: { name: "平台", accent: "muted" as const } }[k];
-                    const parts = calc.dims.filter((d) => d.hit).map((d) => `${(d.normWeight * 100).toFixed(1)}%×${d.ratios![k]}%`).join(" + ");
                     return (
-                      <div key={k} className="py-1">
-                        <Row
-                          label={`${meta.name}分成`}
-                          value={`¥${calc.amounts[k].toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
-                          accent={meta.accent}
-                          pct={calc.percents[k]}
-                        />
-                        <div className="ml-2 text-[11px] text-muted-foreground font-mono">
-                          {parts} = {calc.percents[k].toFixed(2)}% × ¥{item.amount.toLocaleString()}
-                        </div>
-                      </div>
+                      <SimpleSplitRow
+                        key={k}
+                        name={meta.name}
+                        accent={meta.accent}
+                        pct={calc.percents[k]}
+                        amount={calc.amounts[k]}
+                        base={item.amount}
+                      />
                     );
                   })}
-                  <Separator className="my-2" />
+                  <Separator />
                   <Row
-                    label="合计校验"
+                    label="三方合计"
                     value={`¥${(calc.amounts.org + calc.amounts.planner + calc.amounts.platform).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
                     ok={Math.abs(calc.amounts.org + calc.amounts.planner + calc.amounts.platform - item.amount) < 0.01}
                   />
