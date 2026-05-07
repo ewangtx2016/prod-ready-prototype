@@ -61,7 +61,7 @@ export function AppHeader() {
         <Button size="sm" variant="ghost" onClick={() => { db.reset(); toast.success("演示数据已重置"); window.location.reload(); }}>
           <RefreshCcw className="h-4 w-4" /> 重置数据
         </Button>
-        <Button size="icon" variant="ghost"><Bell className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" onClick={() => nav({ to: "/messages" })} title="我的消息"><Bell className="h-4 w-4" /></Button>
         <Button size="sm" variant="ghost" onClick={() => nav({ to: "/login" })}>
           <LogOut className="h-4 w-4" /> 退出
         </Button>
