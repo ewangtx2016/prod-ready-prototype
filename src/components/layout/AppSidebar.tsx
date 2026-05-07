@@ -4,7 +4,7 @@ import {
   Settings, ShieldCheck, Users, History, ChevronDown,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { MENU_PERMS, SUBMENU_PERMS, type Role } from "@/lib/roles";
+import { MENU_PERMS, SUBMENU_PERMS } from "@/lib/roles";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
