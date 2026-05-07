@@ -11,9 +11,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, type ReactElement } from "react";
-import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info, Wallet, GraduationCap } from "lucide-react";
+import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info, Wallet, GraduationCap, UserCheck, Repeat, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/mock";
+import { RoleGate } from "@/components/dev/RoleGate";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart,
   Pie, PieChart, RadialBar, RadialBarChart, ResponsiveContainer,
@@ -35,25 +36,61 @@ const MODULES: { key: ModuleKey; name: string; desc: string; icon: typeof Users 
   { key: "service",    name: "服务数据",   desc: "规划师服务次数、学管督学完成率", icon: Activity },
   { key: "risk",       name: "风险预警",   desc: "敏感操作预警 (超量导出 / 批量查看 / 越权访问)", icon: ShieldAlert },
 ];
-const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: string; trend?: string; core?: boolean; icon?: typeof Users; formula: string }[] = [
+/** PRD §5.3 默认置顶展示的 4 项核心指标（跨模块派生指标，不属于 5 大模块明细） */
+const CORE_METRICS: { key: string; label: string; value: string; trend?: string; icon: typeof Users; formula: string }[] = [
+  {
+    key: "core_served_ratio",
+    label: "规划师服务用户占比",
+    value: "56.2%",
+    trend: "701 / 1,248",
+    icon: UserCheck,
+    formula: "本机构已被规划师服务过的用户数 / 机构总用户数 × 100%。机构总用户数来自规划师平台与学管师平台同步的用户数据汇总。",
+  },
+  {
+    key: "core_old_user_in_subject",
+    label: "学科课转化用户中机构老用户占比",
+    value: "67.8%",
+    trend: "194 / 286",
+    icon: Repeat,
+    formula: "已购学科课程的用户中，属于机构老用户（注册≥90天且历史有付费记录）的人数 / 学科课转化用户总数 × 100%。",
+  },
+  {
+    key: "core_freq_renew_corr",
+    label: "续报率·服务频次关联度",
+    value: "+15pp",
+    trend: "高频 38% − 低频 23%",
+    icon: Link2,
+    formula: "关联度 = 高频服务用户续报率 − 低频服务用户续报率。高频=近30天服务≥3次，低频=近30天服务<3次。结果以百分点（pp）展示。3次/月为系统默认值，由运营后台维护。",
+  },
+  {
+    key: "core_alert_count",
+    label: "敏感操作预警次数",
+    value: "12",
+    trend: "本月",
+    icon: ShieldAlert,
+    formula: "统计周期内触发敏感操作预警（超量导出、批量查看、越权访问、IP 异常等）的次数合计。",
+  },
+];
+
+const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: string; trend?: string; icon?: typeof Users; formula: string }[] = [
   // M1 用户总览
-  { key: "total_user",     module: "user", label: "总用户数",       value: "1,248", core: true, icon: Users, formula: "归属当前机构、状态为正常或停用的全部用户数（不含已删除）。" },
-  { key: "active_user",    module: "user", label: "活跃用户数",     value: "892",   trend: "+8.4%", core: true, icon: Users, formula: "近 30 天内有过登录、上课或服务记录的去重用户数。活跃=登录∪上课∪服务记录。" },
+  { key: "total_user",     module: "user", label: "总用户数",       value: "1,248", icon: Users, formula: "归属当前机构、状态为正常或停用的全部用户数（不含已删除）。" },
+  { key: "active_user",    module: "user", label: "活跃用户数",     value: "892",   trend: "+8.4%", icon: Users, formula: "近 30 天内有过登录、上课或服务记录的去重用户数。活跃=登录∪上课∪服务记录。" },
   { key: "served_user",    module: "user", label: "规划师服务用户数", value: "701",  trend: "覆盖 78.5%", icon: Activity, formula: "周期内被规划师提供过 1V1 服务记录的去重用户数。" },
   { key: "converted_user", module: "user", label: "转化用户数",     value: "286",   trend: "转化率 22.9%", icon: TrendingUp, formula: "周期内由意向 / 体验状态成功转为已付费学员的去重用户数。" },
   // M2 转化数据
   { key: "order_count",    module: "conversion", label: "学科课订单数", value: "156", icon: TrendingUp, formula: "周期内课程类型为「学科课」且订单状态非「已取消」的订单数量。" },
   { key: "order_amount",   module: "conversion", label: "订单金额",     value: "¥328,400", icon: Wallet, formula: "周期内全部有效订单的应收金额合计（含未结算部分，不扣退款）。" },
-  { key: "conv_rate",      module: "conversion", label: "转化率",       value: "22.9%", trend: "+3.1pp", core: true, icon: TrendingUp, formula: "周期内转化用户数 / 周期内进入服务流程的意向用户数 × 100%。" },
+  { key: "conv_rate",      module: "conversion", label: "转化率",       value: "22.9%", trend: "+3.1pp", icon: TrendingUp, formula: "周期内转化用户数 / 周期内进入服务流程的意向用户数 × 100%。" },
   // M3 分成数据
-  { key: "settled",        module: "profit", label: "已结算金额", value: "¥186,300", trend: "+12.6%", core: true, icon: Wallet, formula: "周期内已完成结算流程并入账的金额合计。结算口径：T+N 到账且对账无异常。" },
+  { key: "settled",        module: "profit", label: "已结算金额", value: "¥186,300", trend: "+12.6%", icon: Wallet, formula: "周期内已完成结算流程并入账的金额合计。结算口径：T+N 到账且对账无异常。" },
   { key: "pending",        module: "profit", label: "待结算金额", value: "¥98,200",  icon: Wallet, formula: "已确认收入但尚未完成结算流程的金额合计（已上课/已确权但未到结算日）。" },
   { key: "estimated",      module: "profit", label: "预估收入",   value: "¥43,800",  icon: Wallet, formula: "按当前规则对未确权订单(如未上课/试听)估算的潜在分成，仅用于预测，不计入财务。" },
   // M4 服务数据
   { key: "service_count",  module: "service", label: "规划师服务次数",   value: "2,184", trend: "+9.3%", icon: Activity, formula: "周期内规划师产生的有效 1V1 服务记录条数（含面谈、电话、回访）。" },
   { key: "tutor_complete", module: "service", label: "学管督学完成率", value: "91.4%", trend: "+2.1pp", icon: GraduationCap, formula: "周期内学管师按计划完成的督学任务数 / 应完成任务总数 × 100%。" },
   // M5 风险预警
-  { key: "alert_count",    module: "risk", label: "敏感操作预警次数", value: "12",  trend: "本月", core: true, icon: ShieldAlert, formula: "周期内触发风控规则的次数合计：超量导出、批量查看、越权访问、IP 异常、验证码失败超阈值等。" },
+  { key: "alert_count",    module: "risk", label: "敏感操作预警次数", value: "12",  trend: "本月", icon: ShieldAlert, formula: "周期内触发风控规则的次数合计：超量导出、批量查看、越权访问、IP 异常、验证码失败超阈值等。" },
 ];
 
 /* ---------------- 图表数据 (mock) — 必须定义在使用组件之前 ---------------- */
@@ -64,19 +101,24 @@ const SPARK: Record<string, { x: string; v: number }[]> = {
   conv_rate:      [16,17,18,18.5,19,20,20.5,21,21.5,22,22.5,22.9].map((v,i)=>({x:`${i+1}`,v})),
   order_amount:   [180,200,220,240,260,270,280,290,300,310,320,328.4].map((v,i)=>({x:`${i+1}`,v})),
   alert_count:    [4,6,5,8,7,9,11,10,12,9,11,12].map((v,i)=>({x:`${i+1}`,v})),
+  core_served_ratio:        [42,44,46,48,49,50,51,52,53,54,55,56.2].map((v,i)=>({x:`${i+1}`,v})),
+  core_old_user_in_subject: [55,57,58,60,61,62,63,64,65,66,67,67.8].map((v,i)=>({x:`${i+1}`,v})),
+  core_freq_renew_corr:     [6,7,9,10,11,12,13,13,14,14,15,15].map((v,i)=>({x:`${i+1}`,v})),
+  core_alert_count:         [4,6,5,8,7,9,11,10,12,9,11,12].map((v,i)=>({x:`${i+1}`,v})),
 };
 const TREND_12M = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
 
 function Dashboard() {
   const { role } = useApp();
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<string[]>(ALL_METRICS.filter((m) => m.core).map((m) => m.key));
+  const [selected, setSelected] = useState<string[]>(ALL_METRICS.map((m) => m.key));
 
   const visible = ALL_METRICS.filter((m) => selected.includes(m.key));
   const isPlanner = role === "planner";
   const isTutor = role === "tutor";
 
   return (
+    <RoleGate allow={["org_admin", "super_admin"]}>
     <div>
       <PageHeader
         title="数据看板"
@@ -103,10 +145,11 @@ function Dashboard() {
         <div>· <b>M3 分成数据</b>：已结算金额 / 待结算金额 / 预估收入</div>
         <div>· <b>M4 服务数据</b>：规划师服务次数 / 学管督学完成率</div>
         <div>· <b>M5 风险预警</b>：敏感操作预警次数（超量导出、批量查看、越权访问、IP 异常等）</div>
+        <div>· <b>顶部 4 项核心指标</b>（PRD §5.3 默认置顶、不可取消）：规划师服务用户占比 / 学科课转化用户中机构老用户占比 / 续报率·服务频次关联度 / 敏感操作预警次数</div>
         <div>· 数据范围：机构管理员=全量；规划师=本人；学管师=本人服务；鼎校超管=按授权</div>
         <div>· 刷新延迟 ≤5s；指标池由运营后台维护，机构可勾选/取消显示（核心指标默认勾选不可取消）</div>
         <div>· 鼠标悬停指标名称右侧 <Info className="inline h-3 w-3 text-info" /> 图标，可查看 <b>计算口径</b>（开发注释开启时显示）</div>
-        <div>· 顶部 4 张为核心指标卡（带迷你趋势），下方按模块独立图表展示</div>
+        <div>· 规划师/学管师直访本页返回 403（PRD §5.5 验收项）</div>
       </DevNote>
 
       <div className="mb-4 flex items-center gap-3">
@@ -141,7 +184,7 @@ function Dashboard() {
       <TooltipProvider delayDuration={150}>
         {/* 顶部：4 张核心指标卡片 */}
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {ALL_METRICS.filter((m) => m.core).slice(0, 4).map((m) => {
+          {CORE_METRICS.map((m) => {
             const Icon = m.icon || BookOpen;
             return (
               <Card key={m.key} className="relative overflow-hidden p-5">
@@ -149,6 +192,7 @@ function Dashboard() {
                 <div className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="h-4.5 w-4.5" />
                 </div>
+                <span className="absolute left-4 top-4 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">核心</span>
                 <FormulaTip label={m.label} formula={m.formula} />
                 <div className="mt-2 text-3xl font-semibold tracking-tight">{m.value}</div>
                 {m.trend && <div className="mt-1 text-xs text-success">{m.trend}</div>}
@@ -198,7 +242,10 @@ function Dashboard() {
           <DialogHeader>
             <DialogTitle>自定义指标池</DialogTitle>
           </DialogHeader>
-          <div className="text-xs text-muted-foreground mb-2">指标池由运营后台维护，机构可勾选/取消展示。核心 4 项默认勾选不可取消。</div>
+          <div className="text-xs text-muted-foreground mb-2">
+            指标池由运营后台维护，机构可勾选/取消展示。<br />
+            <b className="text-foreground">PRD §5.3 默认置顶 4 项核心指标</b>（规划师服务用户占比 / 学科课转化老用户占比 / 续报率-服务频次关联度 / 敏感操作预警次数）始终展示，不在此池中。
+          </div>
           <div className="max-h-96 space-y-4 overflow-auto">
             {MODULES.map((mod, idx) => (
               <div key={mod.key}>
@@ -208,14 +255,11 @@ function Dashboard() {
                     <label key={m.key} className="flex items-center gap-2 rounded border p-2 text-sm">
                       <Checkbox
                         checked={selected.includes(m.key)}
-                        disabled={m.core}
                         onCheckedChange={(v) => {
-                          if (m.core) return;
                           setSelected(v ? [...selected, m.key] : selected.filter((k) => k !== m.key));
                         }}
                       />
                       <span>{m.label}</span>
-                      {m.core && <span className="ml-auto rounded bg-primary/10 px-1 text-[10px] text-primary">核心</span>}
                     </label>
                   ))}
                 </div>
@@ -229,6 +273,7 @@ function Dashboard() {
         </DialogContent>
       </Dialog>
     </div>
+    </RoleGate>
   );
 }
 
@@ -270,9 +315,6 @@ function MetricChartCard({ metric }: { metric: typeof ALL_METRICS[number] }) {
             {metric.trend && <span className="text-xs text-success">{metric.trend}</span>}
           </div>
         </div>
-        {metric.core && (
-          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">核心</span>
-        )}
       </div>
       <div className="mt-3 h-36">
         <ResponsiveContainer width="100%" height="100%">
