@@ -22,7 +22,6 @@ import { Route as AppSettingsOrgRouteImport } from './routes/_app/settings/org'
 import { Route as AppSettingsNotificationEventsRouteImport } from './routes/_app/settings/notification-events'
 import { Route as AppSettingsIpRouteImport } from './routes/_app/settings/ip'
 import { Route as AppSettingsBackupRouteImport } from './routes/_app/settings/backup'
-import { Route as AppSettingsAlertRouteImport } from './routes/_app/settings/alert'
 import { Route as AppServiceSettingsRouteImport } from './routes/_app/service/settings'
 import { Route as AppServiceRecordsRouteImport } from './routes/_app/service/records'
 import { Route as AppProfitRulesRouteImport } from './routes/_app/profit/rules'
@@ -101,11 +100,6 @@ const AppSettingsIpRoute = AppSettingsIpRouteImport.update({
 const AppSettingsBackupRoute = AppSettingsBackupRouteImport.update({
   id: '/settings/backup',
   path: '/settings/backup',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSettingsAlertRoute = AppSettingsAlertRouteImport.update({
-  id: '/settings/alert',
-  path: '/settings/alert',
   getParentRoute: () => AppRoute,
 } as any)
 const AppServiceSettingsRoute = AppServiceSettingsRouteImport.update({
@@ -200,7 +194,6 @@ export interface FileRoutesByFullPath {
   '/profit/rules': typeof AppProfitRulesRoute
   '/service/records': typeof AppServiceRecordsRoute
   '/service/settings': typeof AppServiceSettingsRoute
-  '/settings/alert': typeof AppSettingsAlertRoute
   '/settings/backup': typeof AppSettingsBackupRoute
   '/settings/ip': typeof AppSettingsIpRoute
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
@@ -229,7 +222,6 @@ export interface FileRoutesByTo {
   '/profit/rules': typeof AppProfitRulesRoute
   '/service/records': typeof AppServiceRecordsRoute
   '/service/settings': typeof AppServiceSettingsRoute
-  '/settings/alert': typeof AppSettingsAlertRoute
   '/settings/backup': typeof AppSettingsBackupRoute
   '/settings/ip': typeof AppSettingsIpRoute
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
@@ -260,7 +252,6 @@ export interface FileRoutesById {
   '/_app/profit/rules': typeof AppProfitRulesRoute
   '/_app/service/records': typeof AppServiceRecordsRoute
   '/_app/service/settings': typeof AppServiceSettingsRoute
-  '/_app/settings/alert': typeof AppSettingsAlertRoute
   '/_app/settings/backup': typeof AppSettingsBackupRoute
   '/_app/settings/ip': typeof AppSettingsIpRoute
   '/_app/settings/notification-events': typeof AppSettingsNotificationEventsRoute
@@ -291,7 +282,6 @@ export interface FileRouteTypes {
     | '/profit/rules'
     | '/service/records'
     | '/service/settings'
-    | '/settings/alert'
     | '/settings/backup'
     | '/settings/ip'
     | '/settings/notification-events'
@@ -320,7 +310,6 @@ export interface FileRouteTypes {
     | '/profit/rules'
     | '/service/records'
     | '/service/settings'
-    | '/settings/alert'
     | '/settings/backup'
     | '/settings/ip'
     | '/settings/notification-events'
@@ -350,7 +339,6 @@ export interface FileRouteTypes {
     | '/_app/profit/rules'
     | '/_app/service/records'
     | '/_app/service/settings'
-    | '/_app/settings/alert'
     | '/_app/settings/backup'
     | '/_app/settings/ip'
     | '/_app/settings/notification-events'
@@ -457,13 +445,6 @@ declare module '@tanstack/react-router' {
       path: '/settings/backup'
       fullPath: '/settings/backup'
       preLoaderRoute: typeof AppSettingsBackupRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/settings/alert': {
-      id: '/_app/settings/alert'
-      path: '/settings/alert'
-      fullPath: '/settings/alert'
-      preLoaderRoute: typeof AppSettingsAlertRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/service/settings': {
@@ -585,7 +566,6 @@ interface AppRouteChildren {
   AppProfitRulesRoute: typeof AppProfitRulesRoute
   AppServiceRecordsRoute: typeof AppServiceRecordsRoute
   AppServiceSettingsRoute: typeof AppServiceSettingsRoute
-  AppSettingsAlertRoute: typeof AppSettingsAlertRoute
   AppSettingsBackupRoute: typeof AppSettingsBackupRoute
   AppSettingsIpRoute: typeof AppSettingsIpRoute
   AppSettingsNotificationEventsRoute: typeof AppSettingsNotificationEventsRoute
@@ -613,7 +593,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfitRulesRoute: AppProfitRulesRoute,
   AppServiceRecordsRoute: AppServiceRecordsRoute,
   AppServiceSettingsRoute: AppServiceSettingsRoute,
-  AppSettingsAlertRoute: AppSettingsAlertRoute,
   AppSettingsBackupRoute: AppSettingsBackupRoute,
   AppSettingsIpRoute: AppSettingsIpRoute,
   AppSettingsNotificationEventsRoute: AppSettingsNotificationEventsRoute,
@@ -633,3 +612,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
