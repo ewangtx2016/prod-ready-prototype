@@ -56,6 +56,13 @@ function Page() {
     setEditing(null);
   };
 
+  const toggleEnabled = (e: NotifyEvent, v: boolean) => {
+    const cur = db.notifyEvents();
+    const updated = cur.map((x) => x.key === e.key ? { ...x, enabled: v, updatedBy: ROLE_META[role].name, updatedAt: new Date().toLocaleString("zh-CN") } : x);
+    db.setNotifyEvents(updated); refresh();
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "通知事件", action: v ? "启用" : "停用", detail: e.name });
+  };
+
   return (
     <div>
       <PageHeader title="通知事件" subtitle="集中管理「事件 → 渠道 → 模板」绑定。业务页（服务审核、操作预警等）只引用事件。" />
@@ -83,8 +90,10 @@ function Page() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-16">启用</TableHead>
               <TableHead>事件</TableHead>
               <TableHead className="w-24">分类</TableHead>
+              <TableHead className="w-32">触发阈值</TableHead>
               <TableHead>接收人</TableHead>
               <TableHead>启用渠道</TableHead>
               <TableHead className="w-40">最近更新</TableHead>
@@ -92,16 +101,23 @@ function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visible.length === 0 && <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">无匹配事件</TableCell></TableRow>}
+            {visible.length === 0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">无匹配事件</TableCell></TableRow>}
             {visible.map((e) => {
               const enabled = (Object.keys(e.channels) as NotifyChannelKey[]).filter((k) => e.channels[k].enabled);
+              const evOn = e.enabled !== false;
               return (
                 <TableRow key={e.key} className="cursor-pointer" onClick={() => setEditing(e)}>
+                  <TableCell onClick={(ev) => ev.stopPropagation()}>
+                    <Switch checked={evOn} onCheckedChange={(v) => toggleEnabled(e, v)} />
+                  </TableCell>
                   <TableCell>
-                    <div className="font-medium">{e.name}</div>
+                    <div className={`font-medium ${evOn ? "" : "text-muted-foreground"}`}>{e.name}</div>
                     <div className="mt-0.5 text-xs text-muted-foreground"><code>{e.key}</code> · {e.description}</div>
                   </TableCell>
                   <TableCell><Badge variant="outline" className="font-normal">{e.category}</Badge></TableCell>
+                  <TableCell className="text-xs">
+                    {e.threshold ? <span><b className="text-foreground">{e.threshold.value}</b> <span className="text-muted-foreground">{e.threshold.unit}</span></span> : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{e.recipients.map((r) => ROLE_META[r as Role]?.name || r).join("、") || "—"}</TableCell>
                   <TableCell>
                     {enabled.length === 0 ? <span className="text-xs text-muted-foreground">未启用</span> : (
@@ -163,6 +179,31 @@ function EventEditor({ event, onClose, onSave }: { event: NotifyEvent; onClose: 
         </SheetHeader>
 
         <div className="mt-5 space-y-5">
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <div className="text-sm font-medium">启用此事件</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">关闭后所有渠道都不会发送通知</div>
+            </div>
+            <Switch checked={form.enabled !== false} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
+          </div>
+
+          {form.category === "操作预警" && (
+            <div>
+              <Label className="mb-2 block text-sm">触发阈值</Label>
+              <div className="flex items-center gap-2">
+                <Input type="number" className="w-32" value={form.threshold?.value ?? 0}
+                  onChange={(e) => setForm({ ...form, threshold: { value: +e.target.value, unit: form.threshold?.unit || "次/日" } })} />
+                <Select value={form.threshold?.unit || "次/日"} onValueChange={(v) => setForm({ ...form, threshold: { value: form.threshold?.value ?? 0, unit: v } })}>
+                  <SelectTrigger className="h-9 w-32"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["次/日", "次/小时", "%", "分钟", "次"].map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">达到该阈值时触发本事件并按下方渠道发送通知</div>
+            </div>
+          )}
+
           <div>
             <Label className="mb-2 block text-sm">接收人角色</Label>
             <div className="flex flex-wrap gap-3">
