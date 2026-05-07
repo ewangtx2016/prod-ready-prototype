@@ -30,7 +30,7 @@ const CHANNEL_META: Record<NotifyChannelKey, { label: string; icon: any; tplRout
   email: { label: "邮件", icon: Mail, tplRoute: "/notification/templates", tplTab: "email", tplKey: "demo.tpl.email" },
 };
 
-const CATEGORIES: NotifyEvent["category"][] = ["服务审核", "操作预警", "续报提醒", "财务结算", "账号安全"];
+const CATEGORIES: NotifyEvent["category"][] = ["服务审核", "操作预警", "数据备份", "续报提醒", "财务结算", "账号安全"];
 
 function Page() {
   const { role } = useApp();
@@ -187,7 +187,7 @@ function EventEditor({ event, onClose, onSave }: { event: NotifyEvent; onClose: 
             <Switch checked={form.enabled !== false} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
           </div>
 
-          {form.category === "操作预警" && (
+          {(form.category === "操作预警" || form.category === "数据备份") && form.threshold !== undefined && (
             <div>
               <Label className="mb-2 block text-sm">触发阈值</Label>
               <div className="flex items-center gap-2">
