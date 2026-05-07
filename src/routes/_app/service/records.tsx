@@ -13,9 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Eye, Download, Check, X } from "lucide-react";
 
@@ -238,70 +235,5 @@ function Page() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function EditForm({ record, onClose }: { record: ServiceRecord; onClose: (submit: boolean) => void }) {
-  const { role } = useApp();
-  const [reason, setReason] = useState("");
-  const [content, setContent] = useState(record.content);
-  const submit = () => {
-    if (!reason.trim()) { toast.error("请填写修改原因"); return; }
-    const list = db.services();
-    const idx = list.findIndex((x) => x.id === record.id);
-    list[idx] = { ...list[idx], status: "pending_audit", pendingChange: { reason, newContent: content, submittedAt: new Date().toLocaleString("zh-CN") } };
-    db.setServices(list);
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "提交修改申请", detail: `#${record.id} - ${reason}` });
-    toast.success("修改申请已提交，等待机构管理员审核");
-    onClose(true);
-  };
-  return (
-    <>
-      <div className="space-y-3">
-        <div><Label>修改原因 *</Label><Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="请说明为什么需要修改..." /></div>
-        <div><Label>新的服务内容</Label><Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={4} /></div>
-      </div>
-      <DialogFooter><Button variant="outline" onClick={() => onClose(false)}>取消</Button><Button onClick={submit}>提交申请</Button></DialogFooter>
-    </>
-  );
-}
-
-function CreateForm({ onClose }: { onClose: (submit: boolean) => void }) {
-  const { role } = useApp();
-  const [form, setForm] = useState({ userName: "", userPhone: "", serviceType: "沟通", content: "", duration: 30 });
-  const submit = () => {
-    if (!form.userName || !form.userPhone || !form.content) { toast.error("请填写完整信息"); return; }
-    const list = db.services();
-    const newRec: ServiceRecord = {
-      id: db.rid(), ...form, createdBy: role === "planner" ? "李规划" : "陈学管",
-      createdByRole: role === "planner" ? "planner" : "tutor",
-      createdAt: new Date().toLocaleString("zh-CN"),
-      status: db.auditMode() === "review" ? "pending_audit" : "submitted",
-    };
-    db.setServices([newRec, ...list]);
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "新增", detail: `#${newRec.id}` });
-    toast.success(db.auditMode() === "review" ? "已提交，等待审核" : "服务记录已提交（实时监控模式）");
-    onClose(true);
-  };
-  return (
-    <>
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          <div><Label>用户姓名 *</Label><Input value={form.userName} onChange={(e) => setForm({ ...form, userName: e.target.value })} /></div>
-          <div><Label>手机号 *</Label><Input value={form.userPhone} onChange={(e) => setForm({ ...form, userPhone: e.target.value })} placeholder="13800000000" /></div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div><Label>服务类型</Label>
-            <Select value={form.serviceType} onValueChange={(v) => setForm({ ...form, serviceType: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{["沟通", "督学", "答疑", "打卡", "社群"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div><Label>时长(分钟)</Label><Input type="number" value={form.duration} onChange={(e) => setForm({ ...form, duration: +e.target.value })} /></div>
-        </div>
-        <div><Label>服务内容 *</Label><Textarea rows={4} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
-      </div>
-      <DialogFooter><Button variant="outline" onClick={() => onClose(false)}>取消</Button><Button onClick={submit}>提交</Button></DialogFooter>
-    </>
   );
 }
