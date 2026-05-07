@@ -26,8 +26,8 @@ function Page() {
   const markAll = () => { setList(list.map(m => ({ ...m, read: true }))); toast.success("已全部标记为已读"); };
   return (
     <div>
-      <PageHeader title="站内信" subtitle="系统通知 / 审核提醒 / 异常预警" actions={<Button size="sm" variant="outline" onClick={markAll}>全部标记已读</Button>} />
-      <DevNote prd="§7.2" title="站内信"><div>· 系统级基础通知能力</div><div>· 类型：system 系统 / audit 审核 / alert 预警</div></DevNote>
+      <PageHeader title="我的消息" subtitle="系统通知 / 审核提醒 / 异常预警 收件箱" actions={<Button size="sm" variant="outline" onClick={markAll}>全部标记已读</Button>} />
+      <DevNote prd="§7.2" title="我的消息"><div>· 顶部小喇叭入口，按当前登录账号展示站内信</div><div>· 类型：system 系统 / audit 审核 / alert 预警</div><div>· 文案模板在「通知管理 → 站内信模板」配置</div></DevNote>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList><TabsTrigger value="all">全部 ({list.length})</TabsTrigger><TabsTrigger value="unread">未读 ({list.filter(m => !m.read).length})</TabsTrigger><TabsTrigger value="read">已读</TabsTrigger></TabsList>
         <TabsContent value={tab}>
