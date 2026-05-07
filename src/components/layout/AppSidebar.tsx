@@ -4,7 +4,7 @@ import {
   Settings, ShieldCheck, Users, History, ChevronDown,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { MENU_PERMS } from "@/lib/roles";
+import { MENU_PERMS, SUBMENU_PERMS, type Role } from "@/lib/roles";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +52,16 @@ const GROUPS: Group[] = [
 export function AppSidebar() {
   const { role } = useApp();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const visible = GROUPS.filter((g) => MENU_PERMS[g.key]?.includes(role));
+  const visible = GROUPS
+    .filter((g) => MENU_PERMS[g.key]?.includes(role))
+    .map((g) => ({
+      ...g,
+      children: g.children.filter((c) => {
+        const perms = SUBMENU_PERMS[c.to];
+        return perms ? perms.includes(role) : true;
+      }),
+    }))
+    .filter((g) => g.children.length > 0);
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r bg-card">
