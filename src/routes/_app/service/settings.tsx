@@ -265,8 +265,38 @@ function RuleEditor({ rule, isNew, isSuper, onClose, onSave }: { rule: AlertRule
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{isNew ? "新增" : "编辑"}预警规则 · {TYPE_META[form.type].label}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isNew ? "新增" : "编辑"}预警规则{!isNew && ` · ${TYPE_META[form.type].label}`}</DialogTitle></DialogHeader>
         <div className="space-y-4">
+          {isNew && (
+            <div>
+              <Label className="mb-2 block">规则类型</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(TYPE_META) as AlertRuleType[]).map((t) => {
+                  const Icon = TYPE_META[t].icon;
+                  const active = form.type === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        const blank = createBlank(t, isSuper);
+                        setForm({ ...blank, name: form.name || blank.name, severity: form.severity, scope: form.scope, orgName: form.orgName, notify: form.notify });
+                        setWordsText("");
+                      }}
+                      className={`flex items-start gap-2 rounded-md border p-3 text-left transition ${active ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "hover:bg-muted/50"}`}
+                    >
+                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div>
+                        <div className="text-sm font-medium">{TYPE_META[t].label}</div>
+                        <div className="text-xs text-muted-foreground">{TYPE_META[t].desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div>
             <Label>规则名称</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
