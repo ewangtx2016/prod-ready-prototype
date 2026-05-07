@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Plus, Trash2, ShieldAlert, Clock, Repeat, DollarSign, Info } from "lucide-react";
+import { Pencil, Plus, Trash2, ShieldAlert, Clock, Repeat, DollarSign } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
@@ -62,12 +62,6 @@ function Inner() {
           <p className="text-sm text-muted-foreground">服务记录提交后先做规则匹配；命中「审核规则」的记录需机构管理员审核通过后才对外展示或生效，并按配置通知管理员。</p>
         </Card>
       </div>
-      <Card className="mt-4 border-sky-200 bg-sky-50/50 p-4 text-xs text-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
-        <div className="flex items-start gap-2">
-          <Info className="mt-0.5 h-4 w-4 shrink-0" />
-          <div>「审核规则」仅在「需要审核」模式下生效。切到实时监控时规则不参与判定，但配置仍会保留。</div>
-        </div>
-      </Card>
         </TabsContent>
 
         <TabsContent value="rules" className="mt-4">
