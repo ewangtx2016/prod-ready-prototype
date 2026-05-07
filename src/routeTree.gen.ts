@@ -16,7 +16,6 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppAuditLogRouteImport } from './routes/_app/audit-log'
 import { Route as AppSalesIndexRouteImport } from './routes/_app/sales/index'
 import { Route as AppRoleIndexRouteImport } from './routes/_app/role/index'
-import { Route as AppUserGroupsRouteImport } from './routes/_app/user/groups'
 import { Route as AppUserAccountsRouteImport } from './routes/_app/user/accounts'
 import { Route as AppSettingsOrgRouteImport } from './routes/_app/settings/org'
 import { Route as AppSettingsIpRouteImport } from './routes/_app/settings/ip'
@@ -69,11 +68,6 @@ const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
 const AppRoleIndexRoute = AppRoleIndexRouteImport.update({
   id: '/role/',
   path: '/role/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppUserGroupsRoute = AppUserGroupsRouteImport.update({
-  id: '/user/groups',
-  path: '/user/groups',
   getParentRoute: () => AppRoute,
 } as any)
 const AppUserAccountsRoute = AppUserAccountsRouteImport.update({
@@ -197,7 +191,6 @@ export interface FileRoutesByFullPath {
   '/settings/ip': typeof AppSettingsIpRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/user/accounts': typeof AppUserAccountsRoute
-  '/user/groups': typeof AppUserGroupsRoute
   '/role/': typeof AppRoleIndexRoute
   '/sales/': typeof AppSalesIndexRoute
 }
@@ -225,7 +218,6 @@ export interface FileRoutesByTo {
   '/settings/ip': typeof AppSettingsIpRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/user/accounts': typeof AppUserAccountsRoute
-  '/user/groups': typeof AppUserGroupsRoute
   '/role': typeof AppRoleIndexRoute
   '/sales': typeof AppSalesIndexRoute
 }
@@ -255,7 +247,6 @@ export interface FileRoutesById {
   '/_app/settings/ip': typeof AppSettingsIpRoute
   '/_app/settings/org': typeof AppSettingsOrgRoute
   '/_app/user/accounts': typeof AppUserAccountsRoute
-  '/_app/user/groups': typeof AppUserGroupsRoute
   '/_app/role/': typeof AppRoleIndexRoute
   '/_app/sales/': typeof AppSalesIndexRoute
 }
@@ -285,7 +276,6 @@ export interface FileRouteTypes {
     | '/settings/ip'
     | '/settings/org'
     | '/user/accounts'
-    | '/user/groups'
     | '/role/'
     | '/sales/'
   fileRoutesByTo: FileRoutesByTo
@@ -313,7 +303,6 @@ export interface FileRouteTypes {
     | '/settings/ip'
     | '/settings/org'
     | '/user/accounts'
-    | '/user/groups'
     | '/role'
     | '/sales'
   id:
@@ -342,7 +331,6 @@ export interface FileRouteTypes {
     | '/_app/settings/ip'
     | '/_app/settings/org'
     | '/_app/user/accounts'
-    | '/_app/user/groups'
     | '/_app/role/'
     | '/_app/sales/'
   fileRoutesById: FileRoutesById
@@ -402,13 +390,6 @@ declare module '@tanstack/react-router' {
       path: '/role'
       fullPath: '/role/'
       preLoaderRoute: typeof AppRoleIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/user/groups': {
-      id: '/_app/user/groups'
-      path: '/user/groups'
-      fullPath: '/user/groups'
-      preLoaderRoute: typeof AppUserGroupsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/user/accounts': {
@@ -569,7 +550,6 @@ interface AppRouteChildren {
   AppSettingsIpRoute: typeof AppSettingsIpRoute
   AppSettingsOrgRoute: typeof AppSettingsOrgRoute
   AppUserAccountsRoute: typeof AppUserAccountsRoute
-  AppUserGroupsRoute: typeof AppUserGroupsRoute
   AppRoleIndexRoute: typeof AppRoleIndexRoute
   AppSalesIndexRoute: typeof AppSalesIndexRoute
 }
@@ -596,7 +576,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsIpRoute: AppSettingsIpRoute,
   AppSettingsOrgRoute: AppSettingsOrgRoute,
   AppUserAccountsRoute: AppUserAccountsRoute,
-  AppUserGroupsRoute: AppUserGroupsRoute,
   AppRoleIndexRoute: AppRoleIndexRoute,
   AppSalesIndexRoute: AppSalesIndexRoute,
 }
@@ -611,3 +590,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
