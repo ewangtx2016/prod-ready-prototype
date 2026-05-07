@@ -164,6 +164,29 @@ function HitLine({ ok, label, detail }: { ok: boolean; label: string; detail: st
   );
 }
 
+function SimpleSplitRow({ name, accent, pct, amount, base }: { name: string; accent: "info" | "success" | "muted"; pct: number; amount: number; base: number }) {
+  const cls = accent === "info" ? "text-info" : accent === "success" ? "text-success" : "text-muted-foreground";
+  const barCls = accent === "info" ? "bg-info" : accent === "success" ? "bg-success" : "bg-muted-foreground/60";
+  return (
+    <div>
+      <div className="flex items-center justify-between text-sm">
+        <span className="flex items-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${barCls}`} />
+          <span>{name}分成</span>
+          <span className="text-xs text-muted-foreground">占 {pct.toFixed(1)}%</span>
+        </span>
+        <span className={`font-mono ${cls}`}>¥{amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+      </div>
+      <div className="mt-1 ml-4 text-[11px] text-muted-foreground">
+        ¥{base.toLocaleString()} × {pct.toFixed(1)}% = ¥{amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+      </div>
+      <div className="mt-1 ml-4 h-1 rounded bg-muted overflow-hidden">
+        <div className={`h-full ${barCls}`} style={{ width: `${Math.min(100, pct)}%` }} />
+      </div>
+    </div>
+  );
+}
+
 function Row({ label, value, accent, pct, ok }: { label: string; value: string; accent?: "info" | "success" | "muted"; pct?: number; ok?: boolean }) {
   const cls = accent === "info" ? "text-info" : accent === "success" ? "text-success" : accent === "muted" ? "text-muted-foreground" : "";
   return (
