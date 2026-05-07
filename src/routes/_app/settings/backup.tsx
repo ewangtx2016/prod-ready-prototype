@@ -63,17 +63,9 @@ type Strategy = {
   preCheck: boolean;
 };
 
-type AlertCfg = {
-  notifyOnFail: boolean;
-  notifyOnCapacity: boolean;
-  capacityThreshold: number;
-  recipients: string; // 逗号分隔
-};
-
 const K_TARGETS = "demo.backup.targets";
 const K_BACKUPS = "demo.backup.list";
 const K_STRATEGY = "demo.backup.strategy";
-const K_ALERT = "demo.backup.alert";
 
 const sampleTargets: Target[] = [
   { id: "T1", name: "本地主存储", type: "local", primary: true, status: "ok", usagePct: 42, latencyMs: 8, config: { path: "/var/backups/db" }, createdAt: "2026-01-10 09:00" },
@@ -89,7 +81,6 @@ const sampleBackups: Backup[] = [
 ];
 
 const defaultStrategy: Strategy = { enabled: true, period: "daily", time: "02:00", keepCount: 14, keepDays: 90, encrypt: true, preCheck: true };
-const defaultAlert: AlertCfg = { notifyOnFail: true, notifyOnCapacity: true, capacityThreshold: 80, recipients: "ops@org.com,admin@org.com" };
 
 const TYPE_META: Record<TargetType, { label: string; icon: typeof HardDrive }> = {
   local: { label: "本地磁盘", icon: HardDrive },
@@ -123,7 +114,6 @@ function Page() {
   const [targets, setTargets] = useLS<Target[]>(K_TARGETS, sampleTargets);
   const [list, setList] = useLS<Backup[]>(K_BACKUPS, sampleBackups);
   const [strategy, setStrategy] = useLS<Strategy>(K_STRATEGY, defaultStrategy);
-  const [alertCfg, setAlertCfg] = useLS<AlertCfg>(K_ALERT, defaultAlert);
 
   const [smsScene, setSmsScene] = useState<{ b?: Backup; t?: Target; type: "delete-backup" | "restore" | "delete-target" } | null>(null);
   const [editTarget, setEditTarget] = useState<Target | null>(null);
