@@ -73,6 +73,10 @@ export type AuditLog = {
   module: string;
   action: string;
   detail: string;
+  /** 操作前快照（JSON），可选 */
+  before?: any;
+  /** 操作后快照（JSON），可选 */
+  after?: any;
 };
 
 const KEYS = {

@@ -17,9 +17,9 @@ export const MENU_PERMS: Record<string, Role[]> = {
   sales: ["org_admin", "super_admin", "planner"],
   profit: ["org_admin", "super_admin"],
   ledger: ["org_admin", "super_admin", "planner"],
-  settings: ["org_admin"],
-  role: ["org_admin"],
-  user: ["org_admin"],
+  settings: ["org_admin", "super_admin"],
+  role: ["org_admin", "super_admin"],
+  user: ["org_admin", "super_admin"],
   audit: ["org_admin", "super_admin"],
 };
 
