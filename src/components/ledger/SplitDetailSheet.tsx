@@ -101,9 +101,6 @@ export function SplitDetailSheet({
               <div>
                 <div className="text-xs text-muted-foreground mb-2">分成计算</div>
                 <Card className="p-3 text-sm space-y-2">
-                  <div className="rounded bg-info/5 border border-info/20 px-2 py-1.5 text-[11px] text-muted-foreground">
-                    数据由<span className="text-foreground font-medium">鼎团团</span>等第三方分账系统同步，本系统仅做展示与对账。
-                  </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
                     <span>订单金额</span>
                     <span className="font-mono">¥{item.amount.toLocaleString()}</span>
@@ -142,9 +139,6 @@ export function SplitDetailSheet({
               </Card>
             </div>
 
-            <p className="text-[11px] text-muted-foreground">
-              本明细按订单产生时的规则版本快照计算，规则修订不会影响历史订单。
-            </p>
           </div>
         )}
       </SheetContent>
