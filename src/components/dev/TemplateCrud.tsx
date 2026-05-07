@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -110,13 +108,13 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
       <DevNote prd={prd} title={title}>
         <div>· 触达通道：{channel}</div>
         <div>· 可用变量：{tags.join(" / ")}（统一采用 <code>{"{{中文}}"}</code> 双大括号格式，发送前由系统替换为真实数据）</div>
-        <div>· 自动发送：业务事件触发；手动发送：列表测试发送或在用户详情页</div>
+        <div>· 模板仅负责<b>文案</b>；是否发送、发送给谁，统一在「系统设置 → 通知事件」中按事件绑定渠道与模板</div>
         <div>· 触达内容/时间/结果均留痕（审核日志）</div>
         <div>· <b>模板 Key</b>：英文短标识（如 <code>renewal_reminder</code>），后端按 Key 调用，<b>创建后不可修改</b>；运营改名/改文案不影响触发。系统内置模板使用 <code>sys_</code> 前缀</div>
       </DevNote>
       <Card>
         <Table>
-          <TableHeader><TableRow><TableHead>模板名称</TableHead><TableHead>模板 Key</TableHead><TableHead>内容预览</TableHead><TableHead>自动发送</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>模板名称</TableHead><TableHead>模板 Key</TableHead><TableHead>内容预览</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
             {list.map(t => (
               <TableRow key={t.id}>
@@ -127,7 +125,6 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
                   </button>
                 </TableCell>
                 <TableCell className="max-w-md truncate text-sm text-muted-foreground">{t.content}</TableCell>
-                <TableCell>{t.auto ? <Badge className="bg-success text-success-foreground">已开启</Badge> : <Badge variant="outline">关闭</Badge>}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{t.createdAt}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button size="sm" variant="ghost" onClick={() => setTesting(t)}><Send className="h-3.5 w-3.5" /></Button>
@@ -136,7 +133,7 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
                 </TableCell>
               </TableRow>
             ))}
-            {list.length === 0 && <TableRow><TableCell colSpan={6} className="py-12 text-center text-muted-foreground">暂无模板</TableCell></TableRow>}
+            {list.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">暂无模板</TableCell></TableRow>}
           </TableBody>
         </Table>
       </Card>
@@ -166,7 +163,6 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2"><Switch checked={editing.auto} onCheckedChange={(v) => setEditing({ ...editing, auto: v })} /><Label>开启自动发送</Label></div>
             </div>
           )}
           <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>取消</Button><Button onClick={() => editing && (editing.name && editing.content ? save(editing) : toast.error("名称与内容必填"))}>保存</Button></DialogFooter>
