@@ -28,11 +28,8 @@ export const SUBMENU_PERMS: Record<string, Role[]> = {
   // 学管师仅可见：服务列表、站内信
   "/service/records": ["org_admin", "super_admin", "planner", "tutor"],
   "/service/settings": ["org_admin", "super_admin", "planner"],
-  "/notification/virtual-no": ["org_admin", "super_admin", "planner"],
-  "/notification/sms": ["org_admin", "super_admin", "planner"],
-  "/notification/wechat": ["org_admin", "super_admin", "planner"],
-  "/notification/email": ["org_admin", "super_admin", "planner"],
-  "/notification/inbox": ["org_admin", "super_admin", "planner", "tutor"],
+  "/notification/templates": ["org_admin", "super_admin", "planner"],
+  "/settings/notification-events": ["org_admin", "super_admin"],
 };
 
 export function can(role: Role, action: string): boolean {
