@@ -1,11 +1,10 @@
 import { useApp } from "@/lib/store";
 import { ROLE_LIST, ROLE_META } from "@/lib/roles";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Bell, LogOut, RefreshCcw } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate, useRouterState, Link } from "@tanstack/react-router";
-import { db } from "@/lib/mock";
 import { toast } from "sonner";
 
 const PATH_LABEL: Record<string, string> = {
@@ -19,7 +18,7 @@ const PATH_LABEL: Record<string, string> = {
 };
 
 export function AppHeader() {
-  const { role, setRole, showDevNote, setShowDevNote } = useApp();
+  const { role, setRole } = useApp();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const nav = useNavigate();
   const segments = path.split("/").filter(Boolean);
@@ -36,10 +35,6 @@ export function AppHeader() {
         ))}
       </nav>
       <div className="ml-auto flex items-center gap-3">
-        <div className="flex items-center gap-2 rounded-md border bg-info/5 px-2 py-1 text-xs">
-          <span className="text-muted-foreground">开发注释</span>
-          <Switch checked={showDevNote} onCheckedChange={setShowDevNote} />
-        </div>
         <div className="flex items-center gap-2 rounded-md border bg-warning/10 px-2 py-1">
           <span className="text-xs text-muted-foreground">演示身份</span>
           <Select value={role} onValueChange={(v) => { setRole(v as any); toast.success(`切换为 ${ROLE_META[v as keyof typeof ROLE_META].name}`); }}>
@@ -58,10 +53,13 @@ export function AppHeader() {
             </SelectContent>
           </Select>
         </div>
-        <Button size="sm" variant="ghost" onClick={() => { db.reset(); toast.success("演示数据已重置"); window.location.reload(); }}>
-          <RefreshCcw className="h-4 w-4" /> 重置数据
-        </Button>
         <Button size="icon" variant="ghost" onClick={() => nav({ to: "/messages" })} title="我的消息"><Bell className="h-4 w-4" /></Button>
+        <div className="flex items-center gap-2 pl-2">
+          <Avatar className="h-7 w-7">
+            <AvatarFallback className="bg-primary/10 text-xs text-primary">{ROLE_META[role].name.slice(0, 1)}</AvatarFallback>
+          </Avatar>
+          <span className="text-sm font-medium">{ROLE_META[role].name}</span>
+        </div>
         <Button size="sm" variant="ghost" onClick={() => nav({ to: "/login" })}>
           <LogOut className="h-4 w-4" /> 退出
         </Button>
