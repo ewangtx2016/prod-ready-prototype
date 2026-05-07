@@ -13,7 +13,7 @@ const PATH_LABEL: Record<string, string> = {
   notification: "通知管理", templates: "通知模板", "virtual-no": "虚拟号", sms: "短信模板", wechat: "社群模板", email: "邮件模板", inbox: "站内信",
   sales: "销售管理", profit: "分成管理", rules: "分成规则", dimensions: "维度配置",
   ledger: "台账管理", settled: "已结算", pending: "待结算", estimated: "预估收入", refund: "分账退回", abnormal: "异常台账",
-  org: "机构信息", ip: "IP 白名单", backup: "备份设置", alert: "操作预警",
+  org: "机构信息", ip: "IP 白名单", backup: "备份设置", "notification-events": "通知事件",
   role: "角色管理", user: "用户管理", accounts: "后台账号",
   "audit-log": "审计日志",
 };
