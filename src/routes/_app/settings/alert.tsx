@@ -23,6 +23,8 @@ const init: Rule[] = [
   { id: "A2", name: "异常分账次数", threshold: 3, unit: "次/日", eventKey: "alert.split.abnormal", enabled: true },
   { id: "A3", name: "服务记录驳回率", threshold: 30, unit: "%", eventKey: "alert.audit.reject_rate", enabled: false },
   { id: "A4", name: "登录失败次数", threshold: 5, unit: "次/小时", eventKey: "alert.login.failure", enabled: true },
+  { id: "A5", name: "备份失败", threshold: 1, unit: "次/日", eventKey: "alert.backup.failed", enabled: true },
+  { id: "A6", name: "备份目标容量", threshold: 80, unit: "%", eventKey: "alert.backup.capacity", enabled: true },
 ];
 
 function Page() {
@@ -32,9 +34,17 @@ function Page() {
   // 旧数据迁移：缺失 eventKey 时按 id 补
   useEffect(() => {
     if (list.length && list.some((r) => !r.eventKey)) {
-      const map: Record<string, string> = { A1: "alert.export.bulk", A2: "alert.split.abnormal", A3: "alert.audit.reject_rate", A4: "alert.login.failure" };
+      const map: Record<string, string> = { A1: "alert.export.bulk", A2: "alert.split.abnormal", A3: "alert.audit.reject_rate", A4: "alert.login.failure", A5: "alert.backup.failed", A6: "alert.backup.capacity" };
       const fixed = list.map((r) => r.eventKey ? r : { ...r, eventKey: map[r.id] || "alert.export.bulk" });
       setList(fixed); localStorage.setItem(KEY, JSON.stringify(fixed));
+    }
+  }, [list]);
+  // 旧数据迁移：补齐新增的备份预警项
+  useEffect(() => {
+    if (list.length && !list.some((r) => r.id === "A5")) {
+      const add = init.filter((r) => !list.some((x) => x.id === r.id));
+      const next = [...list, ...add];
+      setList(next); localStorage.setItem(KEY, JSON.stringify(next));
     }
   }, [list]);
   const persist = (v: Rule[]) => { setList(v); localStorage.setItem(KEY, JSON.stringify(v)); };
