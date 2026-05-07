@@ -18,6 +18,7 @@ import { Route as AppSalesIndexRouteImport } from './routes/_app/sales/index'
 import { Route as AppRoleIndexRouteImport } from './routes/_app/role/index'
 import { Route as AppUserAccountsRouteImport } from './routes/_app/user/accounts'
 import { Route as AppSettingsOrgRouteImport } from './routes/_app/settings/org'
+import { Route as AppSettingsNotificationEventsRouteImport } from './routes/_app/settings/notification-events'
 import { Route as AppSettingsIpRouteImport } from './routes/_app/settings/ip'
 import { Route as AppSettingsBackupRouteImport } from './routes/_app/settings/backup'
 import { Route as AppSettingsAlertRouteImport } from './routes/_app/settings/alert'
@@ -80,6 +81,12 @@ const AppSettingsOrgRoute = AppSettingsOrgRouteImport.update({
   path: '/settings/org',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsNotificationEventsRoute =
+  AppSettingsNotificationEventsRouteImport.update({
+    id: '/settings/notification-events',
+    path: '/settings/notification-events',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSettingsIpRoute = AppSettingsIpRouteImport.update({
   id: '/settings/ip',
   path: '/settings/ip',
@@ -189,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/settings/alert': typeof AppSettingsAlertRoute
   '/settings/backup': typeof AppSettingsBackupRoute
   '/settings/ip': typeof AppSettingsIpRoute
+  '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/user/accounts': typeof AppUserAccountsRoute
   '/role/': typeof AppRoleIndexRoute
@@ -216,6 +224,7 @@ export interface FileRoutesByTo {
   '/settings/alert': typeof AppSettingsAlertRoute
   '/settings/backup': typeof AppSettingsBackupRoute
   '/settings/ip': typeof AppSettingsIpRoute
+  '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/user/accounts': typeof AppUserAccountsRoute
   '/role': typeof AppRoleIndexRoute
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/_app/settings/alert': typeof AppSettingsAlertRoute
   '/_app/settings/backup': typeof AppSettingsBackupRoute
   '/_app/settings/ip': typeof AppSettingsIpRoute
+  '/_app/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/_app/settings/org': typeof AppSettingsOrgRoute
   '/_app/user/accounts': typeof AppUserAccountsRoute
   '/_app/role/': typeof AppRoleIndexRoute
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/settings/alert'
     | '/settings/backup'
     | '/settings/ip'
+    | '/settings/notification-events'
     | '/settings/org'
     | '/user/accounts'
     | '/role/'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/settings/alert'
     | '/settings/backup'
     | '/settings/ip'
+    | '/settings/notification-events'
     | '/settings/org'
     | '/user/accounts'
     | '/role'
@@ -329,6 +341,7 @@ export interface FileRouteTypes {
     | '/_app/settings/alert'
     | '/_app/settings/backup'
     | '/_app/settings/ip'
+    | '/_app/settings/notification-events'
     | '/_app/settings/org'
     | '/_app/user/accounts'
     | '/_app/role/'
@@ -404,6 +417,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/org'
       fullPath: '/settings/org'
       preLoaderRoute: typeof AppSettingsOrgRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/notification-events': {
+      id: '/_app/settings/notification-events'
+      path: '/settings/notification-events'
+      fullPath: '/settings/notification-events'
+      preLoaderRoute: typeof AppSettingsNotificationEventsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/ip': {
@@ -548,6 +568,7 @@ interface AppRouteChildren {
   AppSettingsAlertRoute: typeof AppSettingsAlertRoute
   AppSettingsBackupRoute: typeof AppSettingsBackupRoute
   AppSettingsIpRoute: typeof AppSettingsIpRoute
+  AppSettingsNotificationEventsRoute: typeof AppSettingsNotificationEventsRoute
   AppSettingsOrgRoute: typeof AppSettingsOrgRoute
   AppUserAccountsRoute: typeof AppUserAccountsRoute
   AppRoleIndexRoute: typeof AppRoleIndexRoute
@@ -574,6 +595,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsAlertRoute: AppSettingsAlertRoute,
   AppSettingsBackupRoute: AppSettingsBackupRoute,
   AppSettingsIpRoute: AppSettingsIpRoute,
+  AppSettingsNotificationEventsRoute: AppSettingsNotificationEventsRoute,
   AppSettingsOrgRoute: AppSettingsOrgRoute,
   AppUserAccountsRoute: AppUserAccountsRoute,
   AppRoleIndexRoute: AppRoleIndexRoute,

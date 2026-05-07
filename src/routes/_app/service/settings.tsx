@@ -9,7 +9,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Pencil, Plus, Trash2, ShieldAlert, Clock, Repeat, DollarSign } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { EventBindingHint } from "@/routes/_app/settings/notification-events";
 
 export const Route = createFileRoute("/_app/service/settings")({ component: () => <RoleGate allow={["org_admin", "super_admin"]}><Inner /></RoleGate> });
 
@@ -120,6 +120,9 @@ function AlertRulesPanel() {
 
   return (
     <div>
+      <div className="mb-3">
+        <EventBindingHint eventKey="service.audit.hit" />
+      </div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Label className="text-xs text-muted-foreground">筛选：</Label>
@@ -144,27 +147,20 @@ function AlertRulesPanel() {
               <TableHead>规则名称</TableHead>
               <TableHead>类型</TableHead>
               <TableHead>命中条件</TableHead>
-              <TableHead>命中通知</TableHead>
               <TableHead>最近更新</TableHead>
               <TableHead className="w-24">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visible.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">暂无规则</TableCell></TableRow>}
+            {visible.length === 0 && <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">暂无规则</TableCell></TableRow>}
             {visible.map((r) => {
               const Icon = TYPE_META[r.type].icon;
-              const channels = [r.notify.inbox && "站内信", r.notify.sms && "短信", r.notify.group && "社群"].filter(Boolean) as string[];
               return (
                 <TableRow key={r.id}>
                   <TableCell><Switch checked={r.enabled} onCheckedChange={() => toggleEnabled(r)} /></TableCell>
                   <TableCell className="font-medium">{r.name}</TableCell>
                   <TableCell><span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Icon className="h-3.5 w-3.5" />{TYPE_META[r.type].label}</span></TableCell>
                   <TableCell className="max-w-xs text-xs text-muted-foreground">{summarize(r)}</TableCell>
-                  <TableCell className="text-xs">
-                    {channels.length === 0 ? <span className="text-muted-foreground">—</span> : (
-                      <div className="flex flex-wrap gap-1">{channels.map((c) => <Badge key={c} variant="secondary" className="font-normal">{c}</Badge>)}</div>
-                    )}
-                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.updatedBy}<br />{r.updatedAt}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
@@ -236,7 +232,6 @@ function RuleEditor({ rule, isNew, onClose, onSave }: { rule: ReviewRule; isNew:
       if (cfg.words.length === 0) return toast.error("请至少填入一个敏感词");
     }
     if (!form.name.trim()) return toast.error("请填写规则名称");
-    if (!form.notify.inbox && !form.notify.sms && !form.notify.group) return toast.error("请至少选择一种通知方式");
     const saved: ReviewRule = { ...form, config: cfg, updatedBy: ROLE_META[role].name, updatedAt: new Date().toLocaleString("zh-CN") };
     onSave(saved);
   };
@@ -307,13 +302,8 @@ function RuleEditor({ rule, isNew, onClose, onSave }: { rule: ReviewRule; isNew:
           )}
 
           <div>
-            <Label className="mb-2 block">命中通知方式</Label>
-            <p className="mb-2 text-xs text-muted-foreground">命中规则后，按勾选渠道通知机构管理员处理审核（至少选 1 项）。</p>
-            <div className="flex flex-wrap items-center gap-6">
-              <label className="flex items-center gap-2 text-sm"><Switch checked={form.notify.inbox} onCheckedChange={(v) => setForm({ ...form, notify: { ...form.notify, inbox: v } })} />站内信</label>
-              <label className="flex items-center gap-2 text-sm"><Switch checked={form.notify.sms} onCheckedChange={(v) => setForm({ ...form, notify: { ...form.notify, sms: v } })} />短信</label>
-              <label className="flex items-center gap-2 text-sm"><Switch checked={form.notify.group} onCheckedChange={(v) => setForm({ ...form, notify: { ...form.notify, group: v } })} />社群（企微 / 飞书群）</label>
-            </div>
+            <Label className="mb-2 block">命中通知</Label>
+            <EventBindingHint eventKey="service.audit.hit" />
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>取消</Button><Button onClick={submit}>保存</Button></DialogFooter>
