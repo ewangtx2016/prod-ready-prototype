@@ -4,7 +4,6 @@ import { db, type ReviewRule, type ReviewRuleType } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
 import { PageHeader } from "@/components/dev/PageHeader";
-import { DevNote } from "@/components/dev/DevNote";
 import { RoleGate } from "@/components/dev/RoleGate";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
