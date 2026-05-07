@@ -6,6 +6,46 @@ import { db, type LedgerItem, type Order, type ProfitRule } from "@/lib/mock";
 import { CheckCircle2, AlertTriangle, FileText } from "lucide-react";
 import { useMemo } from "react";
 
+type DimCalc = {
+  label: string;
+  rawWeight: number;
+  normWeight: number;
+  hit: boolean;
+  hitKey?: string;
+  ratios?: { org: number; planner: number; platform: number };
+  reason?: string;
+};
+type Calc = {
+  dims: DimCalc[];
+  percents: { org: number; planner: number; platform: number };
+  amounts: { org: number; planner: number; platform: number };
+};
+
+function computeSplit(order: Order, rule: ProfitRule, amount: number): Calc {
+  const dims: DimCalc[] = [];
+  const ct = rule.dims.courseType;
+  if (ct) {
+    const r = ct.ratios[order.courseType];
+    dims.push({ label: "课程类型维度", rawWeight: ct.weight, normWeight: 0, hit: !!r, hitKey: r ? order.courseType : undefined, ratios: r, reason: r ? undefined : `订单课程类型「${order.courseType}」未在规则中` });
+  }
+  const us = rule.dims.userSource;
+  if (us) {
+    const r = us.ratios[order.source];
+    dims.push({ label: "用户来源维度", rawWeight: us.weight, normWeight: 0, hit: !!r, hitKey: r ? order.source : undefined, ratios: r, reason: r ? undefined : `订单用户来源「${order.source}」未在规则中` });
+  }
+  const cs = rule.dims.convStage;
+  if (cs) {
+    dims.push({ label: "转化阶段维度", rawWeight: cs.weight, normWeight: 0, hit: false, reason: "订单无试听/续报标记" });
+  }
+  const sumHitWeight = dims.filter((d) => d.hit).reduce((s, d) => s + d.rawWeight, 0);
+  dims.forEach((d) => { d.normWeight = d.hit && sumHitWeight > 0 ? d.rawWeight / sumHitWeight : 0; });
+  const pct = (k: "org" | "planner" | "platform") => dims.filter((d) => d.hit).reduce((s, d) => s + d.normWeight * d.ratios![k], 0);
+  const percents = { org: pct("org"), planner: pct("planner"), platform: pct("platform") };
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  const amounts = { org: round2(amount * percents.org / 100), planner: round2(amount * percents.planner / 100), platform: round2(amount * percents.platform / 100) };
+  return { dims, percents, amounts };
+}
+
 /**
  * 分成明细抽屉 — 把命中的分成规则与四方金额计算过程一目了然展示
  * PRD §10 / §8（分成规则）
@@ -19,11 +59,12 @@ export function SplitDetailSheet({
 }) {
   const open = !!item;
 
-  const { order, rule } = useMemo(() => {
-    if (!item) return { order: null as Order | null, rule: null as ProfitRule | null };
+  const { order, rule, calc } = useMemo(() => {
+    if (!item) return { order: null as Order | null, rule: null as ProfitRule | null, calc: null as Calc | null };
     const order = db.orders().find((o) => o.id === item.orderId) || null;
     const rule = db.rules().find((r) => r.status === "active") || null;
-    return { order, rule };
+    const calc = order && rule ? computeSplit(order, rule, item.amount) : null;
+    return { order, rule, calc };
   }, [item]);
 
   return (
@@ -55,34 +96,32 @@ export function SplitDetailSheet({
               <div className="flex justify-between"><span className="text-muted-foreground">订单金额</span><span className="font-semibold">¥{item.amount.toLocaleString()}</span></div>
             </Card>
 
-            {/* ② 命中规则 */}
+            {/* ② 命中规则 + 权重归一 */}
             <div>
               <div className="text-xs text-muted-foreground mb-2">命中分成规则</div>
-              {rule ? (
+              {rule && calc ? (
                 <Card className="p-3">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">{rule.name}</span>
                     <Badge variant="secondary" className="font-mono text-[10px]">{rule.version}</Badge>
                     <Badge className="bg-success text-success-foreground text-[10px]">生效中</Badge>
                   </div>
-                  <div className="mt-2 space-y-1 text-xs">
-                    {rule.dims.courseType && order && (
+                  <div className="mt-2 space-y-1.5 text-xs">
+                    {calc.dims.map((d) => (
                       <HitLine
-                        ok
-                        label={`课程类型维度 (权重 ${(rule.dims.courseType.weight * 100) | 0}%)`}
-                        detail={`命中「${order.courseType}」 → 机构 ${rule.dims.courseType.ratios[order.courseType]?.org}% / 规划师 ${rule.dims.courseType.ratios[order.courseType]?.planner}% / 平台 ${rule.dims.courseType.ratios[order.courseType]?.platform}%`}
+                        key={d.label}
+                        ok={d.hit}
+                        label={`${d.label}（原始权重 ${(d.rawWeight * 100).toFixed(0)}%${d.hit ? ` → 归一 ${(d.normWeight * 100).toFixed(1)}%` : "，未命中不参与"}）`}
+                        detail={
+                          d.hit
+                            ? `命中「${d.hitKey}」 → 机构 ${d.ratios!.org}% / 规划师 ${d.ratios!.planner}% / 平台 ${d.ratios!.platform}%`
+                            : d.reason || "无匹配项"
+                        }
                       />
-                    )}
-                    {rule.dims.userSource && order && (
-                      <HitLine
-                        ok
-                        label={`用户来源维度 (权重 ${(rule.dims.userSource.weight * 100) | 0}%)`}
-                        detail={`命中「${order.source}」 → 机构 ${rule.dims.userSource.ratios[order.source]?.org}% / 规划师 ${rule.dims.userSource.ratios[order.source]?.planner}% / 平台 ${rule.dims.userSource.ratios[order.source]?.platform}%`}
-                      />
-                    )}
-                    {rule.dims.convStage && (
-                      <HitLine ok={false} label="转化阶段维度" detail="未命中（订单无试听/续报标记）" />
-                    )}
+                    ))}
+                  </div>
+                  <div className="mt-2 rounded bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground">
+                    归一化：剔除未命中维度后，剩余权重按比例放大至合计 100%。
                   </div>
                 </Card>
               ) : (
@@ -92,23 +131,40 @@ export function SplitDetailSheet({
               )}
             </div>
 
-            {/* ③ 计算过程 */}
-            <div>
-              <div className="text-xs text-muted-foreground mb-2">计算过程</div>
-              <Card className="p-3 text-sm">
-                <Row label="订单总额" value={`¥${item.amount.toLocaleString()}`} />
-                <Separator className="my-2" />
-                <Row label="机构分成" value={`¥${item.orgAmount.toLocaleString()}`} accent="info" pct={item.amount ? (item.orgAmount / item.amount) * 100 : 0} />
-                <Row label="规划师分成" value={`¥${item.plannerAmount.toLocaleString()}`} accent="success" pct={item.amount ? (item.plannerAmount / item.amount) * 100 : 0} />
-                <Row label="平台留存" value={`¥${item.platformAmount.toLocaleString()}`} accent="muted" pct={item.amount ? (item.platformAmount / item.amount) * 100 : 0} />
-                <Separator className="my-2" />
-                <Row
-                  label="合计校验"
-                  value={`¥${(item.orgAmount + item.plannerAmount + item.platformAmount).toLocaleString()}`}
-                  ok={item.orgAmount + item.plannerAmount + item.platformAmount === item.amount}
-                />
-              </Card>
-            </div>
+            {/* ③ 加权计算过程 */}
+            {calc && (
+              <div>
+                <div className="text-xs text-muted-foreground mb-2">加权计算过程</div>
+                <Card className="p-3 text-sm">
+                  <div className="text-xs text-muted-foreground mb-1.5">
+                    最终比例 = Σ(归一权重 × 该维度比例)
+                  </div>
+                  {(["org", "planner", "platform"] as const).map((k) => {
+                    const meta = { org: { name: "机构", accent: "info" as const }, planner: { name: "规划师", accent: "success" as const }, platform: { name: "平台", accent: "muted" as const } }[k];
+                    const parts = calc.dims.filter((d) => d.hit).map((d) => `${(d.normWeight * 100).toFixed(1)}%×${d.ratios![k]}%`).join(" + ");
+                    return (
+                      <div key={k} className="py-1">
+                        <Row
+                          label={`${meta.name}分成`}
+                          value={`¥${calc.amounts[k].toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                          accent={meta.accent}
+                          pct={calc.percents[k]}
+                        />
+                        <div className="ml-2 text-[11px] text-muted-foreground font-mono">
+                          {parts} = {calc.percents[k].toFixed(2)}% × ¥{item.amount.toLocaleString()}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <Separator className="my-2" />
+                  <Row
+                    label="合计校验"
+                    value={`¥${(calc.amounts.org + calc.amounts.planner + calc.amounts.platform).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                    ok={Math.abs(calc.amounts.org + calc.amounts.planner + calc.amounts.platform - item.amount) < 0.01}
+                  />
+                </Card>
+              </div>
+            )}
 
             {/* ④ 状态 */}
             <div>
