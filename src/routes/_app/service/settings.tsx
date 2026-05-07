@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { db, type AlertRule, type AlertRuleType, type AlertSeverity, type AlertScope } from "@/lib/mock";
+import { db, type ReviewRule, type ReviewRuleType } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
 import { PageHeader } from "@/components/dev/PageHeader";
@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Plus, Trash2, AlertTriangle, ShieldAlert, Clock, Repeat, DollarSign } from "lucide-react";
+import { Pencil, Plus, Trash2, AlertTriangle, ShieldAlert, Clock, Repeat, DollarSign, Info } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
@@ -39,11 +39,11 @@ function Inner() {
 
   return (
     <div>
-      <PageHeader title="服务审核与预警" subtitle="审核模式 + 预设预警规则，命中规则自动标记并通知管理员" />
+      <PageHeader title="服务审核设置" subtitle="切换审核模式，并维护「需要审核」模式下的命中规则" />
       <Tabs defaultValue="mode" className="w-full">
         <TabsList>
           <TabsTrigger value="mode">审核模式</TabsTrigger>
-          <TabsTrigger value="rules">预警规则</TabsTrigger>
+          <TabsTrigger value="rules">审核规则</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mode" className="mt-4">
@@ -53,16 +53,22 @@ function Inner() {
             <h3 className="font-semibold">实时监控模式</h3>
             {mode === "realtime" && <span className="rounded bg-primary px-2 py-0.5 text-xs text-primary-foreground">当前生效</span>}
           </div>
-          <p className="text-sm text-muted-foreground">服务记录实时展示，机构可随时查看。命中预设规则时自动触发预警和标记，记录本身不阻塞展示。</p>
+          <p className="text-sm text-muted-foreground">服务记录提交后实时展示，机构可随时查看，无需审核流程，不进行规则匹配。</p>
         </Card>
         <Card className={`p-5 cursor-pointer transition ${mode === "review" ? "border-primary ring-2 ring-primary/20" : ""}`} onClick={() => mode !== "review" && setPending("review")}>
           <div className="mb-2 flex items-center justify-between">
             <h3 className="font-semibold">需要审核模式</h3>
             {mode === "review" && <span className="rounded bg-primary px-2 py-0.5 text-xs text-primary-foreground">当前生效</span>}
           </div>
-          <p className="text-sm text-muted-foreground">命中规则的服务记录需机构管理员审核通过后才对外展示或生效。</p>
+          <p className="text-sm text-muted-foreground">服务记录提交后先做规则匹配；命中「审核规则」的记录需机构管理员审核通过后才对外展示或生效，并按配置通知管理员。</p>
         </Card>
       </div>
+      <Card className="mt-4 border-sky-200 bg-sky-50/50 p-4 text-xs text-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
+        <div className="flex items-start gap-2">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>「审核规则」仅在「需要审核」模式下生效。切到实时监控时规则不参与判定，但配置仍会保留。</div>
+        </div>
+      </Card>
         </TabsContent>
 
         <TabsContent value="rules" className="mt-4">
