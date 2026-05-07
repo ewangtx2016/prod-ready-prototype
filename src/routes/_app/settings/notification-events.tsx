@@ -23,11 +23,11 @@ export const Route = createFileRoute("/_app/settings/notification-events")({
   component: () => <RoleGate allow={["org_admin", "super_admin"]}><Page /></RoleGate>,
 });
 
-const CHANNEL_META: Record<NotifyChannelKey, { label: string; icon: any; tplRoute: string; tplKey: string }> = {
-  inbox: { label: "站内信", icon: Inbox, tplRoute: "/notification/inbox", tplKey: "demo.tpl.inbox" },
-  sms: { label: "短信", icon: MessageSquare, tplRoute: "/notification/sms", tplKey: "demo.tpl.sms" },
-  group: { label: "社群", icon: Users, tplRoute: "/notification/wechat", tplKey: "demo.tpl.wechat" },
-  email: { label: "邮件", icon: Mail, tplRoute: "/notification/email", tplKey: "demo.tpl.email" },
+const CHANNEL_META: Record<NotifyChannelKey, { label: string; icon: any; tplRoute: string; tplTab: string; tplKey: string }> = {
+  inbox: { label: "站内信", icon: Inbox, tplRoute: "/notification/templates", tplTab: "inbox", tplKey: "demo.tpl.inbox.v2" },
+  sms: { label: "短信", icon: MessageSquare, tplRoute: "/notification/templates", tplTab: "sms", tplKey: "demo.tpl.sms" },
+  group: { label: "社群", icon: Users, tplRoute: "/notification/templates", tplTab: "wechat", tplKey: "demo.tpl.wechat" },
+  email: { label: "邮件", icon: Mail, tplRoute: "/notification/templates", tplTab: "email", tplKey: "demo.tpl.email" },
 };
 
 const CATEGORIES: NotifyEvent["category"][] = ["服务审核", "操作预警", "续报提醒", "财务结算", "账号安全"];
