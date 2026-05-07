@@ -217,6 +217,16 @@ export function seedIfNeeded(force = false) {
   write(KEYS.rule, rules);
   write(KEYS.ledger, ledger);
   write(KEYS.log, logs);
+
+  const alertRules: AlertRule[] = [
+    { id: rid(), type: "sensitive_word", name: "敏感词 · 投诉/退费/转介", enabled: true, severity: "warn", scope: "global", config: { words: ["投诉", "退费", "转介", "举报", "差评"] }, notify: { inbox: true, sms: false }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
+    { id: rid(), type: "duration", name: "服务时长异常（<5min 或 >240min）", enabled: true, severity: "warn", scope: "global", config: { minMinutes: 5, maxMinutes: 240 }, notify: { inbox: true, sms: false }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
+    { id: rid(), type: "frequency", name: "同一用户 24h 内服务 > 5 次", enabled: true, severity: "warn", scope: "global", config: { windowHours: 24, maxCount: 5 }, notify: { inbox: true, sms: false }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
+    { id: rid(), type: "amount", name: "单笔金额异常（< 1 元 或 > 50000 元）", enabled: true, severity: "block", scope: "global", config: { minAmount: 1, maxAmount: 50000 }, notify: { inbox: true, sms: true }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
+    { id: rid(), type: "duration", name: "[机构覆盖] 时长 <10min 即预警", enabled: true, severity: "warn", scope: "org", orgName: "示例机构 A", config: { minMinutes: 10, maxMinutes: 240 }, notify: { inbox: true, sms: true }, updatedBy: "机构管理员", updatedAt: "2026-04-26 15:30" },
+  ];
+  write(KEYS.alertRule, alertRules);
+
   localStorage.setItem(KEYS.seeded, "1");
 }
 
@@ -233,6 +243,8 @@ export const db = {
   setLogs: (v: AuditLog[]) => write(KEYS.log, v),
   auditMode: () => (localStorage.getItem(KEYS.auditMode) as "realtime" | "review") || "realtime",
   setAuditMode: (v: "realtime" | "review") => localStorage.setItem(KEYS.auditMode, v),
+  alertRules: () => read<AlertRule[]>(KEYS.alertRule, []),
+  setAlertRules: (v: AlertRule[]) => write(KEYS.alertRule, v),
   log: (entry: Omit<AuditLog, "id" | "time" | "ip">) => {
     const logs = read<AuditLog[]>(KEYS.log, []);
     logs.unshift({ id: rid(), time: new Date().toLocaleString("zh-CN"), ip: "192.168.1." + (Math.floor(Math.random() * 200) + 1), ...entry });
