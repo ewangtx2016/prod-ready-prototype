@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Mail, MailOpen, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/notification/inbox")({ component: Page });
+export const Route = createFileRoute("/_app/messages")({ component: Page });
 
 type Msg = { id: string; title: string; body: string; type: "system" | "audit" | "alert"; read: boolean; time: string };
 const initial: Msg[] = [
