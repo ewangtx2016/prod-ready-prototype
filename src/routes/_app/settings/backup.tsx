@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
@@ -20,8 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Progress } from "@/components/ui/progress";
-import { ShieldAlert, Database, Download, RotateCw, Trash2, HardDrive, Cloud, Server, Plus, Pencil, CheckCircle2, AlertTriangle, XCircle, Clock, Star, Activity, Copy, FileText, Bell } from "lucide-react";
-import { EventBindingHint } from "./notification-events";
+import { ShieldAlert, Database, Download, RotateCw, Trash2, HardDrive, Cloud, Server, Plus, Pencil, CheckCircle2, AlertTriangle, XCircle, Clock, Star, Activity, Copy, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/settings/backup")({ component: Page });
@@ -236,7 +235,6 @@ function Page() {
         <TabsList>
           <TabsTrigger value="strategy">备份策略</TabsTrigger>
           <TabsTrigger value="targets">备份目标 <Badge variant="secondary" className="ml-1">{targets.length}</Badge></TabsTrigger>
-          <TabsTrigger value="alert">通知与告警</TabsTrigger>
         </TabsList>
 
         {/* Tab1：策略 */}
@@ -292,31 +290,6 @@ function Page() {
           )}
         </TabsContent>
 
-        {/* Tab3：告警 */}
-        <TabsContent value="alert">
-          <Card className="p-4 space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-md bg-primary/10"><Bell className="h-5 w-5 text-primary" /></div>
-              <div className="flex-1">
-                <div className="font-medium">备份相关告警已统一在「通知事件」中管理</div>
-                <div className="text-xs text-muted-foreground mt-1">阈值在「操作预警」中配置，渠道（站内信/短信/邮件/社群）、模板与接收人在「通知事件」中配置。这样所有业务告警拥有一致的配置入口和审计记录。</div>
-              </div>
-            </div>
-            <div className="rounded-md border divide-y">
-              <div className="p-3">
-                <div className="text-sm font-medium mb-2">备份失败</div>
-                <EventBindingHint eventKey="alert.backup.failed" />
-              </div>
-              <div className="p-3">
-                <div className="text-sm font-medium mb-2">备份目标容量超阈值</div>
-                <EventBindingHint eventKey="alert.backup.capacity" />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Link to="/settings/notification-events"><Button size="sm" variant="outline"><Bell className="h-4 w-4" /> 前往「通知事件」配置阈值与渠道</Button></Link>
-            </div>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* 备份记录 */}
