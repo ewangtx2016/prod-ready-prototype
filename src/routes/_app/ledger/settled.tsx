@@ -11,7 +11,8 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download } from "lucide-react";
+import { Download, Coins } from "lucide-react";
+import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ledger/settled")({ component: Page });
@@ -20,7 +21,12 @@ function Page() {
   const { role } = useApp();
   const [list, setList] = useState<LedgerItem[]>([]);
   const [period, setPeriod] = useState("month");
-  useEffect(() => { setList(db.ledger().filter(l => l.status === "settled")); }, []);
+  const [detail, setDetail] = useState<LedgerItem | null>(null);
+  useEffect(() => {
+    let arr = db.ledger().filter(l => l.status === "settled");
+    if (role === "planner") arr = arr.filter(l => l.plannerName === "李规划");
+    setList(arr);
+  }, [role]);
 
   const total = list.reduce((s, x) => s + x.amount, 0);
   const orgTotal = list.reduce((s, x) => s + x.orgAmount, 0);
@@ -53,7 +59,7 @@ function Page() {
       </div>
       <Card>
         <Table>
-          <TableHeader><TableRow><TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>课程</TableHead><TableHead>订单金额</TableHead><TableHead>机构</TableHead><TableHead>规划师</TableHead><TableHead>平台</TableHead><TableHead>结算时间</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>课程</TableHead><TableHead>订单金额</TableHead><TableHead>机构</TableHead><TableHead>规划师</TableHead><TableHead>平台</TableHead><TableHead>结算时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
             {list.map(l => (
               <TableRow key={l.id}>
@@ -66,12 +72,14 @@ function Page() {
                 <TableCell className="text-success">¥{l.plannerAmount.toLocaleString()}</TableCell>
                 <TableCell>¥{l.platformAmount.toLocaleString()}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{l.settledAt || "-"}</TableCell>
+                <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => setDetail(l)}><Coins className="h-3.5 w-3.5" /> 分成明细</Button></TableCell>
               </TableRow>
             ))}
-            {list.length === 0 && <TableRow><TableCell colSpan={9} className="py-12 text-center text-muted-foreground">暂无已结算数据</TableCell></TableRow>}
+            {list.length === 0 && <TableRow><TableCell colSpan={10} className="py-12 text-center text-muted-foreground">暂无已结算数据</TableCell></TableRow>}
           </TableBody>
         </Table>
       </Card>
+      <SplitDetailSheet item={detail} onOpenChange={(v) => !v && setDetail(null)} />
     </div>
   );
 }

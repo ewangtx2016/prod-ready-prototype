@@ -12,7 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Coins } from "lucide-react";
+import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ledger/abnormal")({ component: Page });
@@ -21,7 +22,12 @@ function Page() {
   const { role } = useApp();
   const [list, setList] = useState<LedgerItem[]>([]);
   const [retrying, setRetrying] = useState<LedgerItem | null>(null);
-  useEffect(() => { setList(db.ledger().filter(l => l.status === "abnormal")); }, []);
+  const [detail, setDetail] = useState<LedgerItem | null>(null);
+  useEffect(() => {
+    let arr = db.ledger().filter(l => l.status === "abnormal");
+    if (role === "planner") arr = arr.filter(l => l.plannerName === "李规划");
+    setList(arr);
+  }, [role]);
 
   const doRetry = () => {
     if (!retrying) return;
@@ -47,6 +53,7 @@ function Page() {
                 <TableCell className="text-destructive text-sm">{l.abnormalReason}</TableCell>
                 <TableCell>{l.plannerName}</TableCell>
                 <TableCell className="text-right">
+                  <Button size="sm" variant="ghost" onClick={() => setDetail(l)}><Coins className="h-3.5 w-3.5" /> 分成明细</Button>
                   <PermissionTip action="重试分账" prd="§10.3" allow={["org_admin", "super_admin"]}>
                     <Button size="sm" variant="outline" disabled={role !== "org_admin" && role !== "super_admin"} onClick={() => setRetrying(l)}><RefreshCw className="h-3.5 w-3.5" /> 重试</Button>
                   </PermissionTip>
@@ -63,6 +70,7 @@ function Page() {
           <DialogFooter><Button variant="outline" onClick={() => setRetrying(null)}>取消</Button><Button onClick={doRetry}>确认重试</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+      <SplitDetailSheet item={detail} onOpenChange={(v) => !v && setDetail(null)} />
     </div>
   );
 }
