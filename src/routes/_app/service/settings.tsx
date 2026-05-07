@@ -95,7 +95,7 @@ function AlertRulesPanel() {
   const isSuper = role === "super_admin";
   const [list, setList] = useState<AlertRule[]>([]);
   const [editing, setEditing] = useState<AlertRule | null>(null);
-  const [creating, setCreating] = useState<AlertRuleType | null>(null);
+  const [creating, setCreating] = useState<boolean>(false);
   const [filterType, setFilterType] = useState<"all" | AlertRuleType>("all");
 
   useEffect(() => { setList(db.alertRules()); }, []);
@@ -138,12 +138,9 @@ function AlertRulesPanel() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-2">
-          {(Object.keys(TYPE_META) as AlertRuleType[]).map((t) => {
-            const Icon = TYPE_META[t].icon;
-            return <Button key={t} size="sm" variant="outline" onClick={() => setCreating(t)}><Plus className="mr-1 h-3.5 w-3.5" /><Icon className="mr-1 h-3.5 w-3.5" />{TYPE_META[t].label}</Button>;
-          })}
-        </div>
+        <Button size="sm" onClick={() => setCreating(true)}>
+          <Plus className="mr-1 h-3.5 w-3.5" />新增规则
+        </Button>
       </div>
 
       <Card className="overflow-hidden">
@@ -202,17 +199,17 @@ function AlertRulesPanel() {
 
       {(editing || creating) && (
         <RuleEditor
-          rule={editing || createBlank(creating!, isSuper)}
+          rule={editing || createBlank("sensitive_word", isSuper)}
           isNew={!editing}
           isSuper={isSuper}
-          onClose={() => { setEditing(null); setCreating(null); }}
+          onClose={() => { setEditing(null); setCreating(false); }}
           onSave={(saved) => {
             const cur = db.alertRules();
             const next = editing ? cur.map((x) => (x.id === saved.id ? saved : x)) : [saved, ...cur];
             db.setAlertRules(next); refresh();
             db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "预警规则", action: editing ? "修改" : "新增", detail: saved.name, before: editing || null, after: saved });
             toast.success(editing ? "规则已更新" : "规则已新增");
-            setEditing(null); setCreating(null);
+            setEditing(null); setCreating(false);
           }}
         />
       )}
