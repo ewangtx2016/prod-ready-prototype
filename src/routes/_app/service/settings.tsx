@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Plus, Trash2, AlertTriangle, ShieldAlert, Clock, Repeat, DollarSign, Info } from "lucide-react";
+import { Pencil, Plus, Trash2, ShieldAlert, Clock, Repeat, DollarSign, Info } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
@@ -183,18 +183,6 @@ function AlertRulesPanel() {
             })}
           </TableBody>
         </Table>
-      </Card>
-
-      <Card className="mt-4 border-amber-200 bg-amber-50/50 p-4 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-        <div className="flex items-start gap-2">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <div>
-            <div className="mb-1 font-semibold">规则生效说明</div>
-            <div>· 审核规则仅在「需要审核」模式下生效；实时监控模式下不参与匹配。</div>
-            <div>· 规则保存后对新提交记录立即生效；已提交记录沿用提交时的判定结果。</div>
-            <div>· 命中规则的记录将自动暂挂，按勾选的通知方式提醒机构管理员审核。</div>
-          </div>
-        </div>
       </Card>
 
       {(editing || creating) && (
