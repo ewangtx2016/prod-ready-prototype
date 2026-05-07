@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, Eye, Plus, Download, Check, X } from "lucide-react";
+import { Eye, Download, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
 
@@ -32,9 +32,7 @@ function Page() {
   const { role } = useApp();
   const [records, setRecords] = useState<ServiceRecord[]>([]);
   const [tab, setTab] = useState("all");
-  const [editing, setEditing] = useState<ServiceRecord | null>(null);
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
-  const [creating, setCreating] = useState(false);
   const [rejecting, setRejecting] = useState<ServiceRecord | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [approving, setApproving] = useState<ServiceRecord | null>(null);
@@ -81,14 +79,9 @@ function Page() {
     <div>
       <PageHeader
         title="服务记录"
-        subtitle="规划师/学管师与用户交互的全程留痕。提交即锁定，修改走申请审核流。"
+        subtitle="规划师/学管师与用户交互的全程留痕（由外部系统同步）。机构管理员可在此审核/驳回。"
         actions={
           <>
-            <PermissionTip action="新增服务记录" prd="§6.2 / §14" allow={["planner", "tutor"]}>
-              <Button size="sm" disabled={role !== "planner" && role !== "tutor"} onClick={() => setCreating(true)}>
-                <Plus className="h-4 w-4" /> 新增
-              </Button>
-            </PermissionTip>
             <PermissionTip action="导出" prd="§14" allow={["org_admin"]}>
               <Button size="sm" variant="outline" disabled={role !== "org_admin"} onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "导出", detail: `导出 ${filtered.length} 条 (脱敏)` }); toast.success("已导出 services.xlsx (mock)"); }}>
                 <Download className="h-4 w-4" /> 导出
@@ -99,7 +92,7 @@ function Page() {
       />
 
       <DevNote prd="§6.2 §6.5" title="服务列表 + 修改申请">
-        <div>· 提交即锁定：原记录不可直接编辑/删除，只能"提交修改申请"</div>
+        <div>· 规划师/学管师不在本系统新增或修改记录，记录由外部系统同步</div>
         <div>· 数据范围：管理员=全量；规划师=本人创建；学管师=本人创建</div>
         <div>· <b>审核流</b>（PRD §6.3 / §14）：仅机构管理员在「待审核」tab 可执行通过/驳回；行内展示「原内容 → 新内容」对比与修改原因</div>
         <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
@@ -159,11 +152,6 @@ function Page() {
                   <TableCell><Badge className={STATUS_LABEL[r.status].color}>{STATUS_LABEL[r.status].label}</Badge></TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button variant="ghost" size="sm" onClick={() => setViewing(r)}><Eye className="h-3.5 w-3.5" /></Button>
-                    {(role === "planner" || role === "tutor") && r.status !== "pending_audit" && (
-                      <PermissionTip action="提交修改申请" prd="§6.5" allow={["planner", "tutor"]} desc="原记录锁定，必须走申请流">
-                        <Button variant="ghost" size="sm" onClick={() => setEditing(r)}><Edit className="h-3.5 w-3.5" /></Button>
-                      </PermissionTip>
-                    )}
                     {isAdmin && r.status === "pending_audit" && (
                       <>
                         <PermissionTip action="审核通过" prd="§6.3" allow={["org_admin"]}>
@@ -205,22 +193,6 @@ function Page() {
             </div>
           )}
           <DialogFooter><Button onClick={() => setViewing(null)}>关闭</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 修改申请 */}
-      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>提交修改申请</DialogTitle></DialogHeader>
-          {editing && <EditForm record={editing} onClose={(submit) => { setEditing(null); if (submit) refresh(); }} />}
-        </DialogContent>
-      </Dialog>
-
-      {/* 新增 */}
-      <Dialog open={creating} onOpenChange={setCreating}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>新增服务记录</DialogTitle></DialogHeader>
-          <CreateForm onClose={(submit) => { setCreating(false); if (submit) refresh(); }} />
         </DialogContent>
       </Dialog>
 
