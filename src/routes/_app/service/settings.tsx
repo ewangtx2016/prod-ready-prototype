@@ -95,7 +95,7 @@ function AlertRulesPanel() {
   const isSuper = role === "super_admin";
   const [list, setList] = useState<AlertRule[]>([]);
   const [editing, setEditing] = useState<AlertRule | null>(null);
-  const [creating, setCreating] = useState<AlertRuleType | null>(null);
+  const [creating, setCreating] = useState<boolean>(false);
   const [filterType, setFilterType] = useState<"all" | AlertRuleType>("all");
 
   useEffect(() => { setList(db.alertRules()); }, []);
@@ -138,12 +138,9 @@ function AlertRulesPanel() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-2">
-          {(Object.keys(TYPE_META) as AlertRuleType[]).map((t) => {
-            const Icon = TYPE_META[t].icon;
-            return <Button key={t} size="sm" variant="outline" onClick={() => setCreating(t)}><Plus className="mr-1 h-3.5 w-3.5" /><Icon className="mr-1 h-3.5 w-3.5" />{TYPE_META[t].label}</Button>;
-          })}
-        </div>
+        <Button size="sm" onClick={() => setCreating(true)}>
+          <Plus className="mr-1 h-3.5 w-3.5" />新增规则
+        </Button>
       </div>
 
       <Card className="overflow-hidden">
@@ -202,17 +199,17 @@ function AlertRulesPanel() {
 
       {(editing || creating) && (
         <RuleEditor
-          rule={editing || createBlank(creating!, isSuper)}
+          rule={editing || createBlank("sensitive_word", isSuper)}
           isNew={!editing}
           isSuper={isSuper}
-          onClose={() => { setEditing(null); setCreating(null); }}
+          onClose={() => { setEditing(null); setCreating(false); }}
           onSave={(saved) => {
             const cur = db.alertRules();
             const next = editing ? cur.map((x) => (x.id === saved.id ? saved : x)) : [saved, ...cur];
             db.setAlertRules(next); refresh();
             db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "预警规则", action: editing ? "修改" : "新增", detail: saved.name, before: editing || null, after: saved });
             toast.success(editing ? "规则已更新" : "规则已新增");
-            setEditing(null); setCreating(null);
+            setEditing(null); setCreating(false);
           }}
         />
       )}
@@ -268,8 +265,38 @@ function RuleEditor({ rule, isNew, isSuper, onClose, onSave }: { rule: AlertRule
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{isNew ? "新增" : "编辑"}预警规则 · {TYPE_META[form.type].label}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isNew ? "新增" : "编辑"}预警规则{!isNew && ` · ${TYPE_META[form.type].label}`}</DialogTitle></DialogHeader>
         <div className="space-y-4">
+          {isNew && (
+            <div>
+              <Label className="mb-2 block">规则类型</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(TYPE_META) as AlertRuleType[]).map((t) => {
+                  const Icon = TYPE_META[t].icon;
+                  const active = form.type === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        const blank = createBlank(t, isSuper);
+                        setForm({ ...blank, name: form.name || blank.name, severity: form.severity, scope: form.scope, orgName: form.orgName, notify: form.notify });
+                        setWordsText("");
+                      }}
+                      className={`flex items-start gap-2 rounded-md border p-3 text-left transition ${active ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "hover:bg-muted/50"}`}
+                    >
+                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div>
+                        <div className="text-sm font-medium">{TYPE_META[t].label}</div>
+                        <div className="text-xs text-muted-foreground">{TYPE_META[t].desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div>
             <Label>规则名称</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
