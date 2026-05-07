@@ -9,7 +9,8 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle, Coins } from "lucide-react";
+import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
 
 export const Route = createFileRoute("/_app/ledger/estimated")({ component: Page });
 
@@ -17,7 +18,12 @@ function Page() {
   const { role } = useApp();
   const [list, setList] = useState<LedgerItem[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
-  useEffect(() => { setList(db.ledger().filter(l => l.status === "estimated" || l.status === "pending")); }, [refreshKey]);
+  const [detail, setDetail] = useState<LedgerItem | null>(null);
+  useEffect(() => {
+    let arr = db.ledger().filter(l => l.status === "estimated" || l.status === "pending");
+    if (role === "planner") arr = arr.filter(l => l.plannerName === "李规划");
+    setList(arr);
+  }, [refreshKey, role]);
   const orgEst = list.reduce((s, x) => s + x.orgAmount, 0);
   const planEst = list.reduce((s, x) => s + x.plannerAmount, 0);
   return (
@@ -31,7 +37,7 @@ function Page() {
       </div>
       <Card>
         <Table>
-          <TableHeader><TableRow><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>课程</TableHead><TableHead>金额</TableHead><TableHead>预估机构</TableHead><TableHead>预估规划师</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>课程</TableHead><TableHead>金额</TableHead><TableHead>预估机构</TableHead><TableHead>预估规划师</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
             {list.map(l => (
               <TableRow key={l.id}>
@@ -41,12 +47,14 @@ function Page() {
                 <TableCell>¥{l.amount.toLocaleString()}</TableCell>
                 <TableCell>¥{l.orgAmount.toLocaleString()}</TableCell>
                 <TableCell>¥{l.plannerAmount.toLocaleString()}</TableCell>
+                <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => setDetail(l)}><Coins className="h-3.5 w-3.5" /> 分成明细</Button></TableCell>
               </TableRow>
             ))}
-            {list.length === 0 && <TableRow><TableCell colSpan={6} className="py-12 text-center text-muted-foreground">暂无预估数据</TableCell></TableRow>}
+            {list.length === 0 && <TableRow><TableCell colSpan={7} className="py-12 text-center text-muted-foreground">暂无预估数据</TableCell></TableRow>}
           </TableBody>
         </Table>
       </Card>
+      <SplitDetailSheet item={detail} onOpenChange={(v) => !v && setDetail(null)} />
     </div>
   );
 }
