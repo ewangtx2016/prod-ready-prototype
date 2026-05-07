@@ -11,7 +11,7 @@ export const ROLE_LIST: Role[] = ["org_admin", "super_admin", "planner", "tutor"
 
 /** 菜单可见性矩阵（PRD §14） */
 export const MENU_PERMS: Record<string, Role[]> = {
-  dashboard: ["org_admin", "super_admin", "planner", "tutor"],
+  dashboard: ["org_admin", "super_admin", "planner"],
   service: ["org_admin", "super_admin", "planner", "tutor"],
   notification: ["org_admin", "super_admin", "planner", "tutor"],
   sales: ["org_admin", "super_admin", "planner"],
@@ -21,6 +21,18 @@ export const MENU_PERMS: Record<string, Role[]> = {
   role: ["org_admin"],
   user: ["org_admin"],
   audit: ["org_admin", "super_admin"],
+};
+
+/** 子菜单可见性（按路径）。未配置则继承父级 MENU_PERMS。 */
+export const SUBMENU_PERMS: Record<string, Role[]> = {
+  // 学管师仅可见：服务列表、站内信
+  "/service/records": ["org_admin", "super_admin", "planner", "tutor"],
+  "/service/settings": ["org_admin", "super_admin", "planner"],
+  "/notification/virtual-no": ["org_admin", "super_admin", "planner"],
+  "/notification/sms": ["org_admin", "super_admin", "planner"],
+  "/notification/wechat": ["org_admin", "super_admin", "planner"],
+  "/notification/email": ["org_admin", "super_admin", "planner"],
+  "/notification/inbox": ["org_admin", "super_admin", "planner", "tutor"],
 };
 
 export function can(role: Role, action: string): boolean {
