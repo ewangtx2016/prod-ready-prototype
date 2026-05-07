@@ -6,6 +6,46 @@ import { db, type LedgerItem, type Order, type ProfitRule } from "@/lib/mock";
 import { CheckCircle2, AlertTriangle, FileText } from "lucide-react";
 import { useMemo } from "react";
 
+type DimCalc = {
+  label: string;
+  rawWeight: number;
+  normWeight: number;
+  hit: boolean;
+  hitKey?: string;
+  ratios?: { org: number; planner: number; platform: number };
+  reason?: string;
+};
+type Calc = {
+  dims: DimCalc[];
+  percents: { org: number; planner: number; platform: number };
+  amounts: { org: number; planner: number; platform: number };
+};
+
+function computeSplit(order: Order, rule: ProfitRule, amount: number): Calc {
+  const dims: DimCalc[] = [];
+  const ct = rule.dims.courseType;
+  if (ct) {
+    const r = ct.ratios[order.courseType];
+    dims.push({ label: "课程类型维度", rawWeight: ct.weight, normWeight: 0, hit: !!r, hitKey: r ? order.courseType : undefined, ratios: r, reason: r ? undefined : `订单课程类型「${order.courseType}」未在规则中` });
+  }
+  const us = rule.dims.userSource;
+  if (us) {
+    const r = us.ratios[order.source];
+    dims.push({ label: "用户来源维度", rawWeight: us.weight, normWeight: 0, hit: !!r, hitKey: r ? order.source : undefined, ratios: r, reason: r ? undefined : `订单用户来源「${order.source}」未在规则中` });
+  }
+  const cs = rule.dims.convStage;
+  if (cs) {
+    dims.push({ label: "转化阶段维度", rawWeight: cs.weight, normWeight: 0, hit: false, reason: "订单无试听/续报标记" });
+  }
+  const sumHitWeight = dims.filter((d) => d.hit).reduce((s, d) => s + d.rawWeight, 0);
+  dims.forEach((d) => { d.normWeight = d.hit && sumHitWeight > 0 ? d.rawWeight / sumHitWeight : 0; });
+  const pct = (k: "org" | "planner" | "platform") => dims.filter((d) => d.hit).reduce((s, d) => s + d.normWeight * d.ratios![k], 0);
+  const percents = { org: pct("org"), planner: pct("planner"), platform: pct("platform") };
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  const amounts = { org: round2(amount * percents.org / 100), planner: round2(amount * percents.planner / 100), platform: round2(amount * percents.platform / 100) };
+  return { dims, percents, amounts };
+}
+
 /**
  * 分成明细抽屉 — 把命中的分成规则与四方金额计算过程一目了然展示
  * PRD §10 / §8（分成规则）
