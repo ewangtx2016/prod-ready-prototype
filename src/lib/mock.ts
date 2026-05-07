@@ -79,6 +79,38 @@ export type AuditLog = {
   after?: any;
 };
 
+/** 服务记录预警规则 */
+export type AlertRuleType = "sensitive_word" | "duration" | "frequency" | "amount";
+export type AlertSeverity = "warn" | "block"; // 黄标 / 红标
+export type AlertScope = "global" | "org"; // 平台级 / 机构级
+
+export type AlertRule = {
+  id: string;
+  type: AlertRuleType;
+  name: string;
+  enabled: boolean;
+  severity: AlertSeverity;
+  scope: AlertScope;
+  orgName?: string; // 机构级覆盖时的机构名
+  /** 类型化配置（按 type 解释） */
+  config: {
+    /** sensitive_word: 词列表 */
+    words?: string[];
+    /** duration: 时长（分钟） */
+    minMinutes?: number;
+    maxMinutes?: number;
+    /** frequency: 时窗（小时）+ 次数 */
+    windowHours?: number;
+    maxCount?: number;
+    /** amount: 单笔金额上下限（元） */
+    minAmount?: number;
+    maxAmount?: number;
+  };
+  notify: { inbox: boolean; sms: boolean };
+  updatedBy: string;
+  updatedAt: string;
+};
+
 const KEYS = {
   service: "demo.services",
   order: "demo.orders",
@@ -87,6 +119,7 @@ const KEYS = {
   log: "demo.logs",
   seeded: "demo.seeded.v2",
   auditMode: "demo.auditMode",
+  alertRule: "demo.alertRules",
 };
 
 function read<T>(k: string, fallback: T): T {
