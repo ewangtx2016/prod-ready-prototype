@@ -194,6 +194,24 @@ export function seedIfNeeded(force = false) {
   // 存量服务记录默认全部标记为「日常跟进」（无订单绑定）
   services.forEach((s) => { s.recordType = "presales"; s.orderIds = []; });
 
+  // 演示用附件：图片 / 视频 / 文件（外链 mock）
+  const PIC = (seed: string) => `https://picsum.photos/seed/${seed}/800/600`;
+  const PIC_THUMB = (seed: string) => `https://picsum.photos/seed/${seed}/200/150`;
+  const SAMPLE_VIDEO = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+  if (services[0]) services[0].attachments = [
+    { id: rid(), type: "image", name: "作业反馈截图1.png", url: PIC("svc1a"), thumb: PIC_THUMB("svc1a"), size: 184320 },
+    { id: rid(), type: "image", name: "作业反馈截图2.png", url: PIC("svc1b"), thumb: PIC_THUMB("svc1b"), size: 220160 },
+    { id: rid(), type: "file", name: "数学应用题加练计划.pdf", url: "#mock-pdf", size: 524288 },
+  ];
+  if (services[2]) services[2].attachments = [
+    { id: rid(), type: "image", name: "浮力题板书.jpg", url: PIC("svc3a"), thumb: PIC_THUMB("svc3a"), size: 312000 },
+    { id: rid(), type: "video", name: "答疑录屏.mp4", url: SAMPLE_VIDEO, thumb: PIC_THUMB("svcv1"), size: 4 * 1024 * 1024 },
+  ];
+  if (services[6]) services[6].attachments = [
+    { id: rid(), type: "video", name: "化学方程式讲解.mp4", url: SAMPLE_VIDEO, thumb: PIC_THUMB("svcv2"), size: 6 * 1024 * 1024 },
+    { id: rid(), type: "file", name: "配平习题.docx", url: "#mock-doc", size: 81920 },
+  ];
+
   const orders: Order[] = [
     { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "学科课", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", createdAt: "2026-04-20 11:00" },
     { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "少儿编程素养课", courseType: "素养课", amount: 3600, source: "规划师新拓", channel: "甄选", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "李规划", createdAt: "2026-04-22 15:00" },
