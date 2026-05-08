@@ -18,6 +18,7 @@ import { Eye, Download, Check, X, UserCog, GraduationCap, Link2, Coffee, Image a
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CreateServiceDialog } from "@/components/service/CreateServiceDialog";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
 
@@ -209,6 +210,9 @@ function Page() {
         subtitle="规划师/学管师与用户交互的全程留痕（由外部系统同步）。机构管理员可在此审核/驳回。"
         actions={
           <>
+            {(role === "planner" || role === "tutor") && (
+              <CreateServiceDialog onCreated={refresh} />
+            )}
             <PermissionTip action="导出" prd="§14" allow={["org_admin"]}>
               <Button size="sm" variant="outline" disabled={role !== "org_admin"} onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "导出", detail: `导出 ${filtered.length} 条 (脱敏)` }); toast.success("已导出 services.xlsx (mock)"); }}>
                 <Download className="h-4 w-4" /> 导出
