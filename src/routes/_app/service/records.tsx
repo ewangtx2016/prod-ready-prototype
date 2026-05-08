@@ -142,7 +142,18 @@ function Page() {
         <div>· 当前待审核：{pendingCount} 条{!isAdmin && "（仅管理员可审核）"}</div>
       </DevNote>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-6">
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-7">
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">记录类型</Label>
+          <Select value={fRecordType} onValueChange={(v) => setFRecordType(v as any)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部类型</SelectItem>
+              <SelectItem value="delivery">交付服务</SelectItem>
+              <SelectItem value="presales">日常跟进</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">用户（姓名/手机）</Label>
           <Input value={fUser} onChange={(e) => setFUser(e.target.value)} placeholder="搜索用户" className="h-8" />
