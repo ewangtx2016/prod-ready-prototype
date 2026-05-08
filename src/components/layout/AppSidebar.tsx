@@ -4,8 +4,8 @@ import {
   Settings, ShieldCheck, Users, History, ChevronDown,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { MENU_PERMS, SUBMENU_PERMS } from "@/lib/roles";
-import { useState } from "react";
+import { usePermStore, flattenTree } from "@/lib/permissions";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 type Item = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; key: string };
@@ -47,16 +47,16 @@ const GROUPS: Group[] = [
 
 export function AppSidebar() {
   const { role } = useApp();
+  const { tree, roles } = usePermStore();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const allowedPaths = useMemo(() => {
+    const r = roles.find((x) => x.key === role);
+    if (!r) return new Set<string>();
+    const allowed = new Set(r.permIds);
+    return new Set(flattenTree(tree).filter((n) => n.path && allowed.has(n.id)).map((n) => n.path!));
+  }, [tree, roles, role]);
   const visible = GROUPS
-    .filter((g) => MENU_PERMS[g.key]?.includes(role))
-    .map((g) => ({
-      ...g,
-      children: g.children.filter((c) => {
-        const perms = SUBMENU_PERMS[c.to];
-        return perms ? perms.includes(role) : true;
-      }),
-    }))
+    .map((g) => ({ ...g, children: g.children.filter((c) => allowedPaths.has(c.to)) }))
     .filter((g) => g.children.length > 0);
 
   return (
