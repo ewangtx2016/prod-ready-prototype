@@ -15,9 +15,22 @@ export type ServiceRecord = {
   recordType?: "delivery" | "presales";
   /** 关联订单 id（可多个，仅 delivery 类有意义） */
   orderIds?: string[];
+  /** 服务附件：图片 / 视频 / 文件 */
+  attachments?: ServiceAttachment[];
   // 修改申请
   pendingChange?: { reason: string; newContent: string; submittedAt: string };
   rejectReason?: string;
+};
+
+export type ServiceAttachment = {
+  id: string;
+  type: "image" | "video" | "file";
+  name: string;
+  url: string;
+  /** 文件大小（字节，可选；mock 用） */
+  size?: number;
+  /** 视频/图片 缩略图（可选） */
+  thumb?: string;
 };
 
 export type Order = {
@@ -139,7 +152,7 @@ const KEYS = {
   rule: "demo.rules",
   ledger: "demo.ledger",
   log: "demo.logs",
-  seeded: "demo.seeded.v7",
+  seeded: "demo.seeded.v8",
   // 注：模型变更需提升版本以触发重置
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
@@ -181,6 +194,24 @@ export function seedIfNeeded(force = false) {
   // 存量服务记录默认全部标记为「日常跟进」（无订单绑定）
   services.forEach((s) => { s.recordType = "presales"; s.orderIds = []; });
 
+  // 演示用附件：图片 / 视频 / 文件（外链 mock）
+  const PIC = (seed: string) => `https://picsum.photos/seed/${seed}/800/600`;
+  const PIC_THUMB = (seed: string) => `https://picsum.photos/seed/${seed}/200/150`;
+  const SAMPLE_VIDEO = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+  if (services[0]) services[0].attachments = [
+    { id: rid(), type: "image", name: "作业反馈截图1.png", url: PIC("svc1a"), thumb: PIC_THUMB("svc1a"), size: 184320 },
+    { id: rid(), type: "image", name: "作业反馈截图2.png", url: PIC("svc1b"), thumb: PIC_THUMB("svc1b"), size: 220160 },
+    { id: rid(), type: "file", name: "数学应用题加练计划.pdf", url: "#mock-pdf", size: 524288 },
+  ];
+  if (services[2]) services[2].attachments = [
+    { id: rid(), type: "image", name: "浮力题板书.jpg", url: PIC("svc3a"), thumb: PIC_THUMB("svc3a"), size: 312000 },
+    { id: rid(), type: "video", name: "答疑录屏.mp4", url: SAMPLE_VIDEO, thumb: PIC_THUMB("svcv1"), size: 4 * 1024 * 1024 },
+  ];
+  if (services[6]) services[6].attachments = [
+    { id: rid(), type: "video", name: "化学方程式讲解.mp4", url: SAMPLE_VIDEO, thumb: PIC_THUMB("svcv2"), size: 6 * 1024 * 1024 },
+    { id: rid(), type: "file", name: "配平习题.docx", url: "#mock-doc", size: 81920 },
+  ];
+
   const orders: Order[] = [
     { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "学科课", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", createdAt: "2026-04-20 11:00" },
     { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "少儿编程素养课", courseType: "素养课", amount: 3600, source: "规划师新拓", channel: "甄选", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "李规划", createdAt: "2026-04-22 15:00" },
@@ -191,10 +222,21 @@ export function seedIfNeeded(force = false) {
 
   // 演示用「交付类」服务记录，绑定到具体订单
   const deliveryServices: ServiceRecord[] = [
-    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "督学", content: "高三数学冲刺班开课首周督学，确认每日刷题计划。", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-21 20:30", status: "approved", recordType: "delivery", orderIds: [orders[0].id] },
-    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "答疑", content: "数学函数综合题答疑 4 道，已发送视频讲解。", duration: 35, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-25 19:00", status: "approved", recordType: "delivery", orderIds: [orders[0].id] },
-    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "少儿编程素养课入学沟通，确认上课时间与班级群。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id] },
-    { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "沟通", content: "艺考素养课退费沟通，已记录原因并提交退费流程。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id] },
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "督学", content: "高三数学冲刺班开课首周督学，确认每日刷题计划。", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-21 20:30", status: "approved", recordType: "delivery", orderIds: [orders[0].id], attachments: [
+      { id: rid(), type: "image", name: "刷题计划表.png", url: PIC("d1a"), thumb: PIC_THUMB("d1a"), size: 256000 },
+      { id: rid(), type: "image", name: "首周打卡截图.png", url: PIC("d1b"), thumb: PIC_THUMB("d1b"), size: 198000 },
+    ] },
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "答疑", content: "数学函数综合题答疑 4 道，已发送视频讲解。", duration: 35, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-25 19:00", status: "approved", recordType: "delivery", orderIds: [orders[0].id], attachments: [
+      { id: rid(), type: "video", name: "函数题讲解.mp4", url: SAMPLE_VIDEO, thumb: PIC_THUMB("d2v"), size: 8 * 1024 * 1024 },
+      { id: rid(), type: "file", name: "函数综合题.pdf", url: "#mock-pdf", size: 614400 },
+    ] },
+    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "少儿编程素养课入学沟通，确认上课时间与班级群。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id], attachments: [
+      { id: rid(), type: "image", name: "班级群二维码.png", url: PIC("d3a"), thumb: PIC_THUMB("d3a"), size: 102400 },
+    ] },
+    { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "沟通", content: "艺考素养课退费沟通，已记录原因并提交退费流程。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id], attachments: [
+      { id: rid(), type: "file", name: "退费申请书.pdf", url: "#mock-pdf", size: 245760 },
+      { id: rid(), type: "file", name: "沟通录音.m4a", url: "#mock-audio", size: 1048576 },
+    ] },
   ];
   services.push(...deliveryServices);
 
