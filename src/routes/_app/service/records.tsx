@@ -330,6 +330,42 @@ function Page() {
                   <div className="rounded-lg border bg-card p-4 text-sm leading-relaxed whitespace-pre-wrap">{viewing.content}</div>
                 </div>
 
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-medium text-muted-foreground">关联订单</div>
+                    {(viewing.recordType ?? "presales") === "delivery"
+                      ? <Badge variant="outline" className="gap-1 border-success/40 bg-success/10 text-success"><Link2 className="h-3 w-3" />交付服务</Badge>
+                      : <Badge variant="outline" className="gap-1 text-muted-foreground"><Coffee className="h-3 w-3" />日常跟进</Badge>}
+                  </div>
+                  {viewing.orderIds && viewing.orderIds.length > 0 ? (
+                    <div className="space-y-2">
+                      {viewing.orderIds.map((oid) => {
+                        const o = orderMap.get(oid);
+                        if (!o) return <div key={oid} className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">订单 <span className="font-mono">{oid}</span>（已删除或同步中）</div>;
+                        return (
+                          <div key={oid} className="rounded-md border bg-card p-3 text-xs flex items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="font-mono text-[11px] text-muted-foreground">{o.id}</div>
+                              <div className="text-sm font-medium">{o.course}</div>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <Badge variant="outline" className="text-[10px]">{o.courseType}</Badge>
+                                <Badge variant="outline" className="text-[10px]">{o.source}</Badge>
+                                <Badge variant="outline" className="text-[10px]">{o.channel}</Badge>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-semibold">¥{o.amount.toLocaleString()}</div>
+                              <Badge variant={o.status === "已退费" ? "destructive" : o.status === "退费中" ? "secondary" : "default"} className="mt-1 text-[10px]">{o.status}</Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="rounded-md border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">未绑定订单（售前咨询 / 日常沟通类记录）</div>
+                  )}
+                </div>
+
                 {viewing.pendingChange && (
                   <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-warning-foreground">
