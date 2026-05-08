@@ -8,7 +8,8 @@ export function maskPhone(phone: string, role: Role) {
 }
 
 export function maskName(name: string, role: Role) {
-  if (role === "org_admin") return name;
+  // 机构管理员 / 规划师 / 学管师 可见明文姓名（业务方需要）
+  if (role === "org_admin" || role === "planner" || role === "tutor") return name;
   if (!name) return name;
   return name[0] + "**";
 }

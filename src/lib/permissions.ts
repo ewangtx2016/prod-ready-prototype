@@ -143,7 +143,7 @@ export const DEFAULT_TREE: PermNode[] = [
     ],
   },
   {
-    id: "m_user", type: "menu", name: "用户管理", code: "user:view", api: "GET /api/users", builtin: true,
+    id: "m_user", type: "menu", name: "账号管理", code: "user:view", api: "GET /api/users", builtin: true,
     children: [
       { id: "m_user_accounts", type: "menu", name: "后台账号", code: "user.accounts:view", api: "GET /api/users/accounts", path: "/user/accounts", builtin: true,
         children: [
@@ -195,6 +195,8 @@ function presetIds(role: Role): string[] {
   return ALL_IDS.filter((id) => {
     const node = findById(DEFAULT_TREE, id);
     if (!node) return false;
+    // 学管师不需要「审核模式」菜单
+    if (role === "tutor" && (id === "m_service_settings" || node.code === "service:mode_switch")) return false;
     if (node.type === "menu") {
       // 菜单 code 形如 dashboard:view / service.records:view ;取首段
       const top = node.code.split(":")[0].split(".")[0];
@@ -236,8 +238,8 @@ export function getAncestors(nodes: PermNode[], id: string, trail: string[] = []
 }
 
 /* ============================== Mock Store ============================== */
-const LS_TREE = "demo.permTree";
-const LS_ROLES = "demo.permRoles";
+const LS_TREE = "demo.permTree.v3";
+const LS_ROLES = "demo.permRoles.v3";
 
 type State = { tree: PermNode[]; roles: RoleDef[] };
 let state: State = load();

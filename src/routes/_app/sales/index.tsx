@@ -12,8 +12,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { SalesServicesSheet } from "@/components/sales/SalesServicesSheet";
 
 export const Route = createFileRoute("/_app/sales/")({ component: () => <RoleGate allow={["org_admin", "super_admin", "planner"]}><Inner /></RoleGate> });
 
@@ -21,6 +22,7 @@ function Inner() {
   const { role } = useApp();
   const [orders, setOrders] = useState<Order[]>([]);
   const [tab, setTab] = useState<string>("all");
+  const [viewOrder, setViewOrder] = useState<Order | null>(null);
   useEffect(() => { setOrders(db.orders()); }, []);
 
   const filtered = orders.filter((o) => tab === "all" ? true : o.status === tab);
@@ -51,7 +53,7 @@ function Inner() {
             <TableHeader><TableRow>
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
               <TableHead>课程</TableHead><TableHead>类型</TableHead><TableHead>金额</TableHead>
-              <TableHead>来源</TableHead><TableHead>渠道</TableHead><TableHead>状态</TableHead>
+              <TableHead>来源</TableHead><TableHead>渠道</TableHead><TableHead>状态</TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {filtered.map((o) => (
@@ -65,13 +67,15 @@ function Inner() {
                   <TableCell><Badge className={o.source === "机构老用户" ? "bg-info text-info-foreground" : "bg-success text-success-foreground"}>{o.source}</Badge></TableCell>
                   <TableCell><span className="text-xs text-muted-foreground">{o.channel}</span></TableCell>
                   <TableCell><Badge variant={o.status === "已退费" ? "destructive" : o.status === "退费中" ? "secondary" : "default"}>{o.status}</Badge></TableCell>
+                  <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => setViewOrder(o)}><FileText className="h-3.5 w-3.5" /> 服务记录</Button></TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={10} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
         </TabsContent>
       </Tabs>
+      <SalesServicesSheet order={viewOrder} onOpenChange={(v) => !v && setViewOrder(null)} />
     </div>
   );
 }

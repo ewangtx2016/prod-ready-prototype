@@ -39,7 +39,7 @@ const GROUPS: Group[] = [
     { to: "/settings/backup", label: "备份设置", icon: Settings, key: "settings" },
   ] },
   { key: "role", label: "角色管理", icon: ShieldCheck, children: [{ to: "/role", label: "角色管理", icon: ShieldCheck, key: "role" }] },
-  { key: "user", label: "用户管理", icon: Users, children: [
+  { key: "user", label: "账号管理", icon: Users, children: [
     { to: "/user/accounts", label: "后台账号", icon: Users, key: "user" },
   ] },
   { key: "audit", label: "审计日志", icon: History, children: [{ to: "/audit-log", label: "审计日志", icon: History, key: "audit" }] },
