@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Eye, Download, Check, X } from "lucide-react";
+import { Eye, Download, Check, X, UserCog, GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +27,24 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   approved: { label: "已通过", color: "bg-success text-success-foreground" },
   rejected: { label: "未通过", color: "bg-destructive text-destructive-foreground" },
 };
+
+const SERVICE_ROLE_META: Record<"planner" | "tutor", { label: string; icon: typeof UserCog; className: string }> = {
+  planner: { label: "规划师", icon: UserCog, className: "bg-primary/10 text-primary border-primary/20" },
+  tutor: { label: "学管师", icon: GraduationCap, className: "bg-accent/40 text-accent-foreground border-accent" },
+};
+
+function ServantBadge({ name, r, size = "sm" }: { name: string; r: "planner" | "tutor"; size?: "sm" | "md" }) {
+  const meta = SERVICE_ROLE_META[r];
+  const Icon = meta.icon;
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      <span className={size === "md" ? "text-sm font-medium" : "text-sm"}>{name}</span>
+      <Badge variant="outline" className={`gap-1 px-1.5 py-0 text-[10px] font-normal ${meta.className}`}>
+        <Icon className="h-3 w-3" />{meta.label}
+      </Badge>
+    </div>
+  );
+}
 
 function Page() {
   const { role } = useApp();
