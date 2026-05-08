@@ -206,6 +206,8 @@ function presetIds(role: Role): string[] {
   return ALL_IDS.filter((id) => {
     const node = findById(DEFAULT_TREE, id);
     if (!node) return false;
+    // 学管师不需要「审核模式」菜单
+    if (role === "tutor" && (id === "m_service_settings" || node.code === "service:mode_switch")) return false;
     if (node.type === "menu") {
       // 菜单 code 形如 dashboard:view / service.records:view ;取首段
       const top = node.code.split(":")[0].split(".")[0];
