@@ -139,7 +139,7 @@ const KEYS = {
   rule: "demo.rules",
   ledger: "demo.ledger",
   log: "demo.logs",
-  seeded: "demo.seeded.v6",
+  seeded: "demo.seeded.v7",
   // 注：模型变更需提升版本以触发重置
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
