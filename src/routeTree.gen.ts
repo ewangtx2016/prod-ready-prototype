@@ -17,6 +17,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppAuditLogRouteImport } from './routes/_app/audit-log'
 import { Route as AppSalesIndexRouteImport } from './routes/_app/sales/index'
 import { Route as AppRoleIndexRouteImport } from './routes/_app/role/index'
+import { Route as AppCustomerIndexRouteImport } from './routes/_app/customer/index'
 import { Route as AppUserAccountsRouteImport } from './routes/_app/user/accounts'
 import { Route as AppSettingsOrgRouteImport } from './routes/_app/settings/org'
 import { Route as AppSettingsNotificationEventsRouteImport } from './routes/_app/settings/notification-events'
@@ -70,6 +71,11 @@ const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
 const AppRoleIndexRoute = AppRoleIndexRouteImport.update({
   id: '/role/',
   path: '/role/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCustomerIndexRoute = AppCustomerIndexRouteImport.update({
+  id: '/customer/',
+  path: '/customer/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppUserAccountsRoute = AppUserAccountsRouteImport.update({
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/user/accounts': typeof AppUserAccountsRoute
+  '/customer/': typeof AppCustomerIndexRoute
   '/role/': typeof AppRoleIndexRoute
   '/sales/': typeof AppSalesIndexRoute
 }
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/user/accounts': typeof AppUserAccountsRoute
+  '/customer': typeof AppCustomerIndexRoute
   '/role': typeof AppRoleIndexRoute
   '/sales': typeof AppSalesIndexRoute
 }
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/_app/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/_app/settings/org': typeof AppSettingsOrgRoute
   '/_app/user/accounts': typeof AppUserAccountsRoute
+  '/_app/customer/': typeof AppCustomerIndexRoute
   '/_app/role/': typeof AppRoleIndexRoute
   '/_app/sales/': typeof AppSalesIndexRoute
 }
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/settings/notification-events'
     | '/settings/org'
     | '/user/accounts'
+    | '/customer/'
     | '/role/'
     | '/sales/'
   fileRoutesByTo: FileRoutesByTo
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/settings/notification-events'
     | '/settings/org'
     | '/user/accounts'
+    | '/customer'
     | '/role'
     | '/sales'
   id:
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/_app/settings/notification-events'
     | '/_app/settings/org'
     | '/_app/user/accounts'
+    | '/_app/customer/'
     | '/_app/role/'
     | '/_app/sales/'
   fileRoutesById: FileRoutesById
@@ -362,6 +374,13 @@ declare module '@tanstack/react-router' {
       path: '/role'
       fullPath: '/role/'
       preLoaderRoute: typeof AppRoleIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/customer/': {
+      id: '/_app/customer/'
+      path: '/customer'
+      fullPath: '/customer/'
+      preLoaderRoute: typeof AppCustomerIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/user/accounts': {
@@ -491,6 +510,7 @@ interface AppRouteChildren {
   AppSettingsNotificationEventsRoute: typeof AppSettingsNotificationEventsRoute
   AppSettingsOrgRoute: typeof AppSettingsOrgRoute
   AppUserAccountsRoute: typeof AppUserAccountsRoute
+  AppCustomerIndexRoute: typeof AppCustomerIndexRoute
   AppRoleIndexRoute: typeof AppRoleIndexRoute
   AppSalesIndexRoute: typeof AppSalesIndexRoute
 }
@@ -514,6 +534,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsNotificationEventsRoute: AppSettingsNotificationEventsRoute,
   AppSettingsOrgRoute: AppSettingsOrgRoute,
   AppUserAccountsRoute: AppUserAccountsRoute,
+  AppCustomerIndexRoute: AppCustomerIndexRoute,
   AppRoleIndexRoute: AppRoleIndexRoute,
   AppSalesIndexRoute: AppSalesIndexRoute,
 }
