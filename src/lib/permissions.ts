@@ -143,7 +143,7 @@ export const DEFAULT_TREE: PermNode[] = [
     ],
   },
   {
-    id: "m_user", type: "menu", name: "用户管理", code: "user:view", api: "GET /api/users", builtin: true,
+    id: "m_user", type: "menu", name: "账号管理", code: "user:view", api: "GET /api/users", builtin: true,
     children: [
       { id: "m_user_accounts", type: "menu", name: "后台账号", code: "user.accounts:view", api: "GET /api/users/accounts", path: "/user/accounts", builtin: true,
         children: [
@@ -151,6 +151,16 @@ export const DEFAULT_TREE: PermNode[] = [
           { id: "b_user_edit", type: "button", name: "编辑账号", code: "user:edit", api: "PUT /api/users", builtin: true },
           { id: "b_user_reset", type: "button", name: "重置密码", code: "user:reset_password", api: "POST /api/users/reset-password", builtin: true },
           { id: "b_user_toggle", type: "button", name: "启停账号", code: "user:toggle", api: "PUT /api/users/status", builtin: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "m_customer", type: "menu", name: "用户管理", code: "customer:view", api: "GET /api/customers", builtin: true,
+    children: [
+      { id: "m_customer_list", type: "menu", name: "用户列表", code: "customer.list:view", api: "GET /api/customers", path: "/customer", builtin: true,
+        children: [
+          { id: "b_customer_export", type: "button", name: "导出用户", code: "customer:export", api: "POST /api/customers/export", builtin: true },
         ],
       },
     ],
