@@ -46,6 +46,90 @@ function ServantBadge({ name, r, size = "sm" }: { name: string; r: "planner" | "
   );
 }
 
+function fmtSize(n?: number) {
+  if (!n) return "";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function AttachmentGallery({ items }: { items: import("@/lib/mock").ServiceAttachment[] }) {
+  const [preview, setPreview] = useState<import("@/lib/mock").ServiceAttachment | null>(null);
+  const images = items.filter((a) => a.type === "image");
+  const videos = items.filter((a) => a.type === "video");
+  const files = items.filter((a) => a.type === "file");
+  return (
+    <>
+      {(images.length > 0 || videos.length > 0) && (
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {images.map((a) => (
+            <button
+              key={a.id}
+              onClick={() => setPreview(a)}
+              className="group relative aspect-[4/3] overflow-hidden rounded-md border bg-muted"
+              title={a.name}
+            >
+              <img src={a.thumb || a.url} alt={a.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />
+              <div className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-[10px] text-white">{a.name}</div>
+            </button>
+          ))}
+          {videos.map((a) => (
+            <button
+              key={a.id}
+              onClick={() => setPreview(a)}
+              className="group relative aspect-[4/3] overflow-hidden rounded-md border bg-muted"
+              title={a.name}
+            >
+              {a.thumb ? (
+                <img src={a.thumb} alt={a.name} className="h-full w-full object-cover" loading="lazy" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40"><Video className="h-6 w-6 text-muted-foreground" /></div>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="rounded-full bg-black/60 p-2 transition group-hover:bg-black/80"><Play className="h-4 w-4 fill-white text-white" /></div>
+              </div>
+              <div className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-[10px] text-white">{a.name}</div>
+            </button>
+          ))}
+        </div>
+      )}
+      {files.length > 0 && (
+        <div className="mt-2 space-y-1.5">
+          {files.map((a) => (
+            <div key={a.id} className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2 text-xs">
+              <div className="flex min-w-0 items-center gap-2">
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate">{a.name}</span>
+                {a.size ? <span className="shrink-0 text-muted-foreground">· {fmtSize(a.size)}</span> : null}
+              </div>
+              <a href={a.url} download={a.name} onClick={(e) => { if (a.url.startsWith("#")) { e.preventDefault(); toast.info("Mock 附件：实际环境将下载文件"); } }}>
+                <Button size="sm" variant="ghost" className="h-7 px-2"><Download className="h-3.5 w-3.5" /></Button>
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={!!preview} onOpenChange={(v) => !v && setPreview(null)}>
+        <DialogContent className="max-w-3xl">
+          {preview && (
+            <>
+              <DialogHeader><DialogTitle className="truncate text-sm font-normal">{preview.name}</DialogTitle></DialogHeader>
+              <div className="flex items-center justify-center bg-black/90 rounded-md overflow-hidden">
+                {preview.type === "image" ? (
+                  <img src={preview.url} alt={preview.name} className="max-h-[70vh] w-auto" />
+                ) : (
+                  <video src={preview.url} controls className="max-h-[70vh] w-full" />
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function Page() {
   const { role } = useApp();
   const [records, setRecords] = useState<ServiceRecord[]>([]);
