@@ -186,10 +186,10 @@ const ALL_IDS = collectIds(DEFAULT_TREE, () => true);
 /** 按 PRD §14 矩阵给每个角色分配权限 */
 function presetIds(role: Role): string[] {
   const allowedMenus: Record<Role, string[]> = {
-    super_admin: ["dashboard", "service", "notification", "sales", "profit", "ledger", "settings", "role", "user", "audit"],
-    org_admin:   ["dashboard", "service", "notification", "sales", "profit", "ledger", "settings", "role", "user", "audit"],
-    planner:     ["dashboard", "service", "notification", "sales", "ledger"],
-    tutor:       ["service", "notification"],
+    super_admin: ["dashboard", "service", "notification", "sales", "profit", "ledger", "settings", "role", "user", "customer", "audit"],
+    org_admin:   ["dashboard", "service", "notification", "sales", "profit", "ledger", "settings", "role", "user", "customer", "audit"],
+    planner:     ["dashboard", "service", "notification", "sales", "ledger", "customer"],
+    tutor:       ["service", "notification", "customer"],
   };
   const allowedBtns: Record<Role, string[]> = {
     super_admin: ["profit:create", "profit:edit", "profit:enable", "profit:disable", "service.records 查看"],
@@ -197,6 +197,7 @@ function presetIds(role: Role): string[] {
                 "sales:export", "profit:audit", "profit:sms_verify", "ledger:export",
                 "settings:org_edit", "settings:backup_restore", "settings:backup_delete",
                 "user:create", "user:edit", "user:reset_password", "user:toggle",
+                "customer:export",
                 "role:config_scope", "role:create", "role:edit", "role:delete"],
     planner: ["service:create", "service:edit_request", "ledger:export"],
     tutor: ["service:create", "service:edit_request"],
