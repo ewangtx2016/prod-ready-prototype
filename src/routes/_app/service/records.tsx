@@ -15,6 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Eye, Download, Check, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
 
@@ -34,15 +37,36 @@ function Page() {
   const [rejectReason, setRejectReason] = useState("");
   const [approving, setApproving] = useState<ServiceRecord | null>(null);
   const isAdmin = role === "org_admin";
+  const [fUser, setFUser] = useState("");
+  const [fType, setFType] = useState("all");
+  const [fStatus, setFStatus] = useState("all");
+  const [fSubmitter, setFSubmitter] = useState("");
+  const [fStart, setFStart] = useState("");
+  const [fEnd, setFEnd] = useState("");
 
   useEffect(() => { setRecords(db.services()); }, []);
 
   const refresh = () => setRecords(db.services());
+  const typeOptions = Array.from(new Set(records.map((r) => r.serviceType)));
   const filtered = records.filter((r) => {
     if (role === "planner") return r.createdByRole === "planner";
     if (role === "tutor") return r.createdByRole === "tutor";
     return true;
-  }).filter((r) => tab === "all" ? true : r.status === tab);
+  })
+    .filter((r) => tab === "all" ? true : r.status === tab)
+    .filter((r) => {
+      if (fUser.trim()) {
+        const q = fUser.trim().toLowerCase();
+        if (!r.userName.toLowerCase().includes(q) && !r.userPhone.includes(q)) return false;
+      }
+      if (fType !== "all" && r.serviceType !== fType) return false;
+      if (fStatus !== "all" && r.status !== fStatus) return false;
+      if (fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
+      if (fStart && r.createdAt < fStart) return false;
+      if (fEnd && r.createdAt > fEnd + " 23:59") return false;
+      return true;
+    });
+  const resetFilters = () => { setFUser(""); setFType("all"); setFStatus("all"); setFSubmitter(""); setFStart(""); setFEnd(""); };
 
   const pendingCount = records.filter((r) => {
     if (role === "planner") return r.createdByRole === "planner" && r.status === "pending_audit";
@@ -95,6 +119,48 @@ function Page() {
         <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
         <div>· 当前待审核：{pendingCount} 条{!isAdmin && "（仅管理员可审核）"}</div>
       </DevNote>
+
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-6">
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">用户（姓名/手机）</Label>
+          <Input value={fUser} onChange={(e) => setFUser(e.target.value)} placeholder="搜索用户" className="h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">类型</Label>
+          <Select value={fType} onValueChange={setFType}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部类型</SelectItem>
+              {typeOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">状态</Label>
+          <Select value={fStatus} onValueChange={setFStatus}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部状态</SelectItem>
+              {Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">提交人</Label>
+          <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索提交人" className="h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">开始日期</Label>
+          <Input type="date" value={fStart} onChange={(e) => setFStart(e.target.value)} className="h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">结束日期</Label>
+          <div className="flex gap-2">
+            <Input type="date" value={fEnd} onChange={(e) => setFEnd(e.target.value)} className="h-8" />
+            <Button variant="ghost" size="sm" className="h-8" onClick={resetFilters}>重置</Button>
+          </div>
+        </div>
+      </div>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
