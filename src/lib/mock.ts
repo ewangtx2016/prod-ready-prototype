@@ -11,6 +11,10 @@ export type ServiceRecord = {
   createdByRole: "planner" | "tutor";
   createdAt: string;
   status: "submitted" | "pending_audit" | "approved" | "rejected";
+  /** 记录类型：交付类(绑定订单) / 日常跟进(售前或一般沟通) */
+  recordType?: "delivery" | "presales";
+  /** 关联订单 id（可多个，仅 delivery 类有意义） */
+  orderIds?: string[];
   // 修改申请
   pendingChange?: { reason: string; newContent: string; submittedAt: string };
   rejectReason?: string;
@@ -136,6 +140,7 @@ const KEYS = {
   ledger: "demo.ledger",
   log: "demo.logs",
   seeded: "demo.seeded.v6",
+  // 注：模型变更需提升版本以触发重置
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
   notifyEvent: "demo.notifyEvents",
