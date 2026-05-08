@@ -11,6 +11,10 @@ export type ServiceRecord = {
   createdByRole: "planner" | "tutor";
   createdAt: string;
   status: "submitted" | "pending_audit" | "approved" | "rejected";
+  /** 记录类型：交付类(绑定订单) / 日常跟进(售前或一般沟通) */
+  recordType?: "delivery" | "presales";
+  /** 关联订单 id（可多个，仅 delivery 类有意义） */
+  orderIds?: string[];
   // 修改申请
   pendingChange?: { reason: string; newContent: string; submittedAt: string };
   rejectReason?: string;
@@ -135,7 +139,8 @@ const KEYS = {
   rule: "demo.rules",
   ledger: "demo.ledger",
   log: "demo.logs",
-  seeded: "demo.seeded.v6",
+  seeded: "demo.seeded.v7",
+  // 注：模型变更需提升版本以触发重置
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
   notifyEvent: "demo.notifyEvents",
@@ -173,6 +178,8 @@ export function seedIfNeeded(force = false) {
     { id: rid(), userName: "林梓豪", userPhone: "13422223333", serviceType: "答疑", content: "答疑初三物理电路图分析，约 30 分钟。", duration: 30, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-27 20:10", status: "pending_audit", pendingChange: { reason: "时长录入有误，实际为 45 分钟", newContent: "答疑初三物理电路图分析，含 2 道拓展题，实际 45 分钟。", submittedAt: "2026-04-28 08:30" } },
     { id: rid(), userName: "苏婉清", userPhone: "13311114444", serviceType: "社群", content: "组织社群早读打卡，参与 28 人。", duration: 20, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-28 07:30", status: "pending_audit", pendingChange: { reason: "补充服务对象明细", newContent: "组织社群早读打卡，参与 28 人，重点跟进 5 名落后学员。", submittedAt: "2026-04-28 22:00" } },
   ];
+  // 存量服务记录默认全部标记为「日常跟进」（无订单绑定）
+  services.forEach((s) => { s.recordType = "presales"; s.orderIds = []; });
 
   const orders: Order[] = [
     { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "学科课", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", createdAt: "2026-04-20 11:00" },
@@ -181,6 +188,15 @@ export function seedIfNeeded(force = false) {
     { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "素养课", amount: 12800, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "李规划", createdAt: "2026-04-15 09:00" },
     { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "英语口语班", courseType: "学科课", amount: 4800, source: "机构老用户", channel: "甄选", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", createdAt: "2026-04-10 14:00" },
   ];
+
+  // 演示用「交付类」服务记录，绑定到具体订单
+  const deliveryServices: ServiceRecord[] = [
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "督学", content: "高三数学冲刺班开课首周督学，确认每日刷题计划。", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-21 20:30", status: "approved", recordType: "delivery", orderIds: [orders[0].id] },
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "答疑", content: "数学函数综合题答疑 4 道，已发送视频讲解。", duration: 35, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-25 19:00", status: "approved", recordType: "delivery", orderIds: [orders[0].id] },
+    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "少儿编程素养课入学沟通，确认上课时间与班级群。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id] },
+    { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "沟通", content: "艺考素养课退费沟通，已记录原因并提交退费流程。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id] },
+  ];
+  services.push(...deliveryServices);
 
   const rules: ProfitRule[] = [
     {
