@@ -238,8 +238,8 @@ export function getAncestors(nodes: PermNode[], id: string, trail: string[] = []
 }
 
 /* ============================== Mock Store ============================== */
-const LS_TREE = "demo.permTree.v2";
-const LS_ROLES = "demo.permRoles.v2";
+const LS_TREE = "demo.permTree.v3";
+const LS_ROLES = "demo.permRoles.v3";
 
 type State = { tree: PermNode[]; roles: RoleDef[] };
 let state: State = load();
