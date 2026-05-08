@@ -2,8 +2,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { db, type LedgerItem, type Order, type ProfitRule } from "@/lib/mock";
-import { CheckCircle2, AlertTriangle, FileText } from "lucide-react";
+import { db, type LedgerItem, type Order, type ProfitRule, type ServiceRecord } from "@/lib/mock";
+import { CheckCircle2, AlertTriangle, FileText, UserCog, GraduationCap } from "lucide-react";
 import { useMemo } from "react";
 
 type DimCalc = {
@@ -65,6 +65,11 @@ export function SplitDetailSheet({
     const rule = db.rules().find((r) => r.status === "active") || null;
     const calc = order && rule ? computeSplit(order, rule, item.amount) : null;
     return { order, rule, calc };
+  }, [item]);
+
+  const services = useMemo<ServiceRecord[]>(() => {
+    if (!item) return [];
+    return db.services().filter((s) => s.orderIds?.includes(item.orderId));
   }, [item]);
 
   return (
@@ -137,6 +142,39 @@ export function SplitDetailSheet({
                 <StatusRow target="规划师" status={item.status} settledAt={item.settledAt} />
                 <StatusRow target="平台" status={item.status} settledAt={item.settledAt} />
               </Card>
+            </div>
+
+            {/* ⑤ 关联服务记录 */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs text-muted-foreground">关联服务记录</div>
+                <span className="text-[11px] text-muted-foreground">{services.length} 条 · {services.reduce((s, r) => s + r.duration, 0)} 分钟</span>
+              </div>
+              {services.length === 0 ? (
+                <Card className="p-4 text-center text-xs text-muted-foreground">该订单暂无关联服务记录</Card>
+              ) : (
+                <Card className="p-2 space-y-1.5">
+                  {services.map((r) => {
+                    const Icon = r.createdByRole === "planner" ? UserCog : GraduationCap;
+                    return (
+                      <div key={r.id} className="rounded-md border bg-background/60 p-2.5 text-xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="outline" className="text-[10px]">{r.serviceType}</Badge>
+                            <span className="text-muted-foreground">{r.duration} 分钟</span>
+                          </div>
+                          <span className="text-muted-foreground">{r.createdAt}</span>
+                        </div>
+                        <div className="leading-relaxed">{r.content}</div>
+                        <div className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Icon className="h-3 w-3" />{r.createdBy} · {r.createdByRole === "planner" ? "规划师" : "学管师"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </Card>
+              )}
+              <div className="mt-1 text-[11px] text-muted-foreground">服务记录仅供参考，结算流程不依赖记录数量。</div>
             </div>
 
           </div>
