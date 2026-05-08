@@ -254,26 +254,86 @@ function Page() {
 
       {/* 查看 */}
       <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>服务记录详情</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
           {viewing && (
-            <div className="space-y-2 text-sm">
-              <div><b>用户：</b>{maskName(viewing.userName, role)} ({maskPhone(viewing.userPhone, role)})</div>
-              <div><b>类型：</b>{viewing.serviceType} · <b>时长：</b>{viewing.duration} 分钟</div>
-              <div><b>内容：</b>{viewing.content}</div>
-              <div><b>提交人：</b>{viewing.createdBy} · <b>时间：</b>{viewing.createdAt}</div>
-              <div><b>状态：</b><Badge className={STATUS_LABEL[viewing.status].color}>{STATUS_LABEL[viewing.status].label}</Badge></div>
-              {viewing.pendingChange && (
-                <div className="rounded-md bg-warning/10 p-3 text-xs">
-                  <div className="font-medium text-warning-foreground mb-1">修改申请待审核</div>
-                  <div>原因：{viewing.pendingChange.reason}</div>
-                  <div>新内容：{viewing.pendingChange.newContent}</div>
+            <>
+              <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 pb-5 border-b">
+                <DialogHeader className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary text-base font-semibold">
+                        {maskName(viewing.userName, role).slice(0, 1)}
+                      </div>
+                      <div>
+                        <DialogTitle className="text-base">{maskName(viewing.userName, role)}</DialogTitle>
+                        <div className="mt-0.5 font-mono text-xs text-muted-foreground">{maskPhone(viewing.userPhone, role)}</div>
+                      </div>
+                    </div>
+                    <Badge className={STATUS_LABEL[viewing.status].color}>{STATUS_LABEL[viewing.status].label}</Badge>
+                  </div>
+                </DialogHeader>
+              </div>
+
+              <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-auto">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <div className="text-[11px] text-muted-foreground mb-1">服务类型</div>
+                    <div className="text-sm font-medium">{viewing.serviceType}</div>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <div className="text-[11px] text-muted-foreground mb-1">服务时长</div>
+                    <div className="text-sm font-medium">{viewing.duration} 分钟</div>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <div className="text-[11px] text-muted-foreground mb-1">提交时间</div>
+                    <div className="text-sm font-medium">{viewing.createdAt}</div>
+                  </div>
                 </div>
-              )}
-              {viewing.rejectReason && <div className="rounded-md bg-destructive/10 p-3 text-xs"><b>驳回原因：</b>{viewing.rejectReason}</div>}
-            </div>
+
+                <div className="rounded-lg border p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-medium text-muted-foreground">服务人</div>
+                    <ServantBadge name={viewing.createdBy} r={viewing.createdByRole} size="md" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground mb-2">服务内容</div>
+                  <div className="rounded-lg border bg-card p-4 text-sm leading-relaxed whitespace-pre-wrap">{viewing.content}</div>
+                </div>
+
+                {viewing.pendingChange && (
+                  <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-warning-foreground">
+                      <span className="inline-flex h-2 w-2 rounded-full bg-warning animate-pulse" />修改申请待审核
+                    </div>
+                    <div className="text-xs text-muted-foreground">申请原因：<span className="text-foreground">{viewing.pendingChange.reason}</span></div>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <div className="rounded-md border bg-background/60 p-3">
+                        <div className="text-[11px] text-muted-foreground mb-1">原内容</div>
+                        <div className="text-xs line-through text-muted-foreground">{viewing.content}</div>
+                      </div>
+                      <div className="rounded-md border border-success/40 bg-success/5 p-3">
+                        <div className="text-[11px] text-success mb-1">新内容</div>
+                        <div className="text-xs">{viewing.pendingChange.newContent}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {viewing.rejectReason && (
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
+                    <div className="text-xs font-medium text-destructive mb-1">驳回原因</div>
+                    <div className="text-sm">{viewing.rejectReason}</div>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="border-t px-6 py-3">
+                <Button variant="outline" onClick={() => setViewing(null)}>关闭</Button>
+              </DialogFooter>
+            </>
           )}
-          <DialogFooter><Button onClick={() => setViewing(null)}>关闭</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -298,7 +358,7 @@ function Page() {
               <div>确认通过以下服务记录的审核？</div>
               <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
                 <div><b>用户：</b>{maskName(approving.userName, role)} · <b>类型：</b>{approving.serviceType}</div>
-                <div><b>提交人：</b>{approving.createdBy}</div>
+                <div className="flex items-center gap-1"><b>服务人：</b><ServantBadge name={approving.createdBy} r={approving.createdByRole} /></div>
                 {approving.pendingChange ? (
                   <>
                     <div className="line-through text-muted-foreground">原：{approving.content}</div>
