@@ -164,8 +164,8 @@ function Page() {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">提交人</Label>
-          <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索提交人" className="h-8" />
+          <Label className="text-xs text-muted-foreground">服务人</Label>
+          <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索服务人" className="h-8" />
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">开始日期</Label>
@@ -201,7 +201,7 @@ function Page() {
                 <TableHead>类型</TableHead>
                 <TableHead>内容{tab === "pending_audit" && "（原 → 新）"}</TableHead>
                 <TableHead>时长</TableHead>
-                <TableHead>提交人</TableHead>
+                <TableHead>服务人</TableHead>
                 <TableHead>提交时间</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -228,7 +228,7 @@ function Page() {
                     )}
                   </TableCell>
                   <TableCell>{r.duration} 分钟</TableCell>
-                  <TableCell>{r.createdBy}</TableCell>
+                  <TableCell><ServantBadge name={r.createdBy} r={r.createdByRole} /></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.createdAt}</TableCell>
                   <TableCell><Badge className={STATUS_LABEL[r.status].color}>{STATUS_LABEL[r.status].label}</Badge></TableCell>
                   <TableCell className="text-right space-x-1">
