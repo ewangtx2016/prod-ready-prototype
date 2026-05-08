@@ -213,6 +213,7 @@ function Page() {
               <TableRow>
                 <TableHead>用户</TableHead>
                 <TableHead>手机号</TableHead>
+                <TableHead>记录类型</TableHead>
                 <TableHead>类型</TableHead>
                 <TableHead>内容{tab === "pending_audit" && "（原 → 新）"}</TableHead>
                 <TableHead>时长</TableHead>
@@ -227,6 +228,18 @@ function Page() {
                 <TableRow key={r.id}>
                   <TableCell>{maskName(r.userName, role)}</TableCell>
                   <TableCell className="font-mono text-xs">{maskPhone(r.userPhone, role)}</TableCell>
+                  <TableCell>
+                    {(r.recordType ?? "presales") === "delivery" ? (
+                      <div className="space-y-0.5">
+                        <Badge variant="outline" className="gap-1 border-success/40 bg-success/10 text-success"><Link2 className="h-3 w-3" />交付服务</Badge>
+                        {r.orderIds && r.orderIds.length > 0 && (
+                          <div className="text-[10px] text-muted-foreground font-mono">{r.orderIds.length === 1 ? r.orderIds[0] : `${r.orderIds[0]} 等${r.orderIds.length}单`}</div>
+                        )}
+                      </div>
+                    ) : (
+                      <Badge variant="outline" className="gap-1 text-muted-foreground"><Coffee className="h-3 w-3" />日常跟进</Badge>
+                    )}
+                  </TableCell>
                   <TableCell>{r.serviceType}</TableCell>
                   <TableCell className="max-w-xs text-xs">
                     {r.pendingChange ? (
@@ -261,7 +274,7 @@ function Page() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
         </TabsContent>
