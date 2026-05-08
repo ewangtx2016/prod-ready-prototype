@@ -14,7 +14,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Eye, Download, Check, X } from "lucide-react";
+import { Eye, Download, Check, X, UserCog, GraduationCap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
 
@@ -25,6 +28,24 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   rejected: { label: "未通过", color: "bg-destructive text-destructive-foreground" },
 };
 
+const SERVICE_ROLE_META: Record<"planner" | "tutor", { label: string; icon: typeof UserCog; className: string }> = {
+  planner: { label: "规划师", icon: UserCog, className: "bg-primary/10 text-primary border-primary/20" },
+  tutor: { label: "学管师", icon: GraduationCap, className: "bg-accent/40 text-accent-foreground border-accent" },
+};
+
+function ServantBadge({ name, r, size = "sm" }: { name: string; r: "planner" | "tutor"; size?: "sm" | "md" }) {
+  const meta = SERVICE_ROLE_META[r];
+  const Icon = meta.icon;
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      <span className={size === "md" ? "text-sm font-medium" : "text-sm"}>{name}</span>
+      <Badge variant="outline" className={`gap-1 px-1.5 py-0 text-[10px] font-normal ${meta.className}`}>
+        <Icon className="h-3 w-3" />{meta.label}
+      </Badge>
+    </div>
+  );
+}
+
 function Page() {
   const { role } = useApp();
   const [records, setRecords] = useState<ServiceRecord[]>([]);
@@ -34,15 +55,36 @@ function Page() {
   const [rejectReason, setRejectReason] = useState("");
   const [approving, setApproving] = useState<ServiceRecord | null>(null);
   const isAdmin = role === "org_admin";
+  const [fUser, setFUser] = useState("");
+  const [fType, setFType] = useState("all");
+  const [fStatus, setFStatus] = useState("all");
+  const [fSubmitter, setFSubmitter] = useState("");
+  const [fStart, setFStart] = useState("");
+  const [fEnd, setFEnd] = useState("");
 
   useEffect(() => { setRecords(db.services()); }, []);
 
   const refresh = () => setRecords(db.services());
+  const typeOptions = Array.from(new Set(records.map((r) => r.serviceType)));
   const filtered = records.filter((r) => {
     if (role === "planner") return r.createdByRole === "planner";
     if (role === "tutor") return r.createdByRole === "tutor";
     return true;
-  }).filter((r) => tab === "all" ? true : r.status === tab);
+  })
+    .filter((r) => tab === "all" ? true : r.status === tab)
+    .filter((r) => {
+      if (fUser.trim()) {
+        const q = fUser.trim().toLowerCase();
+        if (!r.userName.toLowerCase().includes(q) && !r.userPhone.includes(q)) return false;
+      }
+      if (fType !== "all" && r.serviceType !== fType) return false;
+      if (fStatus !== "all" && r.status !== fStatus) return false;
+      if (fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
+      if (fStart && r.createdAt < fStart) return false;
+      if (fEnd && r.createdAt > fEnd + " 23:59") return false;
+      return true;
+    });
+  const resetFilters = () => { setFUser(""); setFType("all"); setFStatus("all"); setFSubmitter(""); setFStart(""); setFEnd(""); };
 
   const pendingCount = records.filter((r) => {
     if (role === "planner") return r.createdByRole === "planner" && r.status === "pending_audit";
@@ -96,6 +138,48 @@ function Page() {
         <div>· 当前待审核：{pendingCount} 条{!isAdmin && "（仅管理员可审核）"}</div>
       </DevNote>
 
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-6">
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">用户（姓名/手机）</Label>
+          <Input value={fUser} onChange={(e) => setFUser(e.target.value)} placeholder="搜索用户" className="h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">类型</Label>
+          <Select value={fType} onValueChange={setFType}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部类型</SelectItem>
+              {typeOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">状态</Label>
+          <Select value={fStatus} onValueChange={setFStatus}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部状态</SelectItem>
+              {Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">服务人</Label>
+          <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索服务人" className="h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">开始日期</Label>
+          <Input type="date" value={fStart} onChange={(e) => setFStart(e.target.value)} className="h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">结束日期</Label>
+          <div className="flex gap-2">
+            <Input type="date" value={fEnd} onChange={(e) => setFEnd(e.target.value)} className="h-8" />
+            <Button variant="ghost" size="sm" className="h-8" onClick={resetFilters}>重置</Button>
+          </div>
+        </div>
+      </div>
+
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="all">全部</TabsTrigger>
@@ -117,7 +201,7 @@ function Page() {
                 <TableHead>类型</TableHead>
                 <TableHead>内容{tab === "pending_audit" && "（原 → 新）"}</TableHead>
                 <TableHead>时长</TableHead>
-                <TableHead>提交人</TableHead>
+                <TableHead>服务人</TableHead>
                 <TableHead>提交时间</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -144,7 +228,7 @@ function Page() {
                     )}
                   </TableCell>
                   <TableCell>{r.duration} 分钟</TableCell>
-                  <TableCell>{r.createdBy}</TableCell>
+                  <TableCell><ServantBadge name={r.createdBy} r={r.createdByRole} /></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.createdAt}</TableCell>
                   <TableCell><Badge className={STATUS_LABEL[r.status].color}>{STATUS_LABEL[r.status].label}</Badge></TableCell>
                   <TableCell className="text-right space-x-1">
@@ -170,26 +254,86 @@ function Page() {
 
       {/* 查看 */}
       <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>服务记录详情</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
           {viewing && (
-            <div className="space-y-2 text-sm">
-              <div><b>用户：</b>{maskName(viewing.userName, role)} ({maskPhone(viewing.userPhone, role)})</div>
-              <div><b>类型：</b>{viewing.serviceType} · <b>时长：</b>{viewing.duration} 分钟</div>
-              <div><b>内容：</b>{viewing.content}</div>
-              <div><b>提交人：</b>{viewing.createdBy} · <b>时间：</b>{viewing.createdAt}</div>
-              <div><b>状态：</b><Badge className={STATUS_LABEL[viewing.status].color}>{STATUS_LABEL[viewing.status].label}</Badge></div>
-              {viewing.pendingChange && (
-                <div className="rounded-md bg-warning/10 p-3 text-xs">
-                  <div className="font-medium text-warning-foreground mb-1">修改申请待审核</div>
-                  <div>原因：{viewing.pendingChange.reason}</div>
-                  <div>新内容：{viewing.pendingChange.newContent}</div>
+            <>
+              <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 pb-5 border-b">
+                <DialogHeader className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary text-base font-semibold">
+                        {maskName(viewing.userName, role).slice(0, 1)}
+                      </div>
+                      <div>
+                        <DialogTitle className="text-base">{maskName(viewing.userName, role)}</DialogTitle>
+                        <div className="mt-0.5 font-mono text-xs text-muted-foreground">{maskPhone(viewing.userPhone, role)}</div>
+                      </div>
+                    </div>
+                    <Badge className={STATUS_LABEL[viewing.status].color}>{STATUS_LABEL[viewing.status].label}</Badge>
+                  </div>
+                </DialogHeader>
+              </div>
+
+              <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-auto">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <div className="text-[11px] text-muted-foreground mb-1">服务类型</div>
+                    <div className="text-sm font-medium">{viewing.serviceType}</div>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <div className="text-[11px] text-muted-foreground mb-1">服务时长</div>
+                    <div className="text-sm font-medium">{viewing.duration} 分钟</div>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <div className="text-[11px] text-muted-foreground mb-1">提交时间</div>
+                    <div className="text-sm font-medium">{viewing.createdAt}</div>
+                  </div>
                 </div>
-              )}
-              {viewing.rejectReason && <div className="rounded-md bg-destructive/10 p-3 text-xs"><b>驳回原因：</b>{viewing.rejectReason}</div>}
-            </div>
+
+                <div className="rounded-lg border p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-medium text-muted-foreground">服务人</div>
+                    <ServantBadge name={viewing.createdBy} r={viewing.createdByRole} size="md" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground mb-2">服务内容</div>
+                  <div className="rounded-lg border bg-card p-4 text-sm leading-relaxed whitespace-pre-wrap">{viewing.content}</div>
+                </div>
+
+                {viewing.pendingChange && (
+                  <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-warning-foreground">
+                      <span className="inline-flex h-2 w-2 rounded-full bg-warning animate-pulse" />修改申请待审核
+                    </div>
+                    <div className="text-xs text-muted-foreground">申请原因：<span className="text-foreground">{viewing.pendingChange.reason}</span></div>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <div className="rounded-md border bg-background/60 p-3">
+                        <div className="text-[11px] text-muted-foreground mb-1">原内容</div>
+                        <div className="text-xs line-through text-muted-foreground">{viewing.content}</div>
+                      </div>
+                      <div className="rounded-md border border-success/40 bg-success/5 p-3">
+                        <div className="text-[11px] text-success mb-1">新内容</div>
+                        <div className="text-xs">{viewing.pendingChange.newContent}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {viewing.rejectReason && (
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
+                    <div className="text-xs font-medium text-destructive mb-1">驳回原因</div>
+                    <div className="text-sm">{viewing.rejectReason}</div>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="border-t px-6 py-3">
+                <Button variant="outline" onClick={() => setViewing(null)}>关闭</Button>
+              </DialogFooter>
+            </>
           )}
-          <DialogFooter><Button onClick={() => setViewing(null)}>关闭</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -214,7 +358,7 @@ function Page() {
               <div>确认通过以下服务记录的审核？</div>
               <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
                 <div><b>用户：</b>{maskName(approving.userName, role)} · <b>类型：</b>{approving.serviceType}</div>
-                <div><b>提交人：</b>{approving.createdBy}</div>
+                <div className="flex items-center gap-1"><b>服务人：</b><ServantBadge name={approving.createdBy} r={approving.createdByRole} /></div>
                 {approving.pendingChange ? (
                   <>
                     <div className="line-through text-muted-foreground">原：{approving.content}</div>
