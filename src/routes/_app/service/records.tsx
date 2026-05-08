@@ -344,6 +344,14 @@ function Page() {
                 <div>
                   <div className="text-xs font-medium text-muted-foreground mb-2">服务内容</div>
                   <div className="rounded-lg border bg-card p-4 text-sm leading-relaxed whitespace-pre-wrap">{viewing.content}</div>
+                  {viewing.attachments && viewing.attachments.length > 0 && (
+                    <div className="mt-3">
+                      <div className="mb-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+                        <Paperclip className="h-3 w-3" />附件 · 共 {viewing.attachments.length} 项
+                      </div>
+                      <AttachmentGallery items={viewing.attachments} />
+                    </div>
+                  )}
                 </div>
 
                 <div>
