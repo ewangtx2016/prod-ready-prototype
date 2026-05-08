@@ -348,6 +348,11 @@ export const db = {
     logs.unshift({ id: rid(), time: new Date().toLocaleString("zh-CN"), ip: "192.168.1." + (Math.floor(Math.random() * 200) + 1), ...entry });
     write(KEYS.log, logs.slice(0, 200));
   },
+  addService: (s: ServiceRecord) => {
+    const list = read<ServiceRecord[]>(KEYS.service, []);
+    list.unshift(s);
+    write(KEYS.service, list);
+  },
   reset: () => {
     Object.values(KEYS).forEach((k) => localStorage.removeItem(k));
     seedIfNeeded(true);
