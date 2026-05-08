@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { db, type ServiceRecord } from "@/lib/mock";
+import { db, type ServiceRecord, type Order } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
 import { maskName, maskPhone } from "@/lib/mask";
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Eye, Download, Check, X, UserCog, GraduationCap } from "lucide-react";
+import { Eye, Download, Check, X, UserCog, GraduationCap, Link2, Coffee } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,8 +61,11 @@ function Page() {
   const [fSubmitter, setFSubmitter] = useState("");
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
+  const [fRecordType, setFRecordType] = useState<"all" | "delivery" | "presales">("all");
+  const [orders, setOrders] = useState<Order[]>([]);
 
-  useEffect(() => { setRecords(db.services()); }, []);
+  useEffect(() => { setRecords(db.services()); setOrders(db.orders()); }, []);
+  const orderMap = new Map(orders.map((o) => [o.id, o]));
 
   const refresh = () => setRecords(db.services());
   const typeOptions = Array.from(new Set(records.map((r) => r.serviceType)));
@@ -82,9 +85,10 @@ function Page() {
       if (fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
       if (fStart && r.createdAt < fStart) return false;
       if (fEnd && r.createdAt > fEnd + " 23:59") return false;
+      if (fRecordType !== "all" && (r.recordType ?? "presales") !== fRecordType) return false;
       return true;
     });
-  const resetFilters = () => { setFUser(""); setFType("all"); setFStatus("all"); setFSubmitter(""); setFStart(""); setFEnd(""); };
+  const resetFilters = () => { setFUser(""); setFType("all"); setFStatus("all"); setFSubmitter(""); setFStart(""); setFEnd(""); setFRecordType("all"); };
 
   const pendingCount = records.filter((r) => {
     if (role === "planner") return r.createdByRole === "planner" && r.status === "pending_audit";
