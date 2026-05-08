@@ -15,9 +15,22 @@ export type ServiceRecord = {
   recordType?: "delivery" | "presales";
   /** 关联订单 id（可多个，仅 delivery 类有意义） */
   orderIds?: string[];
+  /** 服务附件：图片 / 视频 / 文件 */
+  attachments?: ServiceAttachment[];
   // 修改申请
   pendingChange?: { reason: string; newContent: string; submittedAt: string };
   rejectReason?: string;
+};
+
+export type ServiceAttachment = {
+  id: string;
+  type: "image" | "video" | "file";
+  name: string;
+  url: string;
+  /** 文件大小（字节，可选；mock 用） */
+  size?: number;
+  /** 视频/图片 缩略图（可选） */
+  thumb?: string;
 };
 
 export type Order = {
