@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Eye, Download, Check, X, UserCog, GraduationCap, Link2, Coffee } from "lucide-react";
+import { Eye, Download, Check, X, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -250,6 +250,22 @@ function Page() {
                       </div>
                     ) : (
                       <div className="truncate">{r.content}</div>
+                    )}
+                    {r.attachments && r.attachments.length > 0 && (
+                      <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+                        {(() => {
+                          const imgs = r.attachments!.filter((a) => a.type === "image").length;
+                          const vids = r.attachments!.filter((a) => a.type === "video").length;
+                          const files = r.attachments!.filter((a) => a.type === "file").length;
+                          return (
+                            <>
+                              {imgs > 0 && <span className="inline-flex items-center gap-0.5"><ImageIcon className="h-3 w-3" />{imgs}</span>}
+                              {vids > 0 && <span className="inline-flex items-center gap-0.5"><Video className="h-3 w-3" />{vids}</span>}
+                              {files > 0 && <span className="inline-flex items-center gap-0.5"><Paperclip className="h-3 w-3" />{files}</span>}
+                            </>
+                          );
+                        })()}
+                      </div>
                     )}
                     {r.status === "rejected" && r.rejectReason && (
                       <div className="mt-1 text-[11px] text-destructive">驳回：{r.rejectReason}</div>
