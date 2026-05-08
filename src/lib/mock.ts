@@ -222,10 +222,21 @@ export function seedIfNeeded(force = false) {
 
   // 演示用「交付类」服务记录，绑定到具体订单
   const deliveryServices: ServiceRecord[] = [
-    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "督学", content: "高三数学冲刺班开课首周督学，确认每日刷题计划。", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-21 20:30", status: "approved", recordType: "delivery", orderIds: [orders[0].id] },
-    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "答疑", content: "数学函数综合题答疑 4 道，已发送视频讲解。", duration: 35, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-25 19:00", status: "approved", recordType: "delivery", orderIds: [orders[0].id] },
-    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "少儿编程素养课入学沟通，确认上课时间与班级群。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id] },
-    { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "沟通", content: "艺考素养课退费沟通，已记录原因并提交退费流程。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id] },
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "督学", content: "高三数学冲刺班开课首周督学，确认每日刷题计划。", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-21 20:30", status: "approved", recordType: "delivery", orderIds: [orders[0].id], attachments: [
+      { id: rid(), type: "image", name: "刷题计划表.png", url: PIC("d1a"), thumb: PIC_THUMB("d1a"), size: 256000 },
+      { id: rid(), type: "image", name: "首周打卡截图.png", url: PIC("d1b"), thumb: PIC_THUMB("d1b"), size: 198000 },
+    ] },
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "答疑", content: "数学函数综合题答疑 4 道，已发送视频讲解。", duration: 35, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-25 19:00", status: "approved", recordType: "delivery", orderIds: [orders[0].id], attachments: [
+      { id: rid(), type: "video", name: "函数题讲解.mp4", url: SAMPLE_VIDEO, thumb: PIC_THUMB("d2v"), size: 8 * 1024 * 1024 },
+      { id: rid(), type: "file", name: "函数综合题.pdf", url: "#mock-pdf", size: 614400 },
+    ] },
+    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "少儿编程素养课入学沟通，确认上课时间与班级群。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id], attachments: [
+      { id: rid(), type: "image", name: "班级群二维码.png", url: PIC("d3a"), thumb: PIC_THUMB("d3a"), size: 102400 },
+    ] },
+    { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "沟通", content: "艺考素养课退费沟通，已记录原因并提交退费流程。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id], attachments: [
+      { id: rid(), type: "file", name: "退费申请书.pdf", url: "#mock-pdf", size: 245760 },
+      { id: rid(), type: "file", name: "沟通录音.m4a", url: "#mock-audio", size: 1048576 },
+    ] },
   ];
   services.push(...deliveryServices);
 
