@@ -4,8 +4,8 @@ import {
   Settings, ShieldCheck, Users, History, ChevronDown,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { MENU_PERMS, SUBMENU_PERMS } from "@/lib/roles";
-import { useState } from "react";
+import { usePermStore, flattenTree } from "@/lib/permissions";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 type Item = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; key: string };
@@ -18,11 +18,8 @@ const GROUPS: Group[] = [
     { to: "/service/settings", label: "审核模式", icon: Settings, key: "service" },
   ] },
   { key: "notification", label: "通知管理", icon: Bell, children: [
-    { to: "/notification/virtual-no", label: "虚拟号", icon: Bell, key: "notification" },
-    { to: "/notification/sms", label: "短信模板", icon: Bell, key: "notification" },
-    { to: "/notification/wechat", label: "社群模板", icon: Bell, key: "notification" },
-    { to: "/notification/email", label: "邮件模板", icon: Bell, key: "notification" },
-    { to: "/notification/inbox", label: "站内信", icon: Bell, key: "notification" },
+    { to: "/notification/templates", label: "通知模板", icon: Bell, key: "notification" },
+    { to: "/settings/notification-events", label: "通知事件", icon: Bell, key: "notification" },
   ] },
   { key: "sales", label: "销售管理", icon: ShoppingCart, children: [{ to: "/sales", label: "销售明细", icon: ShoppingCart, key: "sales" }] },
   { key: "profit", label: "分成管理", icon: PieChart, children: [
@@ -40,7 +37,6 @@ const GROUPS: Group[] = [
     { to: "/settings/org", label: "机构信息", icon: Settings, key: "settings" },
     { to: "/settings/ip", label: "IP 白名单", icon: Settings, key: "settings" },
     { to: "/settings/backup", label: "备份设置", icon: Settings, key: "settings" },
-    { to: "/settings/alert", label: "操作预警", icon: Settings, key: "settings" },
   ] },
   { key: "role", label: "角色管理", icon: ShieldCheck, children: [{ to: "/role", label: "角色管理", icon: ShieldCheck, key: "role" }] },
   { key: "user", label: "用户管理", icon: Users, children: [
@@ -51,16 +47,16 @@ const GROUPS: Group[] = [
 
 export function AppSidebar() {
   const { role } = useApp();
+  const { tree, roles } = usePermStore();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const allowedPaths = useMemo(() => {
+    const r = roles.find((x) => x.key === role);
+    if (!r) return new Set<string>();
+    const allowed = new Set(r.permIds);
+    return new Set(flattenTree(tree).filter((n) => n.path && allowed.has(n.id)).map((n) => n.path!));
+  }, [tree, roles, role]);
   const visible = GROUPS
-    .filter((g) => MENU_PERMS[g.key]?.includes(role))
-    .map((g) => ({
-      ...g,
-      children: g.children.filter((c) => {
-        const perms = SUBMENU_PERMS[c.to];
-        return perms ? perms.includes(role) : true;
-      }),
-    }))
+    .map((g) => ({ ...g, children: g.children.filter((c) => allowedPaths.has(c.to)) }))
     .filter((g) => g.children.length > 0);
 
   return (

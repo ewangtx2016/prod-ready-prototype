@@ -17,9 +17,9 @@ export const MENU_PERMS: Record<string, Role[]> = {
   sales: ["org_admin", "super_admin", "planner"],
   profit: ["org_admin", "super_admin"],
   ledger: ["org_admin", "super_admin", "planner"],
-  settings: ["org_admin"],
-  role: ["org_admin"],
-  user: ["org_admin"],
+  settings: ["org_admin", "super_admin"],
+  role: ["org_admin", "super_admin"],
+  user: ["org_admin", "super_admin"],
   audit: ["org_admin", "super_admin"],
 };
 
@@ -28,11 +28,8 @@ export const SUBMENU_PERMS: Record<string, Role[]> = {
   // 学管师仅可见：服务列表、站内信
   "/service/records": ["org_admin", "super_admin", "planner", "tutor"],
   "/service/settings": ["org_admin", "super_admin", "planner"],
-  "/notification/virtual-no": ["org_admin", "super_admin", "planner"],
-  "/notification/sms": ["org_admin", "super_admin", "planner"],
-  "/notification/wechat": ["org_admin", "super_admin", "planner"],
-  "/notification/email": ["org_admin", "super_admin", "planner"],
-  "/notification/inbox": ["org_admin", "super_admin", "planner", "tutor"],
+  "/notification/templates": ["org_admin", "super_admin", "planner"],
+  "/settings/notification-events": ["org_admin", "super_admin"],
 };
 
 export function can(role: Role, action: string): boolean {

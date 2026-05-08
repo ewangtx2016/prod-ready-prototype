@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useApp } from "@/lib/store";
-import { ROLE_META, ROLE_LIST, type Role } from "@/lib/roles";
+import { ROLE_META, type Role } from "@/lib/roles";
+import { usePermStore } from "@/lib/permissions";
 import { db } from "@/lib/mock";
 import { PageHeader } from "@/components/dev/PageHeader";
 import { DevNote } from "@/components/dev/DevNote";
@@ -32,6 +33,7 @@ const sample: Account[] = [
 
 function Page() {
   const { role } = useApp();
+  const { roles: dynRoles } = usePermStore();
   const [list, setList] = useState<Account[]>([]);
   const [editing, setEditing] = useState<Account | null>(null);
   const [resetting, setResetting] = useState<Account | null>(null);
@@ -69,7 +71,7 @@ function Page() {
                 <TableCell className="font-mono text-xs">{a.username}</TableCell>
                 <TableCell>{a.name}</TableCell>
                 <TableCell className="font-mono text-xs">{a.phone}</TableCell>
-                <TableCell><Badge className={`text-white ${ROLE_META[a.role].color}`}>{ROLE_META[a.role].name}</Badge></TableCell>
+                <TableCell><Badge className={`text-white ${dynRoles.find(r=>r.key===a.role)?.color ?? "bg-slate-500"}`}>{dynRoles.find(r=>r.key===a.role)?.name ?? a.role}</Badge></TableCell>
                 <TableCell><Switch checked={a.enabled} disabled={!canEdit} onCheckedChange={() => toggle(a)} /></TableCell>
                 <TableCell className="text-xs text-muted-foreground">{a.createdAt}</TableCell>
                 <TableCell className="text-right space-x-1">
@@ -92,7 +94,7 @@ function Page() {
               <div><Label>角色</Label>
                 <Select value={editing.role} onValueChange={(v) => setEditing({ ...editing, role: v as Role })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{ROLE_LIST.map(r => <SelectItem key={r} value={r}>{ROLE_META[r].name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{dynRoles.map(r => <SelectItem key={r.key} value={r.key}>{r.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>

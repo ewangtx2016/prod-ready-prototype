@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
 import { db } from "@/lib/mock";
@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -34,6 +32,31 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
   const [deleting, setDeleting] = useState<Tpl | null>(null);
   const [testing, setTesting] = useState<Tpl | null>(null);
   const [testTo, setTestTo] = useState("");
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // 把所有标签统一格式化为 {{中文}}，兼容传入 "用户姓名" / "{{用户姓名}}" / "{userName}" 三种写法
+  const tagOf = (h: string) => {
+    const m = h.match(/^\{\{?\s*(.+?)\s*\}?\}$/);
+    const inner = (m ? m[1] : h).trim();
+    return `{{${inner}}}`;
+  };
+  const tags = helpers.map(tagOf);
+
+  const insertTag = (tag: string) => {
+    if (!editing) return;
+    const ta = contentRef.current;
+    const cur = editing.content || "";
+    if (!ta) { setEditing({ ...editing, content: cur + tag }); return; }
+    const start = ta.selectionStart ?? cur.length;
+    const end = ta.selectionEnd ?? cur.length;
+    const next = cur.slice(0, start) + tag + cur.slice(end);
+    setEditing({ ...editing, content: next });
+    requestAnimationFrame(() => {
+      ta.focus();
+      const pos = start + tag.length;
+      ta.setSelectionRange(pos, pos);
+    });
+  };
 
   useEffect(() => {
     const raw = localStorage.getItem(storageKey);
@@ -84,14 +107,14 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
       } />
       <DevNote prd={prd} title={title}>
         <div>· 触达通道：{channel}</div>
-        <div>· 占位符示例：{helpers.join(" / ")}</div>
-        <div>· 自动发送：业务事件触发；手动发送：列表测试发送或在用户详情页</div>
+        <div>· 可用变量：{tags.join(" / ")}（统一采用 <code>{"{{中文}}"}</code> 双大括号格式，发送前由系统替换为真实数据）</div>
+        <div>· 模板仅负责<b>文案</b>；是否发送、发送给谁，统一在「系统设置 → 通知事件」中按事件绑定渠道与模板</div>
         <div>· 触达内容/时间/结果均留痕（审核日志）</div>
         <div>· <b>模板 Key</b>：英文短标识（如 <code>renewal_reminder</code>），后端按 Key 调用，<b>创建后不可修改</b>；运营改名/改文案不影响触发。系统内置模板使用 <code>sys_</code> 前缀</div>
       </DevNote>
       <Card>
         <Table>
-          <TableHeader><TableRow><TableHead>模板名称</TableHead><TableHead>模板 Key</TableHead><TableHead>内容预览</TableHead><TableHead>自动发送</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>模板名称</TableHead><TableHead>模板 Key</TableHead><TableHead>内容预览</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
             {list.map(t => (
               <TableRow key={t.id}>
@@ -102,7 +125,6 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
                   </button>
                 </TableCell>
                 <TableCell className="max-w-md truncate text-sm text-muted-foreground">{t.content}</TableCell>
-                <TableCell>{t.auto ? <Badge className="bg-success text-success-foreground">已开启</Badge> : <Badge variant="outline">关闭</Badge>}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{t.createdAt}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button size="sm" variant="ghost" onClick={() => setTesting(t)}><Send className="h-3.5 w-3.5" /></Button>
@@ -111,14 +133,14 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
                 </TableCell>
               </TableRow>
             ))}
-            {list.length === 0 && <TableRow><TableCell colSpan={6} className="py-12 text-center text-muted-foreground">暂无模板</TableCell></TableRow>}
+            {list.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">暂无模板</TableCell></TableRow>}
           </TableBody>
         </Table>
       </Card>
 
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing && list.find(x => x.id === editing.id) ? "编辑" : "新增"}{title}</DialogTitle><DialogDescription>支持占位符：{helpers.join(" / ")}</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{editing && list.find(x => x.id === editing.id) ? "编辑" : "新增"}{title}</DialogTitle><DialogDescription>点击下方变量标签可插入到光标位置，发送时自动替换为真实数据。</DialogDescription></DialogHeader>
           {editing && (
             <div className="space-y-3">
               <div><Label>模板名称 *</Label><Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="如：续报提醒" /></div>
@@ -127,8 +149,20 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
                 <Input value={editing.key} disabled={!!list.find(x => x.id === editing.id)} onChange={(e) => setEditing({ ...editing, key: e.target.value })} placeholder="如：renewal_reminder" className="font-mono" />
                 <p className="mt-1 text-xs text-muted-foreground">小写字母开头，仅允许 a-z 0-9 _，长度 3-40，全局唯一。后端按此 Key 调用模板。</p>
               </div>
-              <div><Label>模板内容 *</Label><Textarea rows={5} value={editing.content} onChange={(e) => setEditing({ ...editing, content: e.target.value })} placeholder={`如：${helpers[0]} 您好，您的课程将于 ${helpers[1] || "{date}"} 开始...`} /></div>
-              <div className="flex items-center gap-2"><Switch checked={editing.auto} onCheckedChange={(v) => setEditing({ ...editing, auto: v })} /><Label>开启自动发送</Label></div>
+              <div>
+                <Label>模板内容 *</Label>
+                <Textarea ref={contentRef} rows={5} value={editing.content} onChange={(e) => setEditing({ ...editing, content: e.target.value })} placeholder={`如：${tags[0]} 您好，您的课程将于 ${tags[1] || "{{上课时间}}"} 开始...`} />
+                <div className="mt-2">
+                  <div className="mb-1 text-xs text-muted-foreground">可插入变量（点击插入到光标处）</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.map((t) => (
+                      <button key={t} type="button" onClick={() => insertTag(t)} className="rounded-md border border-dashed bg-muted/50 px-2 py-0.5 text-xs font-medium text-foreground hover:bg-accent hover:border-solid">
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>取消</Button><Button onClick={() => editing && (editing.name && editing.content ? save(editing) : toast.error("名称与内容必填"))}>保存</Button></DialogFooter>

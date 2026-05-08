@@ -73,6 +73,60 @@ export type AuditLog = {
   module: string;
   action: string;
   detail: string;
+  /** 操作前快照（JSON），可选 */
+  before?: any;
+  /** 操作后快照（JSON），可选 */
+  after?: any;
+};
+
+/** 服务记录审核规则（仅在「需要审核」模式下生效） */
+export type ReviewRuleType = "sensitive_word" | "duration" | "frequency" | "amount";
+
+export type ReviewRule = {
+  id: string;
+  type: ReviewRuleType;
+  name: string;
+  enabled: boolean;
+  /** 类型化配置（按 type 解释） */
+  config: {
+    /** sensitive_word: 词列表 */
+    words?: string[];
+    /** duration: 时长（分钟） */
+    minMinutes?: number;
+    maxMinutes?: number;
+    /** frequency: 时窗（小时）+ 次数 */
+    windowHours?: number;
+    maxCount?: number;
+    /** amount: 单笔金额上下限（元） */
+    minAmount?: number;
+    maxAmount?: number;
+  };
+  /** 命中后通知方式：站内信 / 短信 / 社群（企业微信、飞书群等） */
+  notify: { inbox: boolean; sms: boolean; group: boolean };
+  updatedBy: string;
+  updatedAt: string;
+};
+
+// 兼容旧引用
+export type AlertRule = ReviewRule;
+export type AlertRuleType = ReviewRuleType;
+
+/** 通知事件：把"业务事件 → 渠道 → 模板"集中绑定，业务页只引用事件 key */
+export type NotifyChannelKey = "inbox" | "sms" | "group" | "email";
+export type NotifyEvent = {
+  key: string;            // 业务代码引用，唯一
+  name: string;           // 中文名
+  category: "服务审核" | "操作预警" | "续报提醒" | "财务结算" | "账号安全" | "数据备份";
+  description: string;
+  recipients: string[];   // 角色 key 列表
+  channels: Record<NotifyChannelKey, { enabled: boolean; templateId?: string }>;
+  system: boolean;        // 系统预设（不可删除，可改）
+  /** 事件总开关：关闭后所有渠道都不发送 */
+  enabled?: boolean;
+  /** 触发阈值（仅"操作预警"类事件使用） */
+  threshold?: { value: number; unit: string };
+  updatedBy?: string;
+  updatedAt?: string;
 };
 
 const KEYS = {
@@ -81,8 +135,10 @@ const KEYS = {
   rule: "demo.rules",
   ledger: "demo.ledger",
   log: "demo.logs",
-  seeded: "demo.seeded.v2",
+  seeded: "demo.seeded.v6",
   auditMode: "demo.auditMode",
+  alertRule: "demo.alertRules",
+  notifyEvent: "demo.notifyEvents",
 };
 
 function read<T>(k: string, fallback: T): T {
@@ -170,9 +226,9 @@ export function seedIfNeeded(force = false) {
   ];
 
   const logs: AuditLog[] = [
-    { id: rid(), time: "2026-04-28 10:00", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "服务记录", action: "新增", detail: "新增服务记录 #" + services[0].id },
-    { id: rid(), time: "2026-04-28 11:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "分成规则", action: "短信验证通过", detail: "Q3 续报激励规则" },
-    { id: rid(), time: "2026-04-28 18:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "台账", action: "导出", detail: "导出 4 月已结算明细 (脱敏)" },
+    { id: rid(), time: "2026-04-28 10:00", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "服务记录", action: "新增", detail: "新增服务记录 #" + services[0].id, before: null, after: { id: services[0].id, userName: "张明轩", serviceType: "沟通", duration: 30 } },
+    { id: rid(), time: "2026-04-28 11:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "分成规则", action: "短信验证通过", detail: "Q3 续报激励规则", before: { status: "draft" }, after: { status: "pending_audit" } },
+    { id: rid(), time: "2026-04-28 18:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "台账", action: "导出", detail: "导出 4 月已结算明细 (脱敏)", before: null, after: { exportType: "已结算", month: "2026-04", rows: 128, masked: true } },
   ];
 
   write(KEYS.service, services);
@@ -180,6 +236,34 @@ export function seedIfNeeded(force = false) {
   write(KEYS.rule, rules);
   write(KEYS.ledger, ledger);
   write(KEYS.log, logs);
+
+  const alertRules: AlertRule[] = [
+    { id: rid(), type: "sensitive_word", name: "敏感词 · 投诉/退费/转介", enabled: true, config: { words: ["投诉", "退费", "转介", "举报", "差评"] }, notify: { inbox: true, sms: false, group: false }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
+    { id: rid(), type: "duration", name: "服务时长异常（<5min 或 >240min）", enabled: true, config: { minMinutes: 5, maxMinutes: 240 }, notify: { inbox: true, sms: false, group: false }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
+    { id: rid(), type: "frequency", name: "同一用户 24h 内服务 > 5 次", enabled: true, config: { windowHours: 24, maxCount: 5 }, notify: { inbox: true, sms: false, group: true }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
+    { id: rid(), type: "amount", name: "单笔金额异常（< 1 元 或 > 50000 元）", enabled: true, config: { minAmount: 1, maxAmount: 50000 }, notify: { inbox: true, sms: true, group: true }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
+  ];
+  write(KEYS.alertRule, alertRules);
+
+  const events: NotifyEvent[] = [
+    { key: "service.audit.hit", name: "服务审核 · 命中规则", category: "服务审核", description: "服务记录命中任一审核规则时触发，提醒管理员处理。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
+    { key: "service.audit.pass", name: "服务审核 · 审核通过", category: "服务审核", description: "审核通过后通知服务创建人。", recipients: ["planner", "tutor"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true },
+    { key: "service.audit.reject", name: "服务审核 · 审核驳回", category: "服务审核", description: "审核驳回后通知服务创建人。", recipients: ["planner", "tutor"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true },
+    { key: "alert.export.bulk", name: "操作预警 · 单日导出超阈值", category: "操作预警", description: "敏感数据批量导出次数超阈值。", recipients: ["org_admin", "super_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: true, threshold: { value: 5, unit: "次/日" } },
+    { key: "alert.split.abnormal", name: "操作预警 · 异常分账", category: "操作预警", description: "异常分账次数超阈值。", recipients: ["org_admin", "super_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 3, unit: "次/日" } },
+    { key: "alert.audit.reject_rate", name: "操作预警 · 服务记录驳回率", category: "操作预警", description: "服务记录驳回率超阈值。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: false, threshold: { value: 30, unit: "%" } },
+    { key: "alert.login.failure", name: "操作预警 · 登录失败次数", category: "操作预警", description: "登录失败次数超阈值。", recipients: ["org_admin"], channels: { inbox: { enabled: false }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: true, threshold: { value: 5, unit: "次/小时" } },
+    { key: "backup.failed", name: "数据备份 · 备份失败", category: "数据备份", description: "任意备份目标写入失败时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 1, unit: "次/日" } },
+    { key: "backup.capacity", name: "数据备份 · 目标容量超阈值", category: "数据备份", description: "任一备份目标占用空间超过阈值时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 80, unit: "%" } },
+    { key: "backup.success", name: "数据备份 · 备份成功", category: "数据备份", description: "自动/手动备份成功完成时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: false },
+    { key: "backup.restore", name: "数据备份 · 数据恢复", category: "数据备份", description: "管理员发起或完成数据恢复（覆盖当前数据库）时触发。", recipients: ["org_admin", "super_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true },
+    { key: "renewal.expiring.7d", name: "续报提醒 · 7 天到期", category: "续报提醒", description: "课程将于 7 天内到期，提醒家长续报。", recipients: ["planner"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: true }, email: { enabled: false } }, system: true },
+    { key: "settlement.arrived", name: "财务 · 分润到账", category: "财务结算", description: "结算款到账后通知规划师。", recipients: ["planner"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true },
+    { key: "ledger.abnormal", name: "财务 · 异常台账", category: "财务结算", description: "出现异常台账时通知机构管理员。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: true } }, system: true },
+    { key: "account.login.newDevice", name: "账号安全 · 新设备登录", category: "账号安全", description: "账号在新设备登录时通知本人。", recipients: ["org_admin", "super_admin", "planner", "tutor"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true },
+  ];
+  write(KEYS.notifyEvent, events);
+
   localStorage.setItem(KEYS.seeded, "1");
 }
 
@@ -196,6 +280,11 @@ export const db = {
   setLogs: (v: AuditLog[]) => write(KEYS.log, v),
   auditMode: () => (localStorage.getItem(KEYS.auditMode) as "realtime" | "review") || "realtime",
   setAuditMode: (v: "realtime" | "review") => localStorage.setItem(KEYS.auditMode, v),
+  alertRules: () => read<AlertRule[]>(KEYS.alertRule, []),
+  setAlertRules: (v: AlertRule[]) => write(KEYS.alertRule, v),
+  notifyEvents: () => read<NotifyEvent[]>(KEYS.notifyEvent, []),
+  setNotifyEvents: (v: NotifyEvent[]) => write(KEYS.notifyEvent, v),
+  notifyEvent: (key: string) => read<NotifyEvent[]>(KEYS.notifyEvent, []).find((e) => e.key === key),
   log: (entry: Omit<AuditLog, "id" | "time" | "ip">) => {
     const logs = read<AuditLog[]>(KEYS.log, []);
     logs.unshift({ id: rid(), time: new Date().toLocaleString("zh-CN"), ip: "192.168.1." + (Math.floor(Math.random() * 200) + 1), ...entry });

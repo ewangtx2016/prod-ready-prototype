@@ -94,6 +94,7 @@ function Page() {
         <div>· 状态流转：草稿 → <b>机构短信验证</b> → 待审核 → 机构审核 → 待使用 → <b>启用(机构短信验证)</b> → 使用中 → <b>停用(机构短信验证)</b> → 已停用 → 重新启用</div>
         <div>· 演示提示：以「鼎校超管」身份新增规则 → 切到「机构管理员」完成短信验证与审核 → 切回鼎校启用 → 再切机构验证</div>
         <div>· 短信验证码：任意 6 位数字均通过；输入 000000 模拟错误</div>
+        <div>· <b>生效机制（PRD §9.1.3）</b>：规则启用时间记录为「生效时间」。生效前已生成的订单按原规则计算；生效后新生成的订单按新规则计算；<b>历史已结算订单不追溯</b>。</div>
       </DevNote>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
@@ -173,6 +174,13 @@ function Page() {
           {viewing && (
             <div className="space-y-3 text-sm max-h-96 overflow-auto">
               <div><b>当前状态：</b><Badge className={STATUS_LABEL[viewing.status].color}>{STATUS_LABEL[viewing.status].label}</Badge></div>
+              <div className="rounded-md bg-info/10 border border-info/30 p-3 text-xs leading-relaxed">
+                <div className="font-medium text-info mb-1">📌 生效机制说明（PRD §9.1.3）</div>
+                <div>· 生效时间 = 规则状态变为「使用中」的时刻（见下方操作历史）</div>
+                <div>· 生效前已生成的订单 → 按原规则计算分成</div>
+                <div>· 生效后新生成的订单 → 按本规则计算分成</div>
+                <div>· <b>历史已结算订单不追溯</b>，停用本规则不会回滚已结算分成</div>
+              </div>
               <div className="rounded-md border p-3"><div className="font-medium mb-2">分成维度配置</div>
                 {Object.entries(viewing.dims).map(([k, v]: any) => (
                   <div key={k} className="mb-2 text-xs">
