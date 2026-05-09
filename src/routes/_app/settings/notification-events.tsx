@@ -30,7 +30,7 @@ const CHANNEL_META: Record<NotifyChannelKey, { label: string; icon: any; tplRout
   email: { label: "邮件", icon: Mail, tplRoute: "/notification/templates", tplTab: "email", tplKey: "demo.tpl.email" },
 };
 
-const CATEGORIES: NotifyEvent["category"][] = ["服务审核", "操作预警", "数据备份", "续报提醒", "财务结算", "账号安全"];
+const CATEGORIES: NotifyEvent["category"][] = ["操作预警", "数据备份", "账号安全"];
 
 function Page() {
   const { role } = useApp();
@@ -43,6 +43,7 @@ function Page() {
   const refresh = () => setList(db.notifyEvents());
 
   const visible = useMemo(() => list.filter((e) =>
+    (CATEGORIES as string[]).includes(e.category) &&
     (cat === "all" || e.category === cat) &&
     (q === "" || e.name.includes(q) || e.key.includes(q))
   ), [list, q, cat]);
