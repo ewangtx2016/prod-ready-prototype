@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle, Coins } from "lucide-react";
 import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/ledger/estimated")({ component: Page });
 
@@ -26,6 +27,7 @@ function Page() {
   }, [refreshKey, role]);
   const orgEst = list.reduce((s, x) => s + x.orgAmount, 0);
   const planEst = list.reduce((s, x) => s + x.plannerAmount, 0);
+  const { paged, Pagination } = usePagination(list, 10);
   return (
     <div>
       <PageHeader title="预估收入" subtitle="按当前生效规则对待结算订单的预估" actions={<Button size="sm" variant="outline" onClick={() => setRefreshKey(k => k + 1)}><RefreshCw className="h-4 w-4" /> 刷新</Button>} />
@@ -39,7 +41,7 @@ function Page() {
         <Table>
           <TableHeader><TableRow><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>课程</TableHead><TableHead>金额</TableHead><TableHead>预估机构</TableHead><TableHead>预估规划师</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
-            {list.map(l => (
+            {paged.map(l => (
               <TableRow key={l.id}>
                 <TableCell className="font-mono text-xs">{l.orderId}</TableCell>
                 <TableCell>{maskName(l.userName, role)}</TableCell>
@@ -53,6 +55,7 @@ function Page() {
             {list.length === 0 && <TableRow><TableCell colSpan={7} className="py-12 text-center text-muted-foreground">暂无预估数据</TableCell></TableRow>}
           </TableBody>
         </Table>
+        <Pagination />
       </Card>
       <SplitDetailSheet item={detail} onOpenChange={(v) => !v && setDetail(null)} />
     </div>
