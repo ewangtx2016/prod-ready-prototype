@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { db, type AuditLog } from "@/lib/mock";
 import { PageHeader } from "@/components/dev/PageHeader";
 import { DevNote } from "@/components/dev/DevNote";
@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileDiff } from "lucide-react";
 
 export const Route = createFileRoute("/_app/audit-log")({ component: () => <RoleGate allow={["org_admin", "super_admin"]}><Inner /></RoleGate> });
@@ -15,10 +16,25 @@ export const Route = createFileRoute("/_app/audit-log")({ component: () => <Role
 function Inner() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [viewing, setViewing] = useState<AuditLog | null>(null);
+  const [moduleFilter, setModuleFilter] = useState<string>("all");
   useEffect(() => { setLogs(db.logs()); const t = setInterval(() => setLogs(db.logs()), 1500); return () => clearInterval(t); }, []);
+  const modules = useMemo(() => Array.from(new Set(logs.map((l) => l.module))), [logs]);
+  const filtered = useMemo(() => moduleFilter === "all" ? logs : logs.filter((l) => l.module === moduleFilter), [logs, moduleFilter]);
   return (
     <div>
-      <PageHeader title="审计日志" subtitle="贯穿全模块的操作留痕，每 1.5s 自动刷新" />
+      <PageHeader
+        title="审计日志"
+        subtitle="贯穿全模块的操作留痕（含登录日志），每 1.5s 自动刷新"
+        actions={
+          <Select value={moduleFilter} onValueChange={setModuleFilter}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="全部模块" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部模块</SelectItem>
+              {modules.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        }
+      />
       <DevNote prd="§4.3 §16.5" title="审计日志">
         <div>· 每条日志包含：操作人 / 角色 / 时间 / IP / 模块 / 动作 / 详情</div>
         <div>· 关键变更同时记录「操作前/后内容快照（JSON）」，点击「快照」按钮查看 diff</div>
@@ -29,7 +45,7 @@ function Inner() {
         <Table>
           <TableHeader><TableRow><TableHead>时间</TableHead><TableHead>操作人</TableHead><TableHead>角色</TableHead><TableHead>IP</TableHead><TableHead>模块</TableHead><TableHead>动作</TableHead><TableHead>详情</TableHead><TableHead className="text-right">快照</TableHead></TableRow></TableHeader>
           <TableBody>
-            {logs.map((l) => (
+            {filtered.map((l) => (
               <TableRow key={l.id}>
                 <TableCell className="text-xs font-mono">{l.time}</TableCell>
                 <TableCell>{l.operator}</TableCell>
@@ -45,7 +61,7 @@ function Inner() {
                 </TableCell>
               </TableRow>
             ))}
-            {logs.length === 0 && <TableRow><TableCell colSpan={8} className="py-12 text-center text-muted-foreground">暂无日志</TableCell></TableRow>}
+            {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="py-12 text-center text-muted-foreground">暂无日志</TableCell></TableRow>}
           </TableBody>
         </Table>
       </div>
