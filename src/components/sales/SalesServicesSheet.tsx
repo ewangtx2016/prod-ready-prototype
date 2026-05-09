@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { db, type Order, type ServiceRecord } from "@/lib/mock";
-import { ShoppingCart, FileText, UserCog, GraduationCap } from "lucide-react";
+import { ShoppingCart, FileText, UserCog, GraduationCap, Clock } from "lucide-react";
 import { useMemo } from "react";
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
@@ -15,7 +15,11 @@ const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
 export function SalesServicesSheet({ order, onOpenChange }: { order: Order | null; onOpenChange: (v: boolean) => void }) {
   const records = useMemo<ServiceRecord[]>(() => {
     if (!order) return [];
-    return db.services().filter((s) => s.orderIds?.includes(order.id));
+    return db
+      .services()
+      .filter((s) => s.orderIds?.includes(order.id))
+      .slice()
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
   }, [order]);
   const open = !!order;
   const totalMin = records.reduce((s, r) => s + r.duration, 0);
@@ -45,30 +49,44 @@ export function SalesServicesSheet({ order, onOpenChange }: { order: Order | nul
             {records.length === 0 ? (
               <Card className="p-6 text-center text-xs text-muted-foreground">该订单暂无关联服务记录</Card>
             ) : (
-              <div className="space-y-2">
-                {records.map((r) => {
+              <ol className="relative ml-2 border-l border-border/70 pl-5 space-y-4">
+                {records.map((r, idx) => {
                   const RoleIcon = r.createdByRole === "planner" ? UserCog : GraduationCap;
                   const roleLabel = r.createdByRole === "planner" ? "规划师" : "学管师";
+                  const [datePart, timePart] = r.createdAt.split(" ");
                   return (
-                    <Card key={r.id} className="p-3 text-sm space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">{r.serviceType}</Badge>
-                          <span className="text-xs text-muted-foreground">{r.duration} 分钟</span>
-                        </div>
-                        <Badge className={STATUS_LABEL[r.status]?.cls}>{STATUS_LABEL[r.status]?.label}</Badge>
+                    <li key={r.id} className="relative">
+                      <span
+                        className={`absolute -left-[26px] top-1.5 flex h-3 w-3 items-center justify-center rounded-full ring-4 ring-background ${
+                          idx === 0 ? "bg-primary" : "bg-muted-foreground/40"
+                        }`}
+                      />
+                      <div className="mb-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span className="font-mono">{datePart}</span>
+                        <span className="font-mono">{timePart}</span>
+                        {idx === 0 && <Badge variant="outline" className="h-4 px-1.5 text-[10px]">最新</Badge>}
                       </div>
-                      <div className="text-sm leading-relaxed">{r.content}</div>
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t pt-2">
-                        <div className="inline-flex items-center gap-1.5">
-                          <RoleIcon className="h-3 w-3" />{r.createdBy} · {roleLabel}
+                      <Card className="p-3 text-sm space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{r.serviceType}</Badge>
+                            <span className="text-xs text-muted-foreground">{r.duration} 分钟</span>
+                          </div>
+                          <Badge className={STATUS_LABEL[r.status]?.cls}>{STATUS_LABEL[r.status]?.label}</Badge>
                         </div>
-                        <div>{r.createdAt}</div>
-                      </div>
-                    </Card>
+                        <div className="text-sm leading-relaxed">{r.content}</div>
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t pt-2">
+                          <div className="inline-flex items-center gap-1.5">
+                            <RoleIcon className="h-3 w-3" />
+                            {r.createdBy} · {roleLabel}
+                          </div>
+                        </div>
+                      </Card>
+                    </li>
                   );
                 })}
-              </div>
+              </ol>
             )}
 
             <div className="rounded-md border border-dashed bg-muted/20 p-3 text-[11px] text-muted-foreground flex gap-2">
