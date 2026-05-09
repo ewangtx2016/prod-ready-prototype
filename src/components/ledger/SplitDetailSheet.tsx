@@ -1,12 +1,11 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { db, type LedgerItem, type Order, type ProfitRule, type ServiceRecord } from "@/lib/mock";
-import { CheckCircle2, AlertTriangle, FileText, UserCog, GraduationCap, Clock, History } from "lucide-react";
-import { useMemo, useState } from "react";
+import { db, type LedgerItem, type Order, type ProfitRule } from "@/lib/mock";
+import { CheckCircle2, AlertTriangle, FileText } from "lucide-react";
+import { useMemo } from "react";
 
 type DimCalc = {
   label: string;
@@ -68,18 +67,6 @@ export function SplitDetailSheet({
     const calc = order && rule ? computeSplit(order, rule, item.amount) : null;
     return { order, rule, calc };
   }, [item]);
-
-  const services = useMemo<ServiceRecord[]>(() => {
-    if (!item) return [];
-    return db
-      .services()
-      .filter((s) => s.orderIds?.includes(item.orderId))
-      .slice()
-      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-  }, [item]);
-
-  const [servicesOpen, setServicesOpen] = useState(false);
-  const totalMin = services.reduce((s, r) => s + r.duration, 0);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -153,85 +140,9 @@ export function SplitDetailSheet({
               </Card>
             </div>
 
-            {/* ⑤ 关联服务记录 */}
-            <div>
-              <div className="text-xs text-muted-foreground mb-2">关联服务记录</div>
-              <Card className="p-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <History className="h-4 w-4 text-muted-foreground" />
-                  <span>共 <span className="font-medium">{services.length}</span> 条</span>
-                  <span className="text-muted-foreground">·</span>
-                  <span className="text-muted-foreground">累计 {totalMin} 分钟</span>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={services.length === 0}
-                  onClick={() => setServicesOpen(true)}
-                >
-                  查看时间轴
-                </Button>
-              </Card>
-              <div className="mt-1 text-[11px] text-muted-foreground">服务记录仅供参考，结算流程不依赖记录数量。</div>
-            </div>
-
           </div>
         )}
       </SheetContent>
-
-      <Dialog open={servicesOpen} onOpenChange={setServicesOpen}>
-        <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <History className="h-4 w-4" />关联服务记录
-            </DialogTitle>
-            <DialogDescription className="font-mono text-xs">
-              订单 {item?.orderId} · 共 {services.length} 条 · 累计 {totalMin} 分钟
-            </DialogDescription>
-          </DialogHeader>
-          {services.length === 0 ? (
-            <div className="py-8 text-center text-xs text-muted-foreground">暂无关联服务记录</div>
-          ) : (
-            <ol className="relative ml-2 mt-2 border-l border-border/70 pl-5 space-y-4">
-              {services.map((r, idx) => {
-                const RoleIcon = r.createdByRole === "planner" ? UserCog : GraduationCap;
-                const roleLabel = r.createdByRole === "planner" ? "规划师" : "学管师";
-                const [datePart, timePart] = r.createdAt.split(" ");
-                return (
-                  <li key={r.id} className="relative">
-                    <span
-                      className={`absolute -left-[26px] top-1.5 flex h-3 w-3 items-center justify-center rounded-full ring-4 ring-background ${
-                        idx === 0 ? "bg-primary" : "bg-muted-foreground/40"
-                      }`}
-                    />
-                    <div className="mb-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span className="font-mono">{datePart}</span>
-                      <span className="font-mono">{timePart}</span>
-                      {idx === 0 && <Badge variant="outline" className="h-4 px-1.5 text-[10px]">最新</Badge>}
-                    </div>
-                    <Card className="p-3 text-sm space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">{r.serviceType}</Badge>
-                          <span className="text-xs text-muted-foreground">{r.duration} 分钟</span>
-                        </div>
-                      </div>
-                      <div className="text-sm leading-relaxed">{r.content}</div>
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t pt-2">
-                        <div className="inline-flex items-center gap-1.5">
-                          <RoleIcon className="h-3 w-3" />
-                          {r.createdBy} · {roleLabel}
-                        </div>
-                      </div>
-                    </Card>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-        </DialogContent>
-      </Dialog>
     </Sheet>
   );
 }
