@@ -117,6 +117,7 @@ function AlertRulesPanel() {
   };
 
   const visible = list.filter((r) => filterType === "all" || r.type === filterType);
+  const { paged, Pagination } = usePagination(visible, 10);
 
   return (
     <div>
@@ -153,7 +154,7 @@ function AlertRulesPanel() {
           </TableHeader>
           <TableBody>
             {visible.length === 0 && <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">暂无规则</TableCell></TableRow>}
-            {visible.map((r) => {
+            {paged.map((r) => {
               const Icon = TYPE_META[r.type].icon;
               return (
                 <TableRow key={r.id}>
@@ -173,6 +174,7 @@ function AlertRulesPanel() {
             })}
           </TableBody>
         </Table>
+        <Pagination />
       </Card>
 
       {(editing || creating) && (
