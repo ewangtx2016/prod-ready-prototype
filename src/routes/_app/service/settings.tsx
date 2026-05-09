@@ -19,6 +19,7 @@ import { Pencil, Plus, Trash2, ShieldAlert, Clock, Repeat, DollarSign } from "lu
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { EventBindingHint } from "@/routes/_app/settings/notification-events";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/service/settings")({ component: () => <RoleGate allow={["org_admin", "super_admin"]}><Inner /></RoleGate> });
 
