@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { FileDiff, X } from "lucide-react";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/audit-log")({ component: () => <RoleGate allow={["org_admin", "super_admin"]}><Inner /></RoleGate> });
 
@@ -44,6 +45,7 @@ function Inner() {
   }, [logs, moduleFilter, roleFilter, actionFilter, keyword, dateFrom, dateTo]);
   const hasFilter = moduleFilter !== "all" || roleFilter !== "all" || actionFilter !== "all" || !!keyword || !!dateFrom || !!dateTo;
   const reset = () => { setModuleFilter("all"); setRoleFilter("all"); setActionFilter("all"); setKeyword(""); setDateFrom(""); setDateTo(""); };
+  const { paged, Pagination } = usePagination(filtered, 20);
   return (
     <div>
       <PageHeader title="审计日志" subtitle="贯穿全模块的操作留痕（含登录日志），每 1.5s 自动刷新" />
@@ -86,7 +88,7 @@ function Inner() {
         <Table>
           <TableHeader><TableRow><TableHead>时间</TableHead><TableHead>操作人</TableHead><TableHead>角色</TableHead><TableHead>IP</TableHead><TableHead>模块</TableHead><TableHead>动作</TableHead><TableHead>详情</TableHead><TableHead className="text-right">快照</TableHead></TableRow></TableHeader>
           <TableBody>
-            {filtered.map((l) => (
+            {paged.map((l) => (
               <TableRow key={l.id}>
                 <TableCell className="text-xs font-mono">{l.time}</TableCell>
                 <TableCell>{l.operator}</TableCell>
@@ -105,6 +107,7 @@ function Inner() {
             {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="py-12 text-center text-muted-foreground">暂无日志</TableCell></TableRow>}
           </TableBody>
         </Table>
+        <Pagination />
       </div>
       <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
         <DialogContent className="max-w-2xl">

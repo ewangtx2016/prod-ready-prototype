@@ -16,6 +16,7 @@ import { Eye, Download, UserCog, GraduationCap, Link2, Coffee, Image as ImageIco
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
 
@@ -148,6 +149,7 @@ function Page() {
       if (fRecordType !== "all" && (r.recordType ?? "presales") !== fRecordType) return false;
       return true;
     });
+  const { paged, Pagination } = usePagination(filtered, 10);
   const resetFilters = () => { setFUser(""); setFType("all"); setFSubmitter(""); setFStart(""); setFEnd(""); setFRecordType("all"); };
 
   return (
@@ -231,7 +233,7 @@ function Page() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((r) => (
+              {paged.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell>{maskName(r.userName, role)}</TableCell>
                   <TableCell className="font-mono text-xs">{maskPhone(r.userPhone, role)}</TableCell>
@@ -289,6 +291,7 @@ function Page() {
               {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
+          <Pagination />
       </div>
 
       {/* 查看 */}

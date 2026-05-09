@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { Search, Mail, MessageSquare, Inbox, Users } from "lucide-react";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/settings/notification-events")({
   component: () => <RoleGate allow={["org_admin", "super_admin"]}><Page /></RoleGate>,
@@ -47,6 +48,7 @@ function Page() {
     (cat === "all" || e.category === cat) &&
     (q === "" || e.name.includes(q) || e.key.includes(q))
   ), [list, q, cat]);
+  const { paged, Pagination } = usePagination(visible, 10);
 
   const save = (next: NotifyEvent) => {
     const cur = db.notifyEvents();
@@ -103,7 +105,7 @@ function Page() {
           </TableHeader>
           <TableBody>
             {visible.length === 0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">无匹配事件</TableCell></TableRow>}
-            {visible.map((e) => {
+            {paged.map((e) => {
               const enabled = (Object.keys(e.channels) as NotifyChannelKey[]).filter((k) => e.channels[k].enabled);
               const evOn = e.enabled !== false;
               return (
@@ -137,6 +139,7 @@ function Page() {
             })}
           </TableBody>
         </Table>
+        <Pagination />
       </Card>
 
       {editing && <EventEditor event={editing} onClose={() => setEditing(null)} onSave={save} />}

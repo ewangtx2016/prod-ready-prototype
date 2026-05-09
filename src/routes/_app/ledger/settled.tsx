@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Coins } from "lucide-react";
 import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
+import { usePagination } from "@/components/dev/TablePagination";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ledger/settled")({ component: Page });
@@ -31,6 +32,7 @@ function Page() {
   const total = list.reduce((s, x) => s + x.amount, 0);
   const orgTotal = list.reduce((s, x) => s + x.orgAmount, 0);
   const planTotal = list.reduce((s, x) => s + x.plannerAmount, 0);
+  const { paged, Pagination } = usePagination(list, 10);
 
   const onExport = () => {
     db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "已结算台账", action: "导出", detail: `${list.length} 条 (脱敏)` });
@@ -61,7 +63,7 @@ function Page() {
         <Table>
           <TableHeader><TableRow><TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>课程</TableHead><TableHead>订单金额</TableHead><TableHead>机构</TableHead><TableHead>规划师</TableHead><TableHead>平台</TableHead><TableHead>结算时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
-            {list.map(l => (
+            {paged.map(l => (
               <TableRow key={l.id}>
                 <TableCell className="font-mono text-xs">{l.id}</TableCell>
                 <TableCell className="font-mono text-xs">{l.orderId}</TableCell>
@@ -78,6 +80,7 @@ function Page() {
             {list.length === 0 && <TableRow><TableCell colSpan={10} className="py-12 text-center text-muted-foreground">暂无已结算数据</TableCell></TableRow>}
           </TableBody>
         </Table>
+        <Pagination />
       </Card>
       <SplitDetailSheet item={detail} onOpenChange={(v) => !v && setDetail(null)} />
     </div>

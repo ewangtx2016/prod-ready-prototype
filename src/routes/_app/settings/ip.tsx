@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/settings/ip")({ component: Page });
 
@@ -40,6 +41,7 @@ function Page() {
   }, []);
   const persist = (v: IP[]) => { setList(v); localStorage.setItem(KEY, JSON.stringify(v)); };
   const canEdit = role === "org_admin";
+  const { paged, Pagination } = usePagination(list, 10);
   return (
     <div>
       <PageHeader title="IP 白名单" subtitle="限制机构后台访问来源 IP" actions={
@@ -56,7 +58,7 @@ function Page() {
         <Table>
           <TableHeader><TableRow><TableHead>IP / CIDR</TableHead><TableHead>备注</TableHead><TableHead>添加时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
-            {list.map(i => (
+            {paged.map(i => (
               <TableRow key={i.id}>
                 <TableCell className="font-mono">{i.cidr}</TableCell>
                 <TableCell>{i.remark}</TableCell>
@@ -66,6 +68,7 @@ function Page() {
             ))}
           </TableBody>
         </Table>
+        <Pagination />
       </Card>
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>

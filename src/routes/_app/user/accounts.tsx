@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, KeyRound, X } from "lucide-react";
 import { toast } from "sonner";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/user/accounts")({ component: Page });
 
@@ -71,6 +72,7 @@ function Page() {
   }, [list, keyword, roleFilter, statusFilter]);
   const hasFilter = !!keyword || roleFilter !== "all" || statusFilter !== "all";
   const reset = () => { setKeyword(""); setRoleFilter("all"); setStatusFilter("all"); };
+  const { paged, Pagination } = usePagination(filtered, 10);
 
   return (
     <div>
@@ -104,7 +106,7 @@ function Page() {
         <Table>
           <TableHeader><TableRow><TableHead>用户名</TableHead><TableHead>姓名</TableHead><TableHead>手机号</TableHead><TableHead>角色</TableHead><TableHead>状态</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
-            {filtered.map(a => (
+            {paged.map(a => (
               <TableRow key={a.id}>
                 <TableCell className="font-mono text-xs">{a.username}</TableCell>
                 <TableCell>{a.name}</TableCell>
@@ -121,6 +123,7 @@ function Page() {
             {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="py-12 text-center text-muted-foreground">暂无匹配账号</TableCell></TableRow>}
           </TableBody>
         </Table>
+        <Pagination />
       </Card>
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>

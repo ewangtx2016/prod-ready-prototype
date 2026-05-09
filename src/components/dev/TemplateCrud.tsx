@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2, Send, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { usePagination } from "./TablePagination";
 
 type Tpl = { id: string; key: string; name: string; content: string; channel: string; auto: boolean; createdAt: string };
 
@@ -97,6 +98,7 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
 
   const canEdit = role === "org_admin" || role === "super_admin";
   const copyKey = (k: string) => { navigator.clipboard?.writeText(k); toast.success(`已复制 Key：${k}`); };
+  const { paged, Pagination } = usePagination(list, 10);
 
   return (
     <div>
@@ -116,7 +118,7 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
         <Table>
           <TableHeader><TableRow><TableHead>模板名称</TableHead><TableHead>模板 Key</TableHead><TableHead>内容预览</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
-            {list.map(t => (
+            {paged.map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.name}</TableCell>
                 <TableCell>
@@ -136,6 +138,7 @@ export function TemplateCrud({ storageKey, channel, sample, prd, title, subtitle
             {list.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">暂无模板</TableCell></TableRow>}
           </TableBody>
         </Table>
+        <Pagination />
       </Card>
 
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>

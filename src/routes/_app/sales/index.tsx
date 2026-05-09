@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { SalesServicesSheet } from "@/components/sales/SalesServicesSheet";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/sales/")({ component: () => <RoleGate allow={["org_admin", "super_admin", "planner"]}><Inner /></RoleGate> });
 
@@ -50,6 +51,7 @@ function Inner() {
     if (endDate && o.createdAt.slice(0, 10) > endDate) return false;
     return true;
   });
+  const { paged, Pagination } = usePagination(filtered, 10);
   const hasFilter = !!(kw || courseType !== "all" || source !== "all" || channel !== "all" || startDate || endDate);
   const resetFilters = () => { setKeyword(""); setCourseType("all"); setSource("all"); setChannel("all"); setStartDate(""); setEndDate(""); };
 
@@ -122,7 +124,7 @@ function Inner() {
               <TableHead>来源</TableHead><TableHead>渠道</TableHead><TableHead>状态</TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.map((o) => (
+              {paged.map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono text-xs">{o.id}</TableCell>
                   <TableCell>{maskName(o.userName, role)}</TableCell>
@@ -139,6 +141,7 @@ function Inner() {
               {filtered.length === 0 && <TableRow><TableCell colSpan={10} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
+          <Pagination />
         </TabsContent>
       </Tabs>
       <SalesServicesSheet order={viewOrder} onOpenChange={(v) => !v && setViewOrder(null)} />

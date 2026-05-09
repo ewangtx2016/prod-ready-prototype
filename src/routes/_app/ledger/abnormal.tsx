@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, Coins } from "lucide-react";
 import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/ledger/abnormal")({ component: Page });
 
@@ -23,6 +24,7 @@ function Page() {
     if (role === "planner") arr = arr.filter(l => l.plannerName === "李规划");
     setList(arr);
   }, [role]);
+  const { paged, Pagination } = usePagination(list, 10);
 
   return (
     <div>
@@ -33,7 +35,7 @@ function Page() {
         <Table>
           <TableHeader><TableRow><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>金额</TableHead><TableHead>异常原因</TableHead><TableHead>规划师</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
-            {list.map(l => (
+            {paged.map(l => (
               <TableRow key={l.id}>
                 <TableCell className="font-mono text-xs">{l.orderId}</TableCell>
                 <TableCell>{maskName(l.userName, role)}</TableCell>
@@ -48,6 +50,7 @@ function Page() {
             {list.length === 0 && <TableRow><TableCell colSpan={6} className="py-12 text-center text-muted-foreground">暂无异常</TableCell></TableRow>}
           </TableBody>
         </Table>
+        <Pagination />
       </Card>
       <SplitDetailSheet item={detail} onOpenChange={(v) => !v && setDetail(null)} />
     </div>

@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Coins } from "lucide-react";
 import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/ledger/pending")({ component: Page });
 
@@ -24,6 +25,7 @@ function Page() {
     setList(arr);
   }, [role]);
   const total = list.reduce((s, x) => s + x.amount, 0);
+  const { paged, Pagination } = usePagination(list, 10);
   return (
     <div>
       <PageHeader title="待结算台账" subtitle="已支付但尚未达到结算条件（如未过退款冷静期）的订单" />
@@ -33,7 +35,7 @@ function Page() {
         <Table>
           <TableHeader><TableRow><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>课程</TableHead><TableHead>金额</TableHead><TableHead>机构(预)</TableHead><TableHead>规划师(预)</TableHead><TableHead>状态</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
-            {list.map(l => (
+            {paged.map(l => (
               <TableRow key={l.id}>
                 <TableCell className="font-mono text-xs">{l.orderId}</TableCell>
                 <TableCell>{maskName(l.userName, role)}</TableCell>
@@ -48,6 +50,7 @@ function Page() {
             {list.length === 0 && <TableRow><TableCell colSpan={8} className="py-12 text-center text-muted-foreground">暂无待结算数据</TableCell></TableRow>}
           </TableBody>
         </Table>
+        <Pagination />
       </Card>
       <SplitDetailSheet item={detail} onOpenChange={(v) => !v && setDetail(null)} />
     </div>
