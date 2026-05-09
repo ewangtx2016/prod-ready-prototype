@@ -12,7 +12,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Eye, Download, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -135,7 +134,6 @@ function Page() {
   const [records, setRecords] = useState<ServiceRecord[]>([]);
   const [tab, setTab] = useState("all");
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
-  const isAdmin = role === "org_admin" || role === "super_admin";
   const [fUser, setFUser] = useState("");
   const [fType, setFType] = useState("all");
   const [fStatus, setFStatus] = useState("all");
@@ -147,8 +145,6 @@ function Page() {
 
   useEffect(() => { setRecords(db.services()); setOrders(db.orders()); }, []);
   const orderMap = new Map(orders.map((o) => [o.id, o]));
-
-  const refresh = () => setRecords(db.services());
   const typeOptions = Array.from(new Set(records.map((r) => r.serviceType)));
   const filtered = records.filter((r) => {
     if (role === "planner") return r.createdByRole === "planner";
