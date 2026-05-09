@@ -46,6 +46,7 @@ export type Order = {
   status: "待支付" | "已支付" | "退费中" | "已退费";
   refundStatus: "无" | "退费中" | "已退费";
   plannerName: string;
+  orgName: string;
   createdAt: string;
 };
 
