@@ -18,8 +18,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [showDevNote, setShowDevNoteState] = useState(true);
 
   useEffect(() => {
-    const r = localStorage.getItem(LS_ROLE) as Role | null;
-    if (r) setRoleState(r);
+    // 演示身份切换已隐藏，强制为机构管理员
+    localStorage.setItem(LS_ROLE, "org_admin");
+    setRoleState("org_admin");
     const d = localStorage.getItem(LS_DEVNOTE);
     if (d !== null) setShowDevNoteState(d === "1");
   }, []);
