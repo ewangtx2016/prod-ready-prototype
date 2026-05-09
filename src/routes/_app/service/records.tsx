@@ -313,11 +313,44 @@ function Page() {
                         {maskName(viewing.userName, role).slice(0, 1)}
                       </div>
                       <div>
-                        <DialogTitle className="text-base">{maskName(viewing.userName, role)}</DialogTitle>
+                        <DialogTitle className="text-base flex items-center gap-2">
+                          {maskName(viewing.userName, role)}
+                          {(() => {
+                            const p = studentProfile(viewing.userName, viewing.userPhone);
+                            return (
+                              <>
+                                <Badge variant="outline" className="gap-1 text-[10px] font-normal"><UserIcon className="h-3 w-3" />{p.gender}</Badge>
+                                <Badge variant="outline" className="text-[10px] font-normal">{p.age} 岁</Badge>
+                              </>
+                            );
+                          })()}
+                        </DialogTitle>
                         <div className="mt-0.5 font-mono text-xs text-muted-foreground">{maskPhone(viewing.userPhone, role)}</div>
                       </div>
                     </div>
                   </div>
+                  {(() => {
+                    const p = studentProfile(viewing.userName, viewing.userPhone);
+                    const items: { icon: typeof IdCard; label: string; value: string }[] = [
+                      { icon: IdCard, label: "学员编号", value: p.studentId },
+                      { icon: Cake, label: "出生年月", value: p.birth },
+                      { icon: School, label: "学校", value: p.school },
+                      { icon: BookOpen, label: "年级", value: p.grade },
+                    ];
+                    return (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 pt-2">
+                        {items.map((it) => {
+                          const Icon = it.icon;
+                          return (
+                            <div key={it.label} className="rounded-md border bg-background/60 px-3 py-2">
+                              <div className="flex items-center gap-1 text-[11px] text-muted-foreground"><Icon className="h-3 w-3" />{it.label}</div>
+                              <div className="mt-0.5 text-sm font-medium truncate">{it.value}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </DialogHeader>
               </div>
 
