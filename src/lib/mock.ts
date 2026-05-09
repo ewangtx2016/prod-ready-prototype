@@ -214,11 +214,11 @@ export function seedIfNeeded(force = false) {
   ];
 
   const orders: Order[] = [
-    { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "学科课", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", createdAt: "2026-04-20 11:00" },
-    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "少儿编程素养课", courseType: "素养课", amount: 3600, source: "规划师新拓", channel: "甄选", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "李规划", createdAt: "2026-04-22 15:00" },
-    { id: "O" + rid(), userName: "李思琪", userPhone: "13511112222", course: "物理体验课", courseType: "体验课", amount: 199, source: "规划师新拓", channel: "鼎团团", payMethod: "微信", status: "待支付", refundStatus: "无", plannerName: "李规划", createdAt: "2026-04-28 10:00" },
-    { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "素养课", amount: 12800, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "李规划", createdAt: "2026-04-15 09:00" },
-    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "英语口语班", courseType: "学科课", amount: 4800, source: "机构老用户", channel: "甄选", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", createdAt: "2026-04-10 14:00" },
+    { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "学科课", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", orgName: "启明教育", createdAt: "2026-04-20 11:00" },
+    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "少儿编程素养课", courseType: "素养课", amount: 3600, source: "规划师新拓", channel: "甄选", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "王规划", orgName: "启明教育", createdAt: "2026-04-22 15:00" },
+    { id: "O" + rid(), userName: "李思琪", userPhone: "13511112222", course: "物理体验课", courseType: "体验课", amount: 199, source: "规划师新拓", channel: "鼎团团", payMethod: "微信", status: "待支付", refundStatus: "无", plannerName: "李规划", orgName: "卓越学堂", createdAt: "2026-04-28 10:00" },
+    { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "素养课", amount: 12800, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "周规划", orgName: "启明教育", createdAt: "2026-04-15 09:00" },
+    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "英语口语班", courseType: "学科课", amount: 4800, source: "机构老用户", channel: "甄选", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", orgName: "卓越学堂", createdAt: "2026-04-10 14:00" },
   ];
 
   // 演示用「交付类」服务记录，绑定到具体订单
