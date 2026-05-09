@@ -233,7 +233,6 @@ function Page() {
                 <TableHead>手机号</TableHead>
                 <TableHead>记录类型</TableHead>
                 <TableHead>内容</TableHead>
-                <TableHead>时长</TableHead>
                 <TableHead>服务人</TableHead>
                 <TableHead>提交时间</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -286,7 +285,6 @@ function Page() {
                       <div className="mt-1 text-[11px] text-destructive">驳回：{r.rejectReason}</div>
                     )}
                   </TableCell>
-                  <TableCell>{r.duration} 分钟</TableCell>
                   <TableCell><ServantBadge name={r.createdBy} r={r.createdByRole} /></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.createdAt}</TableCell>
                   <TableCell className="text-right space-x-1">
@@ -294,7 +292,7 @@ function Page() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
           <Pagination />
@@ -355,14 +353,10 @@ function Page() {
               </div>
 
               <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-auto">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg border bg-muted/30 p-3">
                     <div className="text-[11px] text-muted-foreground mb-1">服务类型</div>
                     <div className="text-sm font-medium">{viewing.serviceType}</div>
-                  </div>
-                  <div className="rounded-lg border bg-muted/30 p-3">
-                    <div className="text-[11px] text-muted-foreground mb-1">服务时长</div>
-                    <div className="text-sm font-medium">{viewing.duration} 分钟</div>
                   </div>
                   <div className="rounded-lg border bg-muted/30 p-3">
                     <div className="text-[11px] text-muted-foreground mb-1">提交时间</div>
