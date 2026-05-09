@@ -7,27 +7,18 @@ import { maskName, maskPhone } from "@/lib/mask";
 import { PageHeader } from "@/components/dev/PageHeader";
 import { DevNote } from "@/components/dev/DevNote";
 import { PermissionTip } from "@/components/dev/PermissionTip";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Eye, Download, Check, X, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play, Pencil } from "lucide-react";
+import { Eye, Download, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play, User as UserIcon, Cake, IdCard, School, BookOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreateServiceDialog } from "@/components/service/CreateServiceDialog";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
-
-const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  submitted: { label: "已填写", color: "bg-info text-info-foreground" },
-  pending_audit: { label: "待审核", color: "bg-warning text-warning-foreground" },
-  approved: { label: "已通过", color: "bg-success text-success-foreground" },
-  rejected: { label: "未通过", color: "bg-destructive text-destructive-foreground" },
-};
 
 const SERVICE_ROLE_META: Record<"planner" | "tutor", { label: string; icon: typeof UserCog; className: string }> = {
   planner: { label: "规划师", icon: UserCog, className: "bg-primary/10 text-primary border-primary/20" },
@@ -52,6 +43,27 @@ function fmtSize(n?: number) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/** 基于姓名/手机的确定性 mock 学生档案 */
+function studentProfile(name: string, phone: string) {
+  let h = 0;
+  for (const c of name + phone) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const genders = ["男", "女"] as const;
+  const schools = ["市第一中学", "实验中学", "外国语学校", "育才中学", "新华中学", "明德中学"];
+  const grades = ["小学六年级", "初一", "初二", "初三", "高一", "高二", "高三"];
+  const gender = genders[h % 2];
+  const grade = grades[h % grades.length];
+  // 根据年级估算年龄
+  const baseAge = [12, 13, 14, 15, 16, 17, 18][grades.indexOf(grade)] ?? 15;
+  const age = baseAge;
+  const year = 2026 - age;
+  const month = ((h >> 3) % 12) + 1;
+  const day = ((h >> 5) % 27) + 1;
+  const birth = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const studentId = "S" + String(100000 + (h % 899999)).padStart(6, "0");
+  const school = schools[h % schools.length];
+  return { gender, age, birth, studentId, school, grade };
 }
 
 function AttachmentGallery({ items }: { items: import("@/lib/mock").ServiceAttachment[] }) {
@@ -134,19 +146,8 @@ function AttachmentGallery({ items }: { items: import("@/lib/mock").ServiceAttac
 function Page() {
   const { role } = useApp();
   const [records, setRecords] = useState<ServiceRecord[]>([]);
-  const [tab, setTab] = useState("all");
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
-  const [rejecting, setRejecting] = useState<ServiceRecord | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
-  const [approving, setApproving] = useState<ServiceRecord | null>(null);
-  const isAdmin = role === "org_admin" || role === "super_admin";
-  const canRequestEdit = role === "planner" || role === "tutor";
-  const [editing, setEditing] = useState<ServiceRecord | null>(null);
-  const [editContent, setEditContent] = useState("");
-  const [editReason, setEditReason] = useState("");
   const [fUser, setFUser] = useState("");
-  const [fType, setFType] = useState("all");
-  const [fStatus, setFStatus] = useState("all");
   const [fSubmitter, setFSubmitter] = useState("");
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
@@ -155,93 +156,27 @@ function Page() {
 
   useEffect(() => { setRecords(db.services()); setOrders(db.orders()); }, []);
   const orderMap = new Map(orders.map((o) => [o.id, o]));
-
-  const refresh = () => setRecords(db.services());
-  const typeOptions = Array.from(new Set(records.map((r) => r.serviceType)));
   const filtered = records.filter((r) => {
-    if (role === "planner") return r.createdByRole === "planner";
-    if (role === "tutor") return r.createdByRole === "tutor";
-    return true;
-  })
-    .filter((r) => tab === "all" ? true : r.status === tab)
-    .filter((r) => {
       if (fUser.trim()) {
         const q = fUser.trim().toLowerCase();
         if (!r.userName.toLowerCase().includes(q) && !r.userPhone.includes(q)) return false;
       }
-      if (fType !== "all" && r.serviceType !== fType) return false;
-      if (fStatus !== "all" && r.status !== fStatus) return false;
       if (fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
       if (fStart && r.createdAt < fStart) return false;
       if (fEnd && r.createdAt > fEnd + " 23:59") return false;
       if (fRecordType !== "all" && (r.recordType ?? "presales") !== fRecordType) return false;
       return true;
     });
-  const resetFilters = () => { setFUser(""); setFType("all"); setFStatus("all"); setFSubmitter(""); setFStart(""); setFEnd(""); setFRecordType("all"); };
-
-  const pendingCount = records.filter((r) => {
-    if (role === "planner") return r.createdByRole === "planner" && r.status === "pending_audit";
-    if (role === "tutor") return r.createdByRole === "tutor" && r.status === "pending_audit";
-    return r.status === "pending_audit";
-  }).length;
-
-  const approve = (r: ServiceRecord) => {
-    const list = db.services();
-    const idx = list.findIndex((x) => x.id === r.id);
-    list[idx] = { ...list[idx], status: "approved", content: list[idx].pendingChange?.newContent ?? list[idx].content, pendingChange: undefined };
-    db.setServices(list);
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "审核通过", detail: `#${r.id}` });
-    toast.success("审核通过");
-    refresh();
-    setApproving(null);
-  };
-  const doReject = () => {
-    if (!rejectReason.trim()) { toast.error("请填写驳回原因"); return; }
-    if (!rejecting) return;
-    const list = db.services();
-    const idx = list.findIndex((x) => x.id === rejecting.id);
-    list[idx] = { ...list[idx], status: "rejected", rejectReason, pendingChange: undefined };
-    db.setServices(list);
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "审核驳回", detail: `#${rejecting.id} - ${rejectReason}` });
-    toast.success("已驳回");
-    setRejecting(null); setRejectReason(""); refresh();
-  };
-
-  const openEdit = (r: ServiceRecord) => {
-    setEditing(r);
-    setEditContent(r.content);
-    setEditReason("");
-  };
-  const submitEdit = () => {
-    if (!editing) return;
-    if (!editContent.trim()) { toast.error("请填写新的服务内容"); return; }
-    if (editContent.trim() === editing.content.trim()) { toast.error("新内容与原内容一致"); return; }
-    if (!editReason.trim()) { toast.error("请填写修改原因"); return; }
-    const list = db.services();
-    const idx = list.findIndex((x) => x.id === editing.id);
-    if (idx < 0) return;
-    list[idx] = {
-      ...list[idx],
-      status: "pending_audit",
-      pendingChange: { reason: editReason.trim(), newContent: editContent.trim(), submittedAt: new Date().toLocaleString("zh-CN") },
-    };
-    db.setServices(list);
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "提交修改申请", detail: `#${editing.id} - ${editReason.trim()}` });
-    toast.success("修改申请已提交，等待机构超级管理员审核");
-    setEditing(null); setEditContent(""); setEditReason("");
-    refresh();
-  };
+  const { paged, Pagination } = usePagination(filtered, 10);
+  const resetFilters = () => { setFUser(""); setFSubmitter(""); setFStart(""); setFEnd(""); setFRecordType("all"); };
 
   return (
     <div>
       <PageHeader
         title="服务记录"
-        subtitle="规划师/学管师与用户交互的全程留痕（由外部系统同步）。机构管理员可在此审核/驳回。"
+        subtitle="规划师/学管师与用户交互的全程留痕（由外部系统同步，只读）。"
         actions={
           <>
-            {(role === "planner" || role === "tutor") && (
-              <CreateServiceDialog onCreated={refresh} />
-            )}
             <PermissionTip action="导出" prd="§14" allow={["org_admin"]}>
               <Button size="sm" variant="outline" disabled={role !== "org_admin"} onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "导出", detail: `导出 ${filtered.length} 条 (脱敏)` }); toast.success("已导出 services.xlsx (mock)"); }}>
                 <Download className="h-4 w-4" /> 导出
@@ -251,15 +186,13 @@ function Page() {
         }
       />
 
-      <DevNote prd="§6.2 §6.5" title="服务列表 + 修改申请">
+      <DevNote prd="§6.2 §6.5" title="服务列表（只读）">
         <div>· 规划师/学管师不在本系统新增或修改记录，记录由外部系统同步</div>
-        <div>· 数据范围：管理员=全量；规划师=本人创建；学管师=本人创建</div>
-        <div>· <b>审核流</b>（PRD §6.3 / §14）：仅机构管理员在「待审核」tab 可执行通过/驳回；行内展示「原内容 → 新内容」对比与修改原因</div>
+        <div>· 数据范围：全部记录</div>
         <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
-        <div>· 当前待审核：{pendingCount} 条{!isAdmin && "（仅管理员可审核）"}</div>
       </DevNote>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-7">
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-5">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">记录类型</Label>
           <Select value={fRecordType} onValueChange={(v) => setFRecordType(v as any)}>
@@ -274,26 +207,6 @@ function Page() {
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">用户（姓名/手机）</Label>
           <Input value={fUser} onChange={(e) => setFUser(e.target.value)} placeholder="搜索用户" className="h-8" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">类型</Label>
-          <Select value={fType} onValueChange={setFType}>
-            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部类型</SelectItem>
-              {typeOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">状态</Label>
-          <Select value={fStatus} onValueChange={setFStatus}>
-            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部状态</SelectItem>
-              {Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">服务人</Label>
@@ -312,36 +225,21 @@ function Page() {
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="all">全部</TabsTrigger>
-          <TabsTrigger value="submitted">已填写</TabsTrigger>
-          {isAdmin && (
-            <TabsTrigger value="pending_audit">
-              待审核{pendingCount > 0 && <span className="ml-1 rounded-full bg-warning px-1.5 text-[10px] text-warning-foreground">{pendingCount}</span>}
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="approved">已通过</TabsTrigger>
-          <TabsTrigger value="rejected">未通过</TabsTrigger>
-        </TabsList>
-        <TabsContent value={tab} className="rounded-lg border bg-card">
+      <div className="rounded-lg border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>用户</TableHead>
                 <TableHead>手机号</TableHead>
                 <TableHead>记录类型</TableHead>
-                <TableHead>类型</TableHead>
-                <TableHead>内容{tab === "pending_audit" && "（原 → 新）"}</TableHead>
-                <TableHead>时长</TableHead>
+                <TableHead>内容</TableHead>
                 <TableHead>服务人</TableHead>
                 <TableHead>提交时间</TableHead>
-                <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((r) => (
+              {paged.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell>{maskName(r.userName, role)}</TableCell>
                   <TableCell className="font-mono text-xs">{maskPhone(r.userPhone, role)}</TableCell>
@@ -357,17 +255,8 @@ function Page() {
                       <Badge variant="outline" className="gap-1 text-muted-foreground"><Coffee className="h-3 w-3" />日常跟进</Badge>
                     )}
                   </TableCell>
-                  <TableCell>{r.serviceType}</TableCell>
                   <TableCell className="max-w-xs text-xs">
-                    {r.pendingChange ? (
-                      <div className="space-y-0.5">
-                        <div className="line-through text-muted-foreground truncate">{r.content}</div>
-                        <div className="text-foreground truncate">→ {r.pendingChange.newContent}</div>
-                        <div className="text-info text-[11px]">原因：{r.pendingChange.reason}</div>
-                      </div>
-                    ) : (
-                      <div className="truncate">{r.content}</div>
-                    )}
+                    <div className="truncate">{r.content}</div>
                     {r.attachments && r.attachments.length > 0 && (
                       <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
                         {(() => {
@@ -384,39 +273,19 @@ function Page() {
                         })()}
                       </div>
                     )}
-                    {r.status === "rejected" && r.rejectReason && (
-                      <div className="mt-1 text-[11px] text-destructive">驳回：{r.rejectReason}</div>
-                    )}
                   </TableCell>
-                  <TableCell>{r.duration} 分钟</TableCell>
                   <TableCell><ServantBadge name={r.createdBy} r={r.createdByRole} /></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.createdAt}</TableCell>
-                  <TableCell><Badge className={STATUS_LABEL[r.status].color}>{STATUS_LABEL[r.status].label}</Badge></TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button variant="ghost" size="sm" onClick={() => setViewing(r)}><Eye className="h-3.5 w-3.5" /></Button>
-                    {canRequestEdit && r.createdByRole === role && r.status !== "pending_audit" && !r.pendingChange && (
-                      <PermissionTip action="申请修改" prd="§6.3" allow={["planner", "tutor"]} desc="提交后需机构超级管理员审核通过方可生效">
-                        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => openEdit(r)}><Pencil className="h-3.5 w-3.5" /> 申请修改</Button>
-                      </PermissionTip>
-                    )}
-                    {isAdmin && r.status === "pending_audit" && (
-                      <>
-                        <PermissionTip action="审核通过" prd="§6.3" allow={["org_admin"]}>
-                          <Button size="sm" variant="outline" className="h-7 px-2 text-success" onClick={() => setApproving(r)}><Check className="h-3.5 w-3.5" /> 通过</Button>
-                        </PermissionTip>
-                        <PermissionTip action="审核驳回" prd="§6.3" allow={["org_admin"]}>
-                          <Button size="sm" variant="outline" className="h-7 px-2 text-destructive" onClick={() => setRejecting(r)}><X className="h-3.5 w-3.5" /> 驳回</Button>
-                        </PermissionTip>
-                      </>
-                    )}
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
-        </TabsContent>
-      </Tabs>
+          <Pagination />
+      </div>
 
       {/* 查看 */}
       <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
@@ -431,24 +300,52 @@ function Page() {
                         {maskName(viewing.userName, role).slice(0, 1)}
                       </div>
                       <div>
-                        <DialogTitle className="text-base">{maskName(viewing.userName, role)}</DialogTitle>
+                        <DialogTitle className="text-base flex items-center gap-2">
+                          {maskName(viewing.userName, role)}
+                          {(() => {
+                            const p = studentProfile(viewing.userName, viewing.userPhone);
+                            return (
+                              <>
+                                <Badge variant="outline" className="gap-1 text-[10px] font-normal"><UserIcon className="h-3 w-3" />{p.gender}</Badge>
+                                <Badge variant="outline" className="text-[10px] font-normal">{p.age} 岁</Badge>
+                              </>
+                            );
+                          })()}
+                        </DialogTitle>
                         <div className="mt-0.5 font-mono text-xs text-muted-foreground">{maskPhone(viewing.userPhone, role)}</div>
                       </div>
                     </div>
-                    <Badge className={STATUS_LABEL[viewing.status].color}>{STATUS_LABEL[viewing.status].label}</Badge>
                   </div>
+                  {(() => {
+                    const p = studentProfile(viewing.userName, viewing.userPhone);
+                    const items: { icon: typeof IdCard; label: string; value: string }[] = [
+                      { icon: IdCard, label: "学员编号", value: p.studentId },
+                      { icon: Cake, label: "出生年月", value: p.birth },
+                      { icon: School, label: "学校", value: p.school },
+                      { icon: BookOpen, label: "年级", value: p.grade },
+                    ];
+                    return (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 pt-2">
+                        {items.map((it) => {
+                          const Icon = it.icon;
+                          return (
+                            <div key={it.label} className="rounded-md border bg-background/60 px-3 py-2">
+                              <div className="flex items-center gap-1 text-[11px] text-muted-foreground"><Icon className="h-3 w-3" />{it.label}</div>
+                              <div className="mt-0.5 text-sm font-medium truncate">{it.value}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </DialogHeader>
               </div>
 
               <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-auto">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg border bg-muted/30 p-3">
                     <div className="text-[11px] text-muted-foreground mb-1">服务类型</div>
                     <div className="text-sm font-medium">{viewing.serviceType}</div>
-                  </div>
-                  <div className="rounded-lg border bg-muted/30 p-3">
-                    <div className="text-[11px] text-muted-foreground mb-1">服务时长</div>
-                    <div className="text-sm font-medium">{viewing.duration} 分钟</div>
                   </div>
                   <div className="rounded-lg border bg-muted/30 p-3">
                     <div className="text-[11px] text-muted-foreground mb-1">提交时间</div>
@@ -473,42 +370,6 @@ function Page() {
                       </div>
                       <AttachmentGallery items={viewing.attachments} />
                     </div>
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-medium text-muted-foreground">关联订单</div>
-                    {(viewing.recordType ?? "presales") === "delivery"
-                      ? <Badge variant="outline" className="gap-1 border-success/40 bg-success/10 text-success"><Link2 className="h-3 w-3" />交付服务</Badge>
-                      : <Badge variant="outline" className="gap-1 text-muted-foreground"><Coffee className="h-3 w-3" />日常跟进</Badge>}
-                  </div>
-                  {viewing.orderIds && viewing.orderIds.length > 0 ? (
-                    <div className="space-y-2">
-                      {viewing.orderIds.map((oid) => {
-                        const o = orderMap.get(oid);
-                        if (!o) return <div key={oid} className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">订单 <span className="font-mono">{oid}</span>（已删除或同步中）</div>;
-                        return (
-                          <div key={oid} className="rounded-md border bg-card p-3 text-xs flex items-center justify-between gap-3">
-                            <div className="space-y-1">
-                              <div className="font-mono text-[11px] text-muted-foreground">{o.id}</div>
-                              <div className="text-sm font-medium">{o.course}</div>
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <Badge variant="outline" className="text-[10px]">{o.courseType}</Badge>
-                                <Badge variant="outline" className="text-[10px]">{o.source}</Badge>
-                                <Badge variant="outline" className="text-[10px]">{o.channel}</Badge>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-sm font-semibold">¥{o.amount.toLocaleString()}</div>
-                              <Badge variant={o.status === "已退费" ? "destructive" : o.status === "退费中" ? "secondary" : "default"} className="mt-1 text-[10px]">{o.status}</Badge>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="rounded-md border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">未绑定订单（售前咨询 / 日常沟通类记录）</div>
                   )}
                 </div>
 
@@ -544,78 +405,6 @@ function Page() {
               </DialogFooter>
             </>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* 驳回 */}
-      <Dialog open={!!rejecting} onOpenChange={(v) => { if (!v) { setRejecting(null); setRejectReason(""); } }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>驳回服务记录</DialogTitle></DialogHeader>
-          <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="请填写驳回原因（必填）" />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setRejecting(null); setRejectReason(""); }}>取消</Button>
-            <Button variant="destructive" onClick={doReject}>确认驳回</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 申请修改 */}
-      <Dialog open={!!editing} onOpenChange={(v) => { if (!v) { setEditing(null); setEditContent(""); setEditReason(""); } }}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader><DialogTitle>申请修改服务记录</DialogTitle></DialogHeader>
-          {editing && (
-            <div className="space-y-3 text-sm">
-              <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
-                <div><b>用户：</b>{maskName(editing.userName, role)} · <b>类型：</b>{editing.serviceType} · <b>时长：</b>{editing.duration} 分钟</div>
-                <div className="text-muted-foreground">原内容：{editing.content}</div>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">新的服务内容 <span className="text-destructive">*</span></Label>
-                <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} placeholder="请填写修改后的服务内容" rows={4} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">修改原因 <span className="text-destructive">*</span></Label>
-                <Textarea value={editReason} onChange={(e) => setEditReason(e.target.value)} placeholder="请说明本次修改的原因（必填）" rows={2} />
-              </div>
-              <div className="rounded-md border border-info/40 bg-info/5 p-2 text-[11px] text-muted-foreground">
-                提交后状态变为「待审核」，需经<b className="text-foreground">机构超级管理员</b>审核通过后新内容方可生效；驳回后原内容保留不变。
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditing(null); setEditContent(""); setEditReason(""); }}>取消</Button>
-            <Button onClick={submitEdit}>提交申请</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 通过确认 */}
-      <Dialog open={!!approving} onOpenChange={(v) => !v && setApproving(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>确认审核通过</DialogTitle></DialogHeader>
-          {approving && (
-            <div className="space-y-2 text-sm">
-              <div>确认通过以下服务记录的审核？</div>
-              <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
-                <div><b>用户：</b>{maskName(approving.userName, role)} · <b>类型：</b>{approving.serviceType}</div>
-                <div className="flex items-center gap-1"><b>服务人：</b><ServantBadge name={approving.createdBy} r={approving.createdByRole} /></div>
-                {approving.pendingChange ? (
-                  <>
-                    <div className="line-through text-muted-foreground">原：{approving.content}</div>
-                    <div>新：{approving.pendingChange.newContent}</div>
-                    <div className="text-info">原因：{approving.pendingChange.reason}</div>
-                  </>
-                ) : (
-                  <div>内容：{approving.content}</div>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground">通过后记录将锁定为「已通过」状态，且修改申请的新内容将覆盖原内容。</div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setApproving(null)}>取消</Button>
-            <Button onClick={() => approving && approve(approving)}>确认通过</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

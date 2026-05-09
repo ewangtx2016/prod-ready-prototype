@@ -27,7 +27,7 @@ export const MENU_PERMS: Record<string, Role[]> = {
 export const SUBMENU_PERMS: Record<string, Role[]> = {
   // 学管师仅可见：服务列表、站内信
   "/service/records": ["org_admin", "super_admin", "planner", "tutor"],
-  "/service/settings": ["org_admin", "super_admin"],
+  "/service/settings": [],
   "/notification/templates": ["org_admin", "super_admin", "planner"],
   "/settings/notification-events": ["org_admin", "super_admin"],
 };

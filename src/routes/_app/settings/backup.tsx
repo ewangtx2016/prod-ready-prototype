@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { usePagination } from "@/components/dev/TablePagination";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Progress } from "@/components/ui/progress";
 import { ShieldAlert, Database, Download, RotateCw, Trash2, HardDrive, Cloud, Server, Plus, Pencil, CheckCircle2, AlertTriangle, XCircle, Clock, Star, Activity, Copy, FileText } from "lucide-react";
@@ -126,6 +127,7 @@ function Page() {
       space: "5.74 GB",
     };
   }, [list]);
+  const { paged: pagedBackups, Pagination: BackupPagination } = usePagination(list, 10);
 
   const nextRun = useMemo(() => {
     if (!strategy.enabled) return "未启用";
@@ -317,7 +319,7 @@ function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {list.map(b => (
+            {pagedBackups.map(b => (
               <TableRow key={b.id}>
                 <TableCell className="font-mono text-xs">{b.id}</TableCell>
                 <TableCell>{b.size}</TableCell>
@@ -360,6 +362,7 @@ function Page() {
             ))}
           </TableBody>
         </Table>
+        <BackupPagination />
       </Card>
 
       {/* 弹窗们 */}

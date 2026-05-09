@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Play, Pause, Edit, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/profit/rules")({ component: Page });
 
@@ -44,6 +45,7 @@ function Page() {
 
   const filtered = rules.filter((r) => tab === "all" ? true : r.status === tab);
   const pendingCount = rules.filter((r) => r.status === "pending_audit").length;
+  const { paged, Pagination } = usePagination(filtered, 10);
 
   const onSmsSuccess = () => {
     if (!smsScene) return;
@@ -112,7 +114,7 @@ function Page() {
           <Table>
             <TableHeader><TableRow><TableHead>规则名称</TableHead><TableHead>版本</TableHead><TableHead>创建人</TableHead><TableHead>创建时间</TableHead><TableHead>状态</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
             <TableBody>
-              {filtered.map((r) => (
+              {paged.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.name}</TableCell>
                   <TableCell className="font-mono text-xs">{r.version}</TableCell>
@@ -149,6 +151,7 @@ function Page() {
               {filtered.length === 0 && <TableRow><TableCell colSpan={6} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
+          <Pagination />
         </TabsContent>
       </Tabs>
 
