@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, Download, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play } from "lucide-react";
+import { Eye, Download, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play, User as UserIcon, Cake, IdCard, School, BookOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,6 +43,27 @@ function fmtSize(n?: number) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/** 基于姓名/手机的确定性 mock 学生档案 */
+function studentProfile(name: string, phone: string) {
+  let h = 0;
+  for (const c of name + phone) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const genders = ["男", "女"] as const;
+  const schools = ["市第一中学", "实验中学", "外国语学校", "育才中学", "新华中学", "明德中学"];
+  const grades = ["小学六年级", "初一", "初二", "初三", "高一", "高二", "高三"];
+  const gender = genders[h % 2];
+  const grade = grades[h % grades.length];
+  // 根据年级估算年龄
+  const baseAge = [12, 13, 14, 15, 16, 17, 18][grades.indexOf(grade)] ?? 15;
+  const age = baseAge;
+  const year = 2026 - age;
+  const month = ((h >> 3) % 12) + 1;
+  const day = ((h >> 5) % 27) + 1;
+  const birth = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const studentId = "S" + String(100000 + (h % 899999)).padStart(6, "0");
+  const school = schools[h % schools.length];
+  return { gender, age, birth, studentId, school, grade };
 }
 
 function AttachmentGallery({ items }: { items: import("@/lib/mock").ServiceAttachment[] }) {
@@ -127,7 +148,6 @@ function Page() {
   const [records, setRecords] = useState<ServiceRecord[]>([]);
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
   const [fUser, setFUser] = useState("");
-  const [fType, setFType] = useState("all");
   const [fSubmitter, setFSubmitter] = useState("");
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
@@ -136,13 +156,11 @@ function Page() {
 
   useEffect(() => { setRecords(db.services()); setOrders(db.orders()); }, []);
   const orderMap = new Map(orders.map((o) => [o.id, o]));
-  const typeOptions = Array.from(new Set(records.map((r) => r.serviceType)));
   const filtered = records.filter((r) => {
       if (fUser.trim()) {
         const q = fUser.trim().toLowerCase();
         if (!r.userName.toLowerCase().includes(q) && !r.userPhone.includes(q)) return false;
       }
-      if (fType !== "all" && r.serviceType !== fType) return false;
       if (fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
       if (fStart && r.createdAt < fStart) return false;
       if (fEnd && r.createdAt > fEnd + " 23:59") return false;
@@ -150,7 +168,7 @@ function Page() {
       return true;
     });
   const { paged, Pagination } = usePagination(filtered, 10);
-  const resetFilters = () => { setFUser(""); setFType("all"); setFSubmitter(""); setFStart(""); setFEnd(""); setFRecordType("all"); };
+  const resetFilters = () => { setFUser(""); setFSubmitter(""); setFStart(""); setFEnd(""); setFRecordType("all"); };
 
   return (
     <div>
@@ -174,7 +192,7 @@ function Page() {
         <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
       </DevNote>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-6">
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-5">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">记录类型</Label>
           <Select value={fRecordType} onValueChange={(v) => setFRecordType(v as any)}>
@@ -189,16 +207,6 @@ function Page() {
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">用户（姓名/手机）</Label>
           <Input value={fUser} onChange={(e) => setFUser(e.target.value)} placeholder="搜索用户" className="h-8" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">类型</Label>
-          <Select value={fType} onValueChange={setFType}>
-            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部类型</SelectItem>
-              {typeOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">服务人</Label>
@@ -224,7 +232,6 @@ function Page() {
                 <TableHead>用户</TableHead>
                 <TableHead>手机号</TableHead>
                 <TableHead>记录类型</TableHead>
-                <TableHead>类型</TableHead>
                 <TableHead>内容</TableHead>
                 <TableHead>时长</TableHead>
                 <TableHead>服务人</TableHead>
@@ -249,7 +256,6 @@ function Page() {
                       <Badge variant="outline" className="gap-1 text-muted-foreground"><Coffee className="h-3 w-3" />日常跟进</Badge>
                     )}
                   </TableCell>
-                  <TableCell>{r.serviceType}</TableCell>
                   <TableCell className="max-w-xs text-xs">
                     {r.pendingChange ? (
                       <div className="space-y-0.5">
@@ -288,7 +294,7 @@ function Page() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
           <Pagination />
@@ -307,11 +313,44 @@ function Page() {
                         {maskName(viewing.userName, role).slice(0, 1)}
                       </div>
                       <div>
-                        <DialogTitle className="text-base">{maskName(viewing.userName, role)}</DialogTitle>
+                        <DialogTitle className="text-base flex items-center gap-2">
+                          {maskName(viewing.userName, role)}
+                          {(() => {
+                            const p = studentProfile(viewing.userName, viewing.userPhone);
+                            return (
+                              <>
+                                <Badge variant="outline" className="gap-1 text-[10px] font-normal"><UserIcon className="h-3 w-3" />{p.gender}</Badge>
+                                <Badge variant="outline" className="text-[10px] font-normal">{p.age} 岁</Badge>
+                              </>
+                            );
+                          })()}
+                        </DialogTitle>
                         <div className="mt-0.5 font-mono text-xs text-muted-foreground">{maskPhone(viewing.userPhone, role)}</div>
                       </div>
                     </div>
                   </div>
+                  {(() => {
+                    const p = studentProfile(viewing.userName, viewing.userPhone);
+                    const items: { icon: typeof IdCard; label: string; value: string }[] = [
+                      { icon: IdCard, label: "学员编号", value: p.studentId },
+                      { icon: Cake, label: "出生年月", value: p.birth },
+                      { icon: School, label: "学校", value: p.school },
+                      { icon: BookOpen, label: "年级", value: p.grade },
+                    ];
+                    return (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 pt-2">
+                        {items.map((it) => {
+                          const Icon = it.icon;
+                          return (
+                            <div key={it.label} className="rounded-md border bg-background/60 px-3 py-2">
+                              <div className="flex items-center gap-1 text-[11px] text-muted-foreground"><Icon className="h-3 w-3" />{it.label}</div>
+                              <div className="mt-0.5 text-sm font-medium truncate">{it.value}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </DialogHeader>
               </div>
 
