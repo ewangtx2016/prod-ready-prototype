@@ -12,7 +12,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Search, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { SalesServicesSheet } from "@/components/sales/SalesServicesSheet";
 
@@ -23,9 +25,33 @@ function Inner() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [tab, setTab] = useState<string>("all");
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
+  const [keyword, setKeyword] = useState("");
+  const [courseType, setCourseType] = useState<string>("all");
+  const [source, setSource] = useState<string>("all");
+  const [channel, setChannel] = useState<string>("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   useEffect(() => { setOrders(db.orders()); }, []);
 
-  const filtered = orders.filter((o) => tab === "all" ? true : o.status === tab);
+  const kw = keyword.trim().toLowerCase();
+  const filtered = orders.filter((o) => {
+    if (tab !== "all" && o.status !== tab) return false;
+    if (courseType !== "all" && o.courseType !== courseType) return false;
+    if (source !== "all" && o.source !== source) return false;
+    if (channel !== "all" && o.channel !== channel) return false;
+    if (kw && !(
+      o.id.toLowerCase().includes(kw) ||
+      o.userName.toLowerCase().includes(kw) ||
+      o.userPhone.includes(kw) ||
+      o.course.toLowerCase().includes(kw) ||
+      o.plannerName.toLowerCase().includes(kw)
+    )) return false;
+    if (startDate && o.createdAt.slice(0, 10) < startDate) return false;
+    if (endDate && o.createdAt.slice(0, 10) > endDate) return false;
+    return true;
+  });
+  const hasFilter = !!(kw || courseType !== "all" || source !== "all" || channel !== "all" || startDate || endDate);
+  const resetFilters = () => { setKeyword(""); setCourseType("all"); setSource("all"); setChannel("all"); setStartDate(""); setEndDate(""); };
 
   return (
     <div>
@@ -40,6 +66,46 @@ function Inner() {
         <div>· 退费仅在源系统发起，本系统只读；不支持部分退费</div>
         <div>· <b>待确认</b>：字段映射 Q9-Q14（接口设计阻塞中）</div>
       </DevNote>
+      <div className="mb-3 rounded-lg border bg-card p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[220px] flex-1">
+            <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 用户 / 手机号 / 课程 / 规划师" className="h-9 pl-7" />
+          </div>
+          <Select value={courseType} onValueChange={setCourseType}>
+            <SelectTrigger className="h-9 w-[130px]"><SelectValue placeholder="课程类型" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部类型</SelectItem>
+              <SelectItem value="学科课">学科课</SelectItem>
+              <SelectItem value="素养课">素养课</SelectItem>
+              <SelectItem value="体验课">体验课</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={source} onValueChange={setSource}>
+            <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="用户来源" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部来源</SelectItem>
+              <SelectItem value="机构老用户">机构老用户</SelectItem>
+              <SelectItem value="规划师新拓">规划师新拓</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={channel} onValueChange={setChannel}>
+            <SelectTrigger className="h-9 w-[120px]"><SelectValue placeholder="渠道" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部渠道</SelectItem>
+              <SelectItem value="鼎团团">鼎团团</SelectItem>
+              <SelectItem value="甄选">甄选</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 w-[150px]" />
+          <span className="text-xs text-muted-foreground">至</span>
+          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 w-[150px]" />
+          {hasFilter && (
+            <Button size="sm" variant="ghost" onClick={resetFilters}><X className="h-3.5 w-3.5" /> 清空</Button>
+          )}
+          <span className="ml-auto text-xs text-muted-foreground">共 {filtered.length} 条</span>
+        </div>
+      </div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="all">全部</TabsTrigger>
