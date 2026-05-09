@@ -16,10 +16,6 @@ const GROUPS: Group[] = [
   { key: "service", label: "服务记录", icon: FileText, children: [
     { to: "/service/records", label: "服务列表", icon: FileText, key: "service" },
   ] },
-  { key: "notification", label: "通知管理", icon: Bell, children: [
-    { to: "/notification/templates", label: "通知模板", icon: Bell, key: "notification" },
-    { to: "/settings/notification-events", label: "通知事件", icon: Bell, key: "notification" },
-  ] },
   { key: "sales", label: "销售管理", icon: ShoppingCart, children: [{ to: "/sales", label: "销售明细", icon: ShoppingCart, key: "sales" }] },
   { key: "ledger", label: "台账管理", icon: BookOpen, children: [
     { to: "/ledger/settled", label: "已结算", icon: BookOpen, key: "ledger" },
@@ -27,6 +23,10 @@ const GROUPS: Group[] = [
     { to: "/ledger/estimated", label: "预估收入", icon: BookOpen, key: "ledger" },
     { to: "/ledger/refund", label: "分账退回", icon: BookOpen, key: "ledger" },
     { to: "/ledger/abnormal", label: "异常台账", icon: BookOpen, key: "ledger" },
+  ] },
+  { key: "notification", label: "通知管理", icon: Bell, children: [
+    { to: "/notification/templates", label: "通知模板", icon: Bell, key: "notification" },
+    { to: "/settings/notification-events", label: "通知事件", icon: Bell, key: "notification" },
   ] },
   { key: "settings", label: "系统设置", icon: Settings, children: [
     { to: "/settings/org", label: "机构信息", icon: Settings, key: "settings" },
