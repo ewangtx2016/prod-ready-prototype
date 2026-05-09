@@ -7,7 +7,6 @@ import { maskName, maskPhone } from "@/lib/mask";
 import { PageHeader } from "@/components/dev/PageHeader";
 import { DevNote } from "@/components/dev/DevNote";
 import { PermissionTip } from "@/components/dev/PermissionTip";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,13 +18,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
-
-const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  submitted: { label: "已填写", color: "bg-info text-info-foreground" },
-  pending_audit: { label: "待审核", color: "bg-warning text-warning-foreground" },
-  approved: { label: "已通过", color: "bg-success text-success-foreground" },
-  rejected: { label: "未通过", color: "bg-destructive text-destructive-foreground" },
-};
 
 const SERVICE_ROLE_META: Record<"planner" | "tutor", { label: string; icon: typeof UserCog; className: string }> = {
   planner: { label: "规划师", icon: UserCog, className: "bg-primary/10 text-primary border-primary/20" },
@@ -132,11 +124,9 @@ function AttachmentGallery({ items }: { items: import("@/lib/mock").ServiceAttac
 function Page() {
   const { role } = useApp();
   const [records, setRecords] = useState<ServiceRecord[]>([]);
-  const [tab, setTab] = useState("all");
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
   const [fUser, setFUser] = useState("");
   const [fType, setFType] = useState("all");
-  const [fStatus, setFStatus] = useState("all");
   const [fSubmitter, setFSubmitter] = useState("");
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
@@ -147,25 +137,18 @@ function Page() {
   const orderMap = new Map(orders.map((o) => [o.id, o]));
   const typeOptions = Array.from(new Set(records.map((r) => r.serviceType)));
   const filtered = records.filter((r) => {
-    if (role === "planner") return r.createdByRole === "planner";
-    if (role === "tutor") return r.createdByRole === "tutor";
-    return true;
-  })
-    .filter((r) => tab === "all" ? true : r.status === tab)
-    .filter((r) => {
       if (fUser.trim()) {
         const q = fUser.trim().toLowerCase();
         if (!r.userName.toLowerCase().includes(q) && !r.userPhone.includes(q)) return false;
       }
       if (fType !== "all" && r.serviceType !== fType) return false;
-      if (fStatus !== "all" && r.status !== fStatus) return false;
       if (fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
       if (fStart && r.createdAt < fStart) return false;
       if (fEnd && r.createdAt > fEnd + " 23:59") return false;
       if (fRecordType !== "all" && (r.recordType ?? "presales") !== fRecordType) return false;
       return true;
     });
-  const resetFilters = () => { setFUser(""); setFType("all"); setFStatus("all"); setFSubmitter(""); setFStart(""); setFEnd(""); setFRecordType("all"); };
+  const resetFilters = () => { setFUser(""); setFType("all"); setFSubmitter(""); setFStart(""); setFEnd(""); setFRecordType("all"); };
 
   return (
     <div>
@@ -185,11 +168,11 @@ function Page() {
 
       <DevNote prd="§6.2 §6.5" title="服务列表（只读）">
         <div>· 规划师/学管师不在本系统新增或修改记录，记录由外部系统同步</div>
-        <div>· 数据范围：管理员=全量；规划师=本人创建；学管师=本人创建</div>
+        <div>· 数据范围：全部记录</div>
         <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
       </DevNote>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-7">
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-6">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">记录类型</Label>
           <Select value={fRecordType} onValueChange={(v) => setFRecordType(v as any)}>
@@ -216,16 +199,6 @@ function Page() {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">状态</Label>
-          <Select value={fStatus} onValueChange={setFStatus}>
-            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部状态</SelectItem>
-              {Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">服务人</Label>
           <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索服务人" className="h-8" />
         </div>
@@ -242,14 +215,7 @@ function Page() {
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="all">全部</TabsTrigger>
-          <TabsTrigger value="submitted">已填写</TabsTrigger>
-          <TabsTrigger value="approved">已通过</TabsTrigger>
-          <TabsTrigger value="rejected">未通过</TabsTrigger>
-        </TabsList>
-        <TabsContent value={tab} className="rounded-lg border bg-card">
+      <div className="rounded-lg border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -261,7 +227,6 @@ function Page() {
                 <TableHead>时长</TableHead>
                 <TableHead>服务人</TableHead>
                 <TableHead>提交时间</TableHead>
-                <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
@@ -316,17 +281,15 @@ function Page() {
                   <TableCell>{r.duration} 分钟</TableCell>
                   <TableCell><ServantBadge name={r.createdBy} r={r.createdByRole} /></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.createdAt}</TableCell>
-                  <TableCell><Badge className={STATUS_LABEL[r.status].color}>{STATUS_LABEL[r.status].label}</Badge></TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button variant="ghost" size="sm" onClick={() => setViewing(r)}><Eye className="h-3.5 w-3.5" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
-        </TabsContent>
-      </Tabs>
+      </div>
 
       {/* 查看 */}
       <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
@@ -345,7 +308,6 @@ function Page() {
                         <div className="mt-0.5 font-mono text-xs text-muted-foreground">{maskPhone(viewing.userPhone, role)}</div>
                       </div>
                     </div>
-                    <Badge className={STATUS_LABEL[viewing.status].color}>{STATUS_LABEL[viewing.status].label}</Badge>
                   </div>
                 </DialogHeader>
               </div>
