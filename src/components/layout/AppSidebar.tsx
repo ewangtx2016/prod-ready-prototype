@@ -30,8 +30,6 @@ const GROUPS: Group[] = [
   ] },
   { key: "settings", label: "系统设置", icon: Settings, children: [
     { to: "/settings/org", label: "机构信息", icon: Settings, key: "settings" },
-    { to: "/settings/ip", label: "IP 白名单", icon: Settings, key: "settings" },
-    { to: "/settings/backup", label: "备份设置", icon: Settings, key: "settings" },
   ] },
   { key: "role", label: "角色管理", icon: ShieldCheck, children: [{ to: "/role", label: "角色管理", icon: ShieldCheck, key: "role" }] },
   { key: "user", label: "账号管理", icon: Users, children: [
