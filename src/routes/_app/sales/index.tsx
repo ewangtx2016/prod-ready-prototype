@@ -145,7 +145,7 @@ function Inner() {
                   <TableCell><Badge className={o.source === "机构老用户" ? "bg-info text-info-foreground" : "bg-success text-success-foreground"}>{o.source}</Badge></TableCell>
                   <TableCell><span className="text-xs text-muted-foreground">{o.channel}</span></TableCell>
                   <TableCell><Badge variant={o.status === "已退费" ? "destructive" : o.status === "退费中" ? "secondary" : "default"}>{o.status}</Badge></TableCell>
-                  <TableCell className="text-right"><Button size="sm" variant="ghost" onClick={() => setViewOrder(o)}><FileText className="h-3.5 w-3.5" /> 服务记录</Button></TableCell>
+                  <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && <TableRow><TableCell colSpan={10} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
