@@ -284,6 +284,11 @@ export function seedIfNeeded(force = false) {
   ];
 
   const logs: AuditLog[] = [
+    { id: rid(), time: "2026-04-28 09:55", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "登录成功", detail: "Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/Windows", location: "北京" } },
+    { id: rid(), time: "2026-04-28 09:52", operator: "王老师", role: "辅导老师", ip: "10.0.3.18", module: "登录", action: "登录失败", detail: "密码错误（第 2 次）", before: null, after: { method: "password", reason: "wrong_password", attempts: 2 } },
+    { id: rid(), time: "2026-04-28 08:40", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "登录", action: "登录成功", detail: "短信验证码登录 · 新设备", before: null, after: { method: "sms", device: "Safari/iPhone", location: "北京", newDevice: true } },
+    { id: rid(), time: "2026-04-28 08:30", operator: "鼎校超管", role: "超级管理员", ip: "203.0.113.7", module: "登录", action: "登录成功", detail: "Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/macOS", location: "上海" } },
+    { id: rid(), time: "2026-04-27 19:10", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "退出登录", detail: "用户主动退出", before: null, after: null },
     { id: rid(), time: "2026-04-28 10:00", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "服务记录", action: "新增", detail: "新增服务记录 #" + services[0].id, before: null, after: { id: services[0].id, userName: "张明轩", serviceType: "沟通", duration: 30 } },
     { id: rid(), time: "2026-04-28 11:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "分成规则", action: "短信验证通过", detail: "Q3 续报激励规则", before: { status: "draft" }, after: { status: "pending_audit" } },
     { id: rid(), time: "2026-04-28 18:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "台账", action: "导出", detail: "导出 4 月已结算明细 (脱敏)", before: null, after: { exportType: "已结算", month: "2026-04", rows: 128, masked: true } },
