@@ -127,6 +127,7 @@ function Page() {
       space: "5.74 GB",
     };
   }, [list]);
+  const { paged: pagedBackups, Pagination: BackupPagination } = usePagination(list, 10);
 
   const nextRun = useMemo(() => {
     if (!strategy.enabled) return "未启用";
@@ -318,7 +319,7 @@ function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {list.map(b => (
+            {pagedBackups.map(b => (
               <TableRow key={b.id}>
                 <TableCell className="font-mono text-xs">{b.id}</TableCell>
                 <TableCell>{b.size}</TableCell>
@@ -361,6 +362,7 @@ function Page() {
             ))}
           </TableBody>
         </Table>
+        <BackupPagination />
       </Card>
 
       {/* 弹窗们 */}
