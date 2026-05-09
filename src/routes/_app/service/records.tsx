@@ -256,15 +256,7 @@ function Page() {
                     )}
                   </TableCell>
                   <TableCell className="max-w-xs text-xs">
-                    {r.pendingChange ? (
-                      <div className="space-y-0.5">
-                        <div className="line-through text-muted-foreground truncate">{r.content}</div>
-                        <div className="text-foreground truncate">→ {r.pendingChange.newContent}</div>
-                        <div className="text-info text-[11px]">原因：{r.pendingChange.reason}</div>
-                      </div>
-                    ) : (
-                      <div className="truncate">{r.content}</div>
-                    )}
+                    <div className="truncate">{r.content}</div>
                     {r.attachments && r.attachments.length > 0 && (
                       <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
                         {(() => {
@@ -280,9 +272,6 @@ function Page() {
                           );
                         })()}
                       </div>
-                    )}
-                    {r.status === "rejected" && r.rejectReason && (
-                      <div className="mt-1 text-[11px] text-destructive">驳回：{r.rejectReason}</div>
                     )}
                   </TableCell>
                   <TableCell><ServantBadge name={r.createdBy} r={r.createdByRole} /></TableCell>
