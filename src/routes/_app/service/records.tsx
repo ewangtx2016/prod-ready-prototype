@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Eye, Download, Check, X, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play } from "lucide-react";
+import { Eye, Download, Check, X, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -139,7 +139,11 @@ function Page() {
   const [rejecting, setRejecting] = useState<ServiceRecord | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [approving, setApproving] = useState<ServiceRecord | null>(null);
-  const isAdmin = role === "org_admin";
+  const isAdmin = role === "org_admin" || role === "super_admin";
+  const canRequestEdit = role === "planner" || role === "tutor";
+  const [editing, setEditing] = useState<ServiceRecord | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [editReason, setEditReason] = useState("");
   const [fUser, setFUser] = useState("");
   const [fType, setFType] = useState("all");
   const [fStatus, setFStatus] = useState("all");
@@ -201,6 +205,31 @@ function Page() {
     db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "审核驳回", detail: `#${rejecting.id} - ${rejectReason}` });
     toast.success("已驳回");
     setRejecting(null); setRejectReason(""); refresh();
+  };
+
+  const openEdit = (r: ServiceRecord) => {
+    setEditing(r);
+    setEditContent(r.content);
+    setEditReason("");
+  };
+  const submitEdit = () => {
+    if (!editing) return;
+    if (!editContent.trim()) { toast.error("请填写新的服务内容"); return; }
+    if (editContent.trim() === editing.content.trim()) { toast.error("新内容与原内容一致"); return; }
+    if (!editReason.trim()) { toast.error("请填写修改原因"); return; }
+    const list = db.services();
+    const idx = list.findIndex((x) => x.id === editing.id);
+    if (idx < 0) return;
+    list[idx] = {
+      ...list[idx],
+      status: "pending_audit",
+      pendingChange: { reason: editReason.trim(), newContent: editContent.trim(), submittedAt: new Date().toLocaleString("zh-CN") },
+    };
+    db.setServices(list);
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "服务记录", action: "提交修改申请", detail: `#${editing.id} - ${editReason.trim()}` });
+    toast.success("修改申请已提交，等待机构超级管理员审核");
+    setEditing(null); setEditContent(""); setEditReason("");
+    refresh();
   };
 
   return (
@@ -365,6 +394,11 @@ function Page() {
                   <TableCell><Badge className={STATUS_LABEL[r.status].color}>{STATUS_LABEL[r.status].label}</Badge></TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button variant="ghost" size="sm" onClick={() => setViewing(r)}><Eye className="h-3.5 w-3.5" /></Button>
+                    {canRequestEdit && r.createdByRole === role && r.status !== "pending_audit" && !r.pendingChange && (
+                      <PermissionTip action="申请修改" prd="§6.3" allow={["planner", "tutor"]} desc="提交后需机构超级管理员审核通过方可生效">
+                        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => openEdit(r)}><Pencil className="h-3.5 w-3.5" /> 申请修改</Button>
+                      </PermissionTip>
+                    )}
                     {isAdmin && r.status === "pending_audit" && (
                       <>
                         <PermissionTip action="审核通过" prd="§6.3" allow={["org_admin"]}>
