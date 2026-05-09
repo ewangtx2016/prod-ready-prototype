@@ -27,11 +27,6 @@ import { Route as AppServiceRecordsRouteImport } from './routes/_app/service/rec
 import { Route as AppProfitRulesRouteImport } from './routes/_app/profit/rules'
 import { Route as AppProfitDimensionsRouteImport } from './routes/_app/profit/dimensions'
 import { Route as AppNotificationTemplatesRouteImport } from './routes/_app/notification/templates'
-import { Route as AppLedgerSettledRouteImport } from './routes/_app/ledger/settled'
-import { Route as AppLedgerRefundRouteImport } from './routes/_app/ledger/refund'
-import { Route as AppLedgerPendingRouteImport } from './routes/_app/ledger/pending'
-import { Route as AppLedgerEstimatedRouteImport } from './routes/_app/ledger/estimated'
-import { Route as AppLedgerAbnormalRouteImport } from './routes/_app/ledger/abnormal'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -124,31 +119,6 @@ const AppNotificationTemplatesRoute =
     path: '/notification/templates',
     getParentRoute: () => AppRoute,
   } as any)
-const AppLedgerSettledRoute = AppLedgerSettledRouteImport.update({
-  id: '/ledger/settled',
-  path: '/ledger/settled',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLedgerRefundRoute = AppLedgerRefundRouteImport.update({
-  id: '/ledger/refund',
-  path: '/ledger/refund',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLedgerPendingRoute = AppLedgerPendingRouteImport.update({
-  id: '/ledger/pending',
-  path: '/ledger/pending',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLedgerEstimatedRoute = AppLedgerEstimatedRouteImport.update({
-  id: '/ledger/estimated',
-  path: '/ledger/estimated',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLedgerAbnormalRoute = AppLedgerAbnormalRouteImport.update({
-  id: '/ledger/abnormal',
-  path: '/ledger/abnormal',
-  getParentRoute: () => AppRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -156,11 +126,6 @@ export interface FileRoutesByFullPath {
   '/audit-log': typeof AppAuditLogRoute
   '/dashboard': typeof AppDashboardRoute
   '/messages': typeof AppMessagesRoute
-  '/ledger/abnormal': typeof AppLedgerAbnormalRoute
-  '/ledger/estimated': typeof AppLedgerEstimatedRoute
-  '/ledger/pending': typeof AppLedgerPendingRoute
-  '/ledger/refund': typeof AppLedgerRefundRoute
-  '/ledger/settled': typeof AppLedgerSettledRoute
   '/notification/templates': typeof AppNotificationTemplatesRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
   '/profit/rules': typeof AppProfitRulesRoute
@@ -180,11 +145,6 @@ export interface FileRoutesByTo {
   '/audit-log': typeof AppAuditLogRoute
   '/dashboard': typeof AppDashboardRoute
   '/messages': typeof AppMessagesRoute
-  '/ledger/abnormal': typeof AppLedgerAbnormalRoute
-  '/ledger/estimated': typeof AppLedgerEstimatedRoute
-  '/ledger/pending': typeof AppLedgerPendingRoute
-  '/ledger/refund': typeof AppLedgerRefundRoute
-  '/ledger/settled': typeof AppLedgerSettledRoute
   '/notification/templates': typeof AppNotificationTemplatesRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
   '/profit/rules': typeof AppProfitRulesRoute
@@ -206,11 +166,6 @@ export interface FileRoutesById {
   '/_app/audit-log': typeof AppAuditLogRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/messages': typeof AppMessagesRoute
-  '/_app/ledger/abnormal': typeof AppLedgerAbnormalRoute
-  '/_app/ledger/estimated': typeof AppLedgerEstimatedRoute
-  '/_app/ledger/pending': typeof AppLedgerPendingRoute
-  '/_app/ledger/refund': typeof AppLedgerRefundRoute
-  '/_app/ledger/settled': typeof AppLedgerSettledRoute
   '/_app/notification/templates': typeof AppNotificationTemplatesRoute
   '/_app/profit/dimensions': typeof AppProfitDimensionsRoute
   '/_app/profit/rules': typeof AppProfitRulesRoute
@@ -232,11 +187,6 @@ export interface FileRouteTypes {
     | '/audit-log'
     | '/dashboard'
     | '/messages'
-    | '/ledger/abnormal'
-    | '/ledger/estimated'
-    | '/ledger/pending'
-    | '/ledger/refund'
-    | '/ledger/settled'
     | '/notification/templates'
     | '/profit/dimensions'
     | '/profit/rules'
@@ -256,11 +206,6 @@ export interface FileRouteTypes {
     | '/audit-log'
     | '/dashboard'
     | '/messages'
-    | '/ledger/abnormal'
-    | '/ledger/estimated'
-    | '/ledger/pending'
-    | '/ledger/refund'
-    | '/ledger/settled'
     | '/notification/templates'
     | '/profit/dimensions'
     | '/profit/rules'
@@ -281,11 +226,6 @@ export interface FileRouteTypes {
     | '/_app/audit-log'
     | '/_app/dashboard'
     | '/_app/messages'
-    | '/_app/ledger/abnormal'
-    | '/_app/ledger/estimated'
-    | '/_app/ledger/pending'
-    | '/_app/ledger/refund'
-    | '/_app/ledger/settled'
     | '/_app/notification/templates'
     | '/_app/profit/dimensions'
     | '/_app/profit/rules'
@@ -434,41 +374,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotificationTemplatesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/ledger/settled': {
-      id: '/_app/ledger/settled'
-      path: '/ledger/settled'
-      fullPath: '/ledger/settled'
-      preLoaderRoute: typeof AppLedgerSettledRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ledger/refund': {
-      id: '/_app/ledger/refund'
-      path: '/ledger/refund'
-      fullPath: '/ledger/refund'
-      preLoaderRoute: typeof AppLedgerRefundRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ledger/pending': {
-      id: '/_app/ledger/pending'
-      path: '/ledger/pending'
-      fullPath: '/ledger/pending'
-      preLoaderRoute: typeof AppLedgerPendingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ledger/estimated': {
-      id: '/_app/ledger/estimated'
-      path: '/ledger/estimated'
-      fullPath: '/ledger/estimated'
-      preLoaderRoute: typeof AppLedgerEstimatedRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ledger/abnormal': {
-      id: '/_app/ledger/abnormal'
-      path: '/ledger/abnormal'
-      fullPath: '/ledger/abnormal'
-      preLoaderRoute: typeof AppLedgerAbnormalRouteImport
-      parentRoute: typeof AppRoute
-    }
   }
 }
 
@@ -476,11 +381,6 @@ interface AppRouteChildren {
   AppAuditLogRoute: typeof AppAuditLogRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppMessagesRoute: typeof AppMessagesRoute
-  AppLedgerAbnormalRoute: typeof AppLedgerAbnormalRoute
-  AppLedgerEstimatedRoute: typeof AppLedgerEstimatedRoute
-  AppLedgerPendingRoute: typeof AppLedgerPendingRoute
-  AppLedgerRefundRoute: typeof AppLedgerRefundRoute
-  AppLedgerSettledRoute: typeof AppLedgerSettledRoute
   AppNotificationTemplatesRoute: typeof AppNotificationTemplatesRoute
   AppProfitDimensionsRoute: typeof AppProfitDimensionsRoute
   AppProfitRulesRoute: typeof AppProfitRulesRoute
@@ -499,11 +399,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuditLogRoute: AppAuditLogRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppMessagesRoute: AppMessagesRoute,
-  AppLedgerAbnormalRoute: AppLedgerAbnormalRoute,
-  AppLedgerEstimatedRoute: AppLedgerEstimatedRoute,
-  AppLedgerPendingRoute: AppLedgerPendingRoute,
-  AppLedgerRefundRoute: AppLedgerRefundRoute,
-  AppLedgerSettledRoute: AppLedgerSettledRoute,
   AppNotificationTemplatesRoute: AppNotificationTemplatesRoute,
   AppProfitDimensionsRoute: AppProfitDimensionsRoute,
   AppProfitRulesRoute: AppProfitRulesRoute,
@@ -528,3 +423,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

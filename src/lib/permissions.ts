@@ -108,11 +108,7 @@ export const DEFAULT_TREE: PermNode[] = [
   {
     id: "m_ledger", type: "menu", name: "台账管理", code: "ledger:view", api: "GET /api/ledger", builtin: true,
     children: [
-      { id: "m_ledger_settled", type: "menu", name: "已结算", code: "ledger.settled:view", api: "GET /api/ledger/settled", path: "/ledger/settled", builtin: true },
-      { id: "m_ledger_pending", type: "menu", name: "待结算", code: "ledger.pending:view", api: "GET /api/ledger/pending", path: "/ledger/pending", builtin: true },
-      { id: "m_ledger_estimated", type: "menu", name: "预估收入", code: "ledger.estimated:view", api: "GET /api/ledger/estimated", path: "/ledger/estimated", builtin: true },
-      { id: "m_ledger_refund", type: "menu", name: "分账退回", code: "ledger.refund:view", api: "GET /api/ledger/refund", path: "/ledger/refund", builtin: true },
-      { id: "m_ledger_abnormal", type: "menu", name: "异常台账", code: "ledger.abnormal:view", api: "GET /api/ledger/abnormal", path: "/ledger/abnormal", builtin: true },
+      { id: "m_ledger_view", type: "menu", name: "台账列表", code: "ledger.list:view", api: "GET /api/ledger", path: "/ledger", builtin: true },
       { id: "b_ledger_export", type: "button", name: "导出台账", code: "ledger:export", api: "POST /api/ledger/export", builtin: true },
     ],
   },
@@ -238,8 +234,8 @@ export function getAncestors(nodes: PermNode[], id: string, trail: string[] = []
 }
 
 /* ============================== Mock Store ============================== */
-const LS_TREE = "demo.permTree.v3";
-const LS_ROLES = "demo.permRoles.v3";
+const LS_TREE = "demo.permTree.v4";
+const LS_ROLES = "demo.permRoles.v4";
 
 type State = { tree: PermNode[]; roles: RoleDef[] };
 let state: State = load();
