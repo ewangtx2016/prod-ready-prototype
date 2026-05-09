@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, FileText, Bell, ShoppingCart, PieChart, BookOpen,
+  LayoutDashboard, FileText, Bell, ShoppingCart, BookOpen,
   Settings, ShieldCheck, Users, History, ChevronDown,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
