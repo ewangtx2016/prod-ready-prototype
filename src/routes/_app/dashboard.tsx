@@ -93,6 +93,42 @@ const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: strin
   { key: "alert_count",    module: "risk", label: "敏感操作预警次数", value: "12",  trend: "本月", icon: ShieldAlert, formula: "周期内触发风控规则的次数合计：超量导出、批量查看、越权访问、IP 异常、验证码失败超阈值等。" },
 ];
 
+/* ========== 规划师专属指标（数据已按 planner_id = 当前用户 过滤） ========== */
+const PLANNER_CORE_METRICS: typeof CORE_METRICS = [
+  { key: "served_user",     label: "我服务的用户数",   value: "128",     trend: "近30天 +12", icon: UserCheck, formula: "周期内本人有有效 1V1 服务记录的去重用户数（仅本人名下）。" },
+  { key: "converted_user",  label: "我的转化用户数",   value: "42",      trend: "转化率 32.8%", icon: TrendingUp, formula: "周期内由本人服务并成功转化为已付费学员的去重用户数（仅本人名下）。" },
+  { key: "estimated",       label: "我的预估收入",     value: "¥8,420",  trend: "未确权", icon: Wallet, formula: "本人名下未确权订单按当前分成规则估算的潜在收入，仅供预测，不计入财务。" },
+  { key: "pending",         label: "我的待结算金额",   value: "¥21,560", trend: "已确权", icon: Wallet, formula: "本人名下已确权但尚未完成结算流程的金额合计。" },
+];
+const PLANNER_METRICS: typeof ALL_METRICS = [
+  // M1 我的用户
+  { key: "total_user",     module: "user", label: "我的名下用户数", value: "186", icon: Users, formula: "归属本人名下的全部用户数（仅本人名下）。" },
+  { key: "active_user",    module: "user", label: "活跃用户数",     value: "128", trend: "+6.2%", icon: Users, formula: "近 30 天内有过登录、上课或本人服务记录的去重用户数（仅本人名下）。" },
+  { key: "converted_user", module: "user", label: "我的转化用户数", value: "42",  trend: "转化率 32.8%", icon: TrendingUp, formula: "周期内由本人服务并成功转化的去重用户数。" },
+  // M2 我的转化
+  { key: "order_count",    module: "conversion", label: "我的学科课订单数", value: "26",      icon: TrendingUp, formula: "周期内本人名下学科课且非取消的订单数量。" },
+  { key: "order_amount",   module: "conversion", label: "我的订单金额",     value: "¥58,200", icon: Wallet, formula: "周期内本人名下全部有效订单的应收金额合计（含未结算，不扣退款）。" },
+  { key: "conv_rate",      module: "conversion", label: "我的转化率",       value: "32.8%",   trend: "+2.4pp", icon: TrendingUp, formula: "本人转化用户数 / 本人服务用户数 × 100%。" },
+  // M3 我的分成
+  { key: "settled",        module: "profit", label: "已结算金额", value: "¥34,820", trend: "+9.1%", icon: Wallet, formula: "本人名下已完成结算流程并入账的金额合计。" },
+  { key: "pending",        module: "profit", label: "待结算金额", value: "¥21,560", icon: Wallet, formula: "本人名下已确权但尚未完成结算流程的金额合计。" },
+  { key: "estimated",      module: "profit", label: "预估收入",   value: "¥8,420",  icon: Wallet, formula: "本人名下未确权订单按当前规则估算的潜在分成。" },
+  // M4 我的服务
+  { key: "service_count",  module: "service", label: "我的服务次数", value: "342", trend: "+8.6%", icon: Activity, formula: "周期内本人产生的有效 1V1 服务记录条数（含面谈、电话、回访）。" },
+];
+
+/* ========== 学管师专属指标（仅个人服务相关） ========== */
+const TUTOR_CORE_METRICS: typeof CORE_METRICS = [
+  { key: "service_count",   label: "我的服务次数",     value: "486",   trend: "近30天", icon: Activity, formula: "周期内本人产生的有效服务/督学记录条数。" },
+  { key: "tutor_complete",  label: "我的督学完成率",   value: "93.6%", trend: "+1.8pp", icon: GraduationCap, formula: "本人按计划完成的督学任务数 / 本人应完成任务总数 × 100%。" },
+  { key: "served_user",     label: "我服务的用户数",   value: "94",    trend: "覆盖中", icon: UserCheck, formula: "周期内被本人提供过服务的去重用户数。" },
+  { key: "active_user",     label: "我的活跃用户数",   value: "82",    icon: Users, formula: "近 30 天内有过本人服务记录的去重用户数。" },
+];
+const TUTOR_METRICS: typeof ALL_METRICS = [
+  { key: "service_count",  module: "service", label: "我的服务次数",     value: "486",   trend: "+8.6%", icon: Activity, formula: "周期内本人产生的有效服务/督学记录条数。" },
+  { key: "tutor_complete", module: "service", label: "我的督学完成率",   value: "93.6%", trend: "+1.8pp", icon: GraduationCap, formula: "本人按计划完成的督学任务 / 本人应完成任务 × 100%。" },
+];
+
 /* ---------------- 图表数据 (mock) — 必须定义在使用组件之前 ---------------- */
 const SPARK: Record<string, { x: string; v: number }[]> = {
   _default: [3,5,4,6,7,6,8,9,8,10,11,13].map((v,i)=>({x:`${i+1}`,v})),
@@ -116,30 +152,38 @@ function Dashboard() {
   const visible = ALL_METRICS.filter((m) => selected.includes(m.key));
   const isPlanner = role === "planner";
   const isTutor = role === "tutor";
+  const isOrg = role === "org_admin" || role === "super_admin";
+
+  // 按角色切换指标集合（数据范围：规划师/学管师 = 本人）
+  const coreMetrics = isPlanner ? PLANNER_CORE_METRICS : isTutor ? TUTOR_CORE_METRICS : CORE_METRICS;
+  const allMetrics = isPlanner ? PLANNER_METRICS : isTutor ? TUTOR_METRICS : ALL_METRICS;
+  const visibleMetrics = isOrg ? visible : allMetrics; // 个人视角固定布局，不参与"自定义指标"
 
   return (
-    <RoleGate allow={["org_admin", "super_admin"]}>
+    <RoleGate allow={["org_admin", "super_admin", "planner", "tutor"]}>
     <div>
       <PageHeader
         title="数据看板"
         subtitle={`当前身份：${ROLE_META[role].name} · ${isPlanner ? "仅展示个人数据" : isTutor ? "仅展示个人服务数据" : "全量经营数据概览"}`}
         actions={
           <>
-            <PermissionTip action="自定义指标" prd="§5.2" allow={["org_admin"]} desc="点击弹出指标池，勾选/取消显示">
-              <Button variant="outline" size="sm" onClick={() => setOpen(true)} disabled={isPlanner || isTutor}>
-                <Settings2 className="h-4 w-4" /> 自定义指标
-              </Button>
-            </PermissionTip>
-            <PermissionTip action="导出看板" prd="§5.2 / §14" allow={["org_admin"]} desc="规划师/学管师不可导出">
-              <Button size="sm" onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "数据看板", action: "导出", detail: "导出全量看板数据 (脱敏)" }); toast.success("已导出 dashboard.xlsx (mock)"); }} disabled={isPlanner || isTutor}>
-                <Download className="h-4 w-4" /> 导出
+            {isOrg && (
+              <PermissionTip action="自定义指标" prd="§5.2" allow={["org_admin"]} desc="点击弹出指标池，勾选/取消显示">
+                <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+                  <Settings2 className="h-4 w-4" /> 自定义指标
+                </Button>
+              </PermissionTip>
+            )}
+            <PermissionTip action="导出看板" prd="§5.2 / §14" allow={["org_admin", "planner", "tutor"]} desc={isOrg ? "导出全机构看板（脱敏）" : "仅导出本人范围数据"}>
+              <Button size="sm" onClick={() => { const scope = isOrg ? "全量看板数据 (脱敏)" : "本人范围看板数据"; db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "数据看板", action: "导出", detail: `导出${scope}` }); toast.success(`已导出 dashboard${isOrg ? "" : "_mine"}.xlsx (mock)`); }}>
+                <Download className="h-4 w-4" /> {isOrg ? "导出" : "导出本人数据"}
               </Button>
             </PermissionTip>
           </>
         }
       />
 
-      <DevNote prd="§5" title="数据看板 · 五大模块">
+      {isOrg && <DevNote prd="§5" title="数据看板 · 五大模块">
         <div>· <b>M1 用户总览</b>：总用户数 / 活跃用户数 / 规划师服务用户数 / 转化用户数</div>
         <div>· <b>M2 转化数据</b>：学科课订单数 / 订单金额 / 转化率</div>
         <div>· <b>M3 分成数据</b>：已结算金额 / 待结算金额 / 预估收入</div>
@@ -150,7 +194,14 @@ function Dashboard() {
         <div>· 刷新延迟 ≤5s；指标池由运营后台维护，机构可勾选/取消显示（核心指标默认勾选不可取消）</div>
         <div>· 鼠标悬停指标名称右侧 <Info className="inline h-3 w-3 text-info" /> 图标，可查看 <b>计算口径</b>（开发注释开启时显示）</div>
         <div>· 规划师/学管师直访本页返回 403（PRD §5.5 验收项）</div>
-      </DevNote>
+      </DevNote>}
+      {!isOrg && <DevNote prd="§5" title={`${ROLE_META[role].name}视角 · 个人经营看板`}>
+        <div>· 数据范围：所有指标已按 <b>当前用户</b> 过滤，仅展示本人名下数据，无任何机构级或他人数据。</div>
+        <div>· 顶部 4 张核心 KPI：{isPlanner ? "我服务的用户数 / 我的转化 / 我的预估收入 / 我的待结算" : "我的服务次数 / 我的督学完成率 / 我服务的用户数 / 我的活跃用户数"}。</div>
+        <div>· 已隐藏：自定义指标池（固定布局更聚焦）、风险预警模块（仅机构管理员可见）{isTutor ? "、转化与分成模块（非学管师 KPI）" : ""}。</div>
+        <div>· 已保留：「导出本人数据」按钮，便于个人存档对账（导出范围仅本人，全程脱敏）。</div>
+        <div>· 鼠标悬停指标名称右侧 <Info className="inline h-3 w-3 text-info" /> 图标，可查看 <b>个人维度计算口径</b>。</div>
+      </DevNote>}
 
       <div className="mb-4 flex items-center gap-3">
         <Select defaultValue="month">
@@ -171,20 +222,22 @@ function Dashboard() {
             <SelectItem value="trial">体验课</SelectItem>
           </SelectContent>
         </Select>
-        <Select defaultValue="all_channel">
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all_channel">全部来源渠道</SelectItem>
-            <SelectItem value="dingtuan">鼎团团</SelectItem>
-            <SelectItem value="zhenxuan">甄选</SelectItem>
-          </SelectContent>
-        </Select>
+        {isOrg && (
+          <Select defaultValue="all_channel">
+            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_channel">全部来源渠道</SelectItem>
+              <SelectItem value="dingtuan">鼎团团</SelectItem>
+              <SelectItem value="zhenxuan">甄选</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <TooltipProvider delayDuration={150}>
         {/* 顶部：4 张核心指标卡片 */}
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {CORE_METRICS.map((m) => {
+          {coreMetrics.map((m) => {
             const Icon = m.icon || BookOpen;
             return (
               <Card key={m.key} className="relative overflow-hidden p-5">
@@ -217,7 +270,7 @@ function Dashboard() {
         {/* 五大模块 · 每个指标独立图表卡片 */}
         <div className="space-y-8">
           {MODULES.map((mod, idx) => {
-            const items = visible.filter((m) => m.module === mod.key);
+            const items = visibleMetrics.filter((m) => m.module === mod.key);
             if (items.length === 0) return null;
             const ModIcon = mod.icon;
             return (
