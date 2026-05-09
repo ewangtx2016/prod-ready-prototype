@@ -17,6 +17,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppAuditLogRouteImport } from './routes/_app/audit-log'
 import { Route as AppSalesIndexRouteImport } from './routes/_app/sales/index'
 import { Route as AppRoleIndexRouteImport } from './routes/_app/role/index'
+import { Route as AppLedgerIndexRouteImport } from './routes/_app/ledger/index'
 import { Route as AppUserAccountsRouteImport } from './routes/_app/user/accounts'
 import { Route as AppSettingsOrgRouteImport } from './routes/_app/settings/org'
 import { Route as AppSettingsNotificationEventsRouteImport } from './routes/_app/settings/notification-events'
@@ -65,6 +66,11 @@ const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
 const AppRoleIndexRoute = AppRoleIndexRouteImport.update({
   id: '/role/',
   path: '/role/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLedgerIndexRoute = AppLedgerIndexRouteImport.update({
+  id: '/ledger/',
+  path: '/ledger/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppUserAccountsRoute = AppUserAccountsRouteImport.update({
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/user/accounts': typeof AppUserAccountsRoute
+  '/ledger/': typeof AppLedgerIndexRoute
   '/role/': typeof AppRoleIndexRoute
   '/sales/': typeof AppSalesIndexRoute
 }
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/user/accounts': typeof AppUserAccountsRoute
+  '/ledger': typeof AppLedgerIndexRoute
   '/role': typeof AppRoleIndexRoute
   '/sales': typeof AppSalesIndexRoute
 }
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/_app/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/_app/settings/org': typeof AppSettingsOrgRoute
   '/_app/user/accounts': typeof AppUserAccountsRoute
+  '/_app/ledger/': typeof AppLedgerIndexRoute
   '/_app/role/': typeof AppRoleIndexRoute
   '/_app/sales/': typeof AppSalesIndexRoute
 }
@@ -197,6 +206,7 @@ export interface FileRouteTypes {
     | '/settings/notification-events'
     | '/settings/org'
     | '/user/accounts'
+    | '/ledger/'
     | '/role/'
     | '/sales/'
   fileRoutesByTo: FileRoutesByTo
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/settings/notification-events'
     | '/settings/org'
     | '/user/accounts'
+    | '/ledger'
     | '/role'
     | '/sales'
   id:
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/_app/settings/notification-events'
     | '/_app/settings/org'
     | '/_app/user/accounts'
+    | '/_app/ledger/'
     | '/_app/role/'
     | '/_app/sales/'
   fileRoutesById: FileRoutesById
@@ -302,6 +314,13 @@ declare module '@tanstack/react-router' {
       path: '/role'
       fullPath: '/role/'
       preLoaderRoute: typeof AppRoleIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ledger/': {
+      id: '/_app/ledger/'
+      path: '/ledger'
+      fullPath: '/ledger/'
+      preLoaderRoute: typeof AppLedgerIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/user/accounts': {
@@ -391,6 +410,7 @@ interface AppRouteChildren {
   AppSettingsNotificationEventsRoute: typeof AppSettingsNotificationEventsRoute
   AppSettingsOrgRoute: typeof AppSettingsOrgRoute
   AppUserAccountsRoute: typeof AppUserAccountsRoute
+  AppLedgerIndexRoute: typeof AppLedgerIndexRoute
   AppRoleIndexRoute: typeof AppRoleIndexRoute
   AppSalesIndexRoute: typeof AppSalesIndexRoute
 }
@@ -409,6 +429,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsNotificationEventsRoute: AppSettingsNotificationEventsRoute,
   AppSettingsOrgRoute: AppSettingsOrgRoute,
   AppUserAccountsRoute: AppUserAccountsRoute,
+  AppLedgerIndexRoute: AppLedgerIndexRoute,
   AppRoleIndexRoute: AppRoleIndexRoute,
   AppSalesIndexRoute: AppSalesIndexRoute,
 }
