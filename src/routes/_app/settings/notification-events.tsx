@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { Search, Mail, MessageSquare, Inbox, Users } from "lucide-react";
+import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/settings/notification-events")({
   component: () => <RoleGate allow={["org_admin", "super_admin"]}><Page /></RoleGate>,
