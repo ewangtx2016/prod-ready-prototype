@@ -25,6 +25,7 @@ function Inner() {
   const { role } = useApp();
   const [orders, setOrders] = useState<Order[]>([]);
   const [tab, setTab] = useState<string>("all");
+  const [productTab, setProductTab] = useState<string>("course");
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
   const [keyword, setKeyword] = useState("");
   const [courseType, setCourseType] = useState<string>("all");
@@ -68,6 +69,13 @@ function Inner() {
         <div>· 退费仅在源系统发起，本系统只读；不支持部分退费</div>
         <div>· <b>待确认</b>：字段映射 Q9-Q14（接口设计阻塞中）</div>
       </DevNote>
+      <Tabs value={productTab} onValueChange={setProductTab} className="mb-3">
+        <TabsList>
+          <TabsTrigger value="course">课程</TabsTrigger>
+          <TabsTrigger value="device">学习机</TabsTrigger>
+          <TabsTrigger value="benefit">服务权益</TabsTrigger>
+        </TabsList>
+      </Tabs>
       <div className="mb-3 rounded-lg border bg-card p-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[220px] flex-1">
@@ -102,25 +110,27 @@ function Inner() {
           <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 w-[150px]" />
           <span className="text-xs text-muted-foreground">至</span>
           <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 w-[150px]" />
+          <Select value={tab} onValueChange={setTab}>
+            <SelectTrigger className="h-9 w-[120px]"><SelectValue placeholder="状态" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部状态</SelectItem>
+              <SelectItem value="待支付">待支付</SelectItem>
+              <SelectItem value="已支付">已支付</SelectItem>
+              <SelectItem value="退费中">退费中</SelectItem>
+              <SelectItem value="已退费">已退费</SelectItem>
+            </SelectContent>
+          </Select>
           {hasFilter && (
             <Button size="sm" variant="ghost" onClick={resetFilters}><X className="h-3.5 w-3.5" /> 清空</Button>
           )}
           <span className="ml-auto text-xs text-muted-foreground">共 {filtered.length} 条</span>
         </div>
       </div>
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="all">全部</TabsTrigger>
-          <TabsTrigger value="待支付">待支付</TabsTrigger>
-          <TabsTrigger value="已支付">已支付</TabsTrigger>
-          <TabsTrigger value="退费中">退费中</TabsTrigger>
-          <TabsTrigger value="已退费">已退费</TabsTrigger>
-        </TabsList>
-        <TabsContent value={tab} className="rounded-lg border bg-card">
-          <Table>
+      <div className="rounded-lg border bg-card">
+        <Table>
             <TableHeader><TableRow>
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
-              <TableHead>课程</TableHead><TableHead>类型</TableHead><TableHead>金额</TableHead>
+              <TableHead>产品</TableHead><TableHead>类型</TableHead><TableHead>金额</TableHead>
               <TableHead>来源</TableHead><TableHead>渠道</TableHead><TableHead>状态</TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>
             <TableBody>
@@ -140,10 +150,9 @@ function Inner() {
               ))}
               {filtered.length === 0 && <TableRow><TableCell colSpan={10} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
             </TableBody>
-          </Table>
-          <Pagination />
-        </TabsContent>
-      </Tabs>
+        </Table>
+        <Pagination />
+      </div>
       <SalesServicesSheet order={viewOrder} onOpenChange={(v) => !v && setViewOrder(null)} />
     </div>
   );
