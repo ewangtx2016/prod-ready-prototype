@@ -80,7 +80,7 @@ function Inner() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[220px] flex-1">
             <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 用户 / 手机号 / 课程 / 规划师" className="h-9 pl-7" />
+            <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 用户 / 手机号" className="h-9 pl-7" />
           </div>
           {productTab === "course" && <Select value={courseType} onValueChange={setCourseType}>
             <SelectTrigger className="h-9 w-[130px]"><SelectValue placeholder="课程类型" /></SelectTrigger>
