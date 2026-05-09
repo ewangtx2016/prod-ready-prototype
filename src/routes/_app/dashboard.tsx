@@ -213,10 +213,9 @@ function Dashboard() {
             <SelectItem value="quarter">本季度</SelectItem>
           </SelectContent>
         </Select>
-        <Select defaultValue="all_course">
+        <Select defaultValue="subject">
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all_course">全部课程类型</SelectItem>
             <SelectItem value="subject">学科课</SelectItem>
             <SelectItem value="quality">素养课</SelectItem>
             <SelectItem value="trial">体验课</SelectItem>
