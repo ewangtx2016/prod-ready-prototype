@@ -31,9 +31,16 @@ function Inner() {
   const [courseType, setCourseType] = useState<string>("all");
   const [source, setSource] = useState<string>("all");
   const [channel, setChannel] = useState<string>("all");
+  const [planner, setPlanner] = useState<string>("all");
+  const [org, setOrg] = useState<string>("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   useEffect(() => { setOrders(db.orders()); }, []);
+
+  // 多对多关系：规划师登录 → 按机构筛选；机构/超管登录 → 按规划师筛选
+  const isPlanner = role === "planner";
+  const plannerOptions = Array.from(new Set(orders.map((o) => o.plannerName)));
+  const orgOptions = Array.from(new Set(orders.map((o) => o.orgName)));
 
   const kw = keyword.trim().toLowerCase();
   const filtered = orders.filter((o) => {
@@ -41,20 +48,23 @@ function Inner() {
     if (courseType !== "all" && o.courseType !== courseType) return false;
     if (source !== "all" && o.source !== source) return false;
     if (channel !== "all" && o.channel !== channel) return false;
+    if (!isPlanner && planner !== "all" && o.plannerName !== planner) return false;
+    if (isPlanner && org !== "all" && o.orgName !== org) return false;
     if (kw && !(
       o.id.toLowerCase().includes(kw) ||
       o.userName.toLowerCase().includes(kw) ||
       o.userPhone.includes(kw) ||
       o.course.toLowerCase().includes(kw) ||
-      o.plannerName.toLowerCase().includes(kw)
+      o.plannerName.toLowerCase().includes(kw) ||
+      o.orgName.toLowerCase().includes(kw)
     )) return false;
     if (startDate && o.createdAt.slice(0, 10) < startDate) return false;
     if (endDate && o.createdAt.slice(0, 10) > endDate) return false;
     return true;
   });
   const { paged, Pagination } = usePagination(filtered, 10);
-  const hasFilter = !!(kw || courseType !== "all" || source !== "all" || channel !== "all" || startDate || endDate);
-  const resetFilters = () => { setKeyword(""); setCourseType("all"); setSource("all"); setChannel("all"); setStartDate(""); setEndDate(""); };
+  const hasFilter = !!(kw || courseType !== "all" || source !== "all" || channel !== "all" || planner !== "all" || org !== "all" || startDate || endDate);
+  const resetFilters = () => { setKeyword(""); setCourseType("all"); setSource("all"); setChannel("all"); setPlanner("all"); setOrg("all"); setStartDate(""); setEndDate(""); };
 
   return (
     <div>
@@ -110,6 +120,23 @@ function Inner() {
           <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 w-[150px]" />
           <span className="text-xs text-muted-foreground">至</span>
           <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 w-[150px]" />
+          {isPlanner ? (
+            <Select value={org} onValueChange={setOrg}>
+              <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="机构" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部机构</SelectItem>
+                {orgOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Select value={planner} onValueChange={setPlanner}>
+              <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="规划师" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部规划师</SelectItem>
+                {plannerOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={tab} onValueChange={setTab}>
             <SelectTrigger className="h-9 w-[120px]"><SelectValue placeholder="状态" /></SelectTrigger>
             <SelectContent>
@@ -131,6 +158,7 @@ function Inner() {
             <TableHeader><TableRow>
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
               <TableHead>产品</TableHead>{productTab === "course" && <TableHead>类型</TableHead>}<TableHead>金额</TableHead>
+              <TableHead>{isPlanner ? "机构" : "规划师"}</TableHead>
               <TableHead>来源</TableHead><TableHead>渠道</TableHead><TableHead>状态</TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>
             <TableBody>
@@ -142,13 +170,14 @@ function Inner() {
                   <TableCell>{o.course}</TableCell>
                   {productTab === "course" && <TableCell><Badge variant="outline">{o.courseType}</Badge></TableCell>}
                   <TableCell className="font-medium">¥{o.amount.toLocaleString()}</TableCell>
+                  <TableCell className="text-xs">{isPlanner ? o.orgName : o.plannerName}</TableCell>
                   <TableCell><Badge className={o.source === "机构老用户" ? "bg-info text-info-foreground" : "bg-success text-success-foreground"}>{o.source}</Badge></TableCell>
                   <TableCell><span className="text-xs text-muted-foreground">{o.channel}</span></TableCell>
                   <TableCell><Badge variant={o.status === "已退费" ? "destructive" : o.status === "退费中" ? "secondary" : "default"}>{o.status}</Badge></TableCell>
                   <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={productTab === "course" ? 10 : 9} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={productTab === "course" ? 11 : 10} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
             </TableBody>
         </Table>
         <Pagination />
