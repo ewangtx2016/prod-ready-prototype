@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
 import { ROLE_META, type Role } from "@/lib/roles";
 import { usePermStore } from "@/lib/permissions";
@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, KeyRound } from "lucide-react";
+import { Plus, KeyRound, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/user/accounts")({ component: Page });
@@ -37,6 +37,9 @@ function Page() {
   const [list, setList] = useState<Account[]>([]);
   const [editing, setEditing] = useState<Account | null>(null);
   const [resetting, setResetting] = useState<Account | null>(null);
+  const [keyword, setKeyword] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   useEffect(() => {
     const raw = localStorage.getItem(KEY);
     if (raw) setList(JSON.parse(raw)); else { localStorage.setItem(KEY, JSON.stringify(sample)); setList(sample); }
@@ -53,6 +56,21 @@ function Page() {
   const toggle = (a: Account) => { persist(list.map(x => x.id === a.id ? { ...x, enabled: !x.enabled } : x)); db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "账号管理", action: a.enabled ? "停用账号" : "启用账号", detail: a.username }); };
   const doReset = () => { if (!resetting) return; toast.success(`已向 ${resetting.phone} 发送密码重置短信`); db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "账号管理", action: "重置密码", detail: resetting.username }); setResetting(null); };
   const canEdit = role === "org_admin";
+  const filtered = useMemo(() => {
+    const kw = keyword.trim().toLowerCase();
+    return list.filter((a) => {
+      if (roleFilter !== "all" && a.role !== roleFilter) return false;
+      if (statusFilter === "enabled" && !a.enabled) return false;
+      if (statusFilter === "disabled" && a.enabled) return false;
+      if (kw) {
+        const hay = `${a.username} ${a.name} ${a.phone}`.toLowerCase();
+        if (!hay.includes(kw)) return false;
+      }
+      return true;
+    });
+  }, [list, keyword, roleFilter, statusFilter]);
+  const hasFilter = !!keyword || roleFilter !== "all" || statusFilter !== "all";
+  const reset = () => { setKeyword(""); setRoleFilter("all"); setStatusFilter("all"); };
 
   return (
     <div>
@@ -62,11 +80,31 @@ function Page() {
         </PermissionTip>
       } />
       <DevNote prd="§13" title="账号管理"><div>· 单账号单角色 (PRD §13.2)</div><div>· 重置密码：发送短信链接，链接 24h 有效</div><div>· 停用：账号立即下线，登录态清除</div></DevNote>
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
+        <Input placeholder="搜索用户名 / 姓名 / 手机号" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="w-64" />
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-36"><SelectValue placeholder="全部角色" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部角色</SelectItem>
+            {dynRoles.map((r) => <SelectItem key={r.key} value={r.key}>{r.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-32"><SelectValue placeholder="全部状态" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部状态</SelectItem>
+            <SelectItem value="enabled">启用</SelectItem>
+            <SelectItem value="disabled">停用</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasFilter && <Button variant="ghost" size="sm" onClick={reset}><X className="h-3.5 w-3.5" /> 清空</Button>}
+        <div className="ml-auto text-xs text-muted-foreground">共 {filtered.length} / {list.length} 条</div>
+      </div>
       <Card>
         <Table>
           <TableHeader><TableRow><TableHead>用户名</TableHead><TableHead>姓名</TableHead><TableHead>手机号</TableHead><TableHead>角色</TableHead><TableHead>状态</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
-            {list.map(a => (
+            {filtered.map(a => (
               <TableRow key={a.id}>
                 <TableCell className="font-mono text-xs">{a.username}</TableCell>
                 <TableCell>{a.name}</TableCell>
@@ -80,6 +118,7 @@ function Page() {
                 </TableCell>
               </TableRow>
             ))}
+            {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="py-12 text-center text-muted-foreground">暂无匹配账号</TableCell></TableRow>}
           </TableBody>
         </Table>
       </Card>
