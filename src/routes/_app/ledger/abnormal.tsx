@@ -2,39 +2,27 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { db, type LedgerItem } from "@/lib/mock";
 import { useApp } from "@/lib/store";
-import { ROLE_META } from "@/lib/roles";
 import { maskName } from "@/lib/mask";
 import { PageHeader } from "@/components/dev/PageHeader";
 import { DevNote } from "@/components/dev/DevNote";
-import { PermissionTip } from "@/components/dev/PermissionTip";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { AlertTriangle, RefreshCw, Coins } from "lucide-react";
+import { AlertTriangle, Coins } from "lucide-react";
 import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ledger/abnormal")({ component: Page });
 
 function Page() {
   const { role } = useApp();
   const [list, setList] = useState<LedgerItem[]>([]);
-  const [retrying, setRetrying] = useState<LedgerItem | null>(null);
   const [detail, setDetail] = useState<LedgerItem | null>(null);
   useEffect(() => {
     let arr = db.ledger().filter(l => l.status === "abnormal");
     if (role === "planner") arr = arr.filter(l => l.plannerName === "李规划");
     setList(arr);
   }, [role]);
-
-  const doRetry = () => {
-    if (!retrying) return;
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "异常台账", action: "重试分账", detail: retrying.orderId });
-    toast.success("已触发重试，请稍后查看结果");
-    setRetrying(null);
-  };
 
   return (
     <div>
@@ -54,9 +42,6 @@ function Page() {
                 <TableCell>{l.plannerName}</TableCell>
                 <TableCell className="text-right">
                   <Button size="sm" variant="ghost" onClick={() => setDetail(l)}><Coins className="h-3.5 w-3.5" /> 分成明细</Button>
-                  <PermissionTip action="重试分账" prd="§10.3" allow={["org_admin", "super_admin"]}>
-                    <Button size="sm" variant="outline" disabled={role !== "org_admin" && role !== "super_admin"} onClick={() => setRetrying(l)}><RefreshCw className="h-3.5 w-3.5" /> 重试</Button>
-                  </PermissionTip>
                 </TableCell>
               </TableRow>
             ))}
@@ -64,12 +49,6 @@ function Page() {
           </TableBody>
         </Table>
       </Card>
-      <Dialog open={!!retrying} onOpenChange={(v) => !v && setRetrying(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>确认重试分账？</DialogTitle><DialogDescription>订单 {retrying?.orderId} — ¥{retrying?.amount.toLocaleString()}<br />原因：{retrying?.abnormalReason}</DialogDescription></DialogHeader>
-          <DialogFooter><Button variant="outline" onClick={() => setRetrying(null)}>取消</Button><Button onClick={doRetry}>确认重试</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
       <SplitDetailSheet item={detail} onOpenChange={(v) => !v && setDetail(null)} />
     </div>
   );
