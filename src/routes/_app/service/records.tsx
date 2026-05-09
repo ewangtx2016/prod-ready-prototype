@@ -559,6 +559,36 @@ function Page() {
         </DialogContent>
       </Dialog>
 
+      {/* 申请修改 */}
+      <Dialog open={!!editing} onOpenChange={(v) => { if (!v) { setEditing(null); setEditContent(""); setEditReason(""); } }}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader><DialogTitle>申请修改服务记录</DialogTitle></DialogHeader>
+          {editing && (
+            <div className="space-y-3 text-sm">
+              <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
+                <div><b>用户：</b>{maskName(editing.userName, role)} · <b>类型：</b>{editing.serviceType} · <b>时长：</b>{editing.duration} 分钟</div>
+                <div className="text-muted-foreground">原内容：{editing.content}</div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">新的服务内容 <span className="text-destructive">*</span></Label>
+                <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} placeholder="请填写修改后的服务内容" rows={4} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">修改原因 <span className="text-destructive">*</span></Label>
+                <Textarea value={editReason} onChange={(e) => setEditReason(e.target.value)} placeholder="请说明本次修改的原因（必填）" rows={2} />
+              </div>
+              <div className="rounded-md border border-info/40 bg-info/5 p-2 text-[11px] text-muted-foreground">
+                提交后状态变为「待审核」，需经<b className="text-foreground">机构超级管理员</b>审核通过后新内容方可生效；驳回后原内容保留不变。
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditing(null); setEditContent(""); setEditReason(""); }}>取消</Button>
+            <Button onClick={submitEdit}>提交申请</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* 通过确认 */}
       <Dialog open={!!approving} onOpenChange={(v) => !v && setApproving(null)}>
         <DialogContent>
