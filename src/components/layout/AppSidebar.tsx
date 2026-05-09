@@ -18,11 +18,7 @@ const GROUPS: Group[] = [
   ] },
   { key: "sales", label: "销售管理", icon: ShoppingCart, children: [{ to: "/sales", label: "销售明细", icon: ShoppingCart, key: "sales" }] },
   { key: "ledger", label: "台账管理", icon: BookOpen, children: [
-    { to: "/ledger/settled", label: "已结算", icon: BookOpen, key: "ledger" },
-    { to: "/ledger/pending", label: "待结算", icon: BookOpen, key: "ledger" },
-    { to: "/ledger/estimated", label: "预估收入", icon: BookOpen, key: "ledger" },
-    { to: "/ledger/refund", label: "分账退回", icon: BookOpen, key: "ledger" },
-    { to: "/ledger/abnormal", label: "异常台账", icon: BookOpen, key: "ledger" },
+    { to: "/ledger", label: "台账管理", icon: BookOpen, key: "ledger" },
   ] },
   { key: "notification", label: "通知管理", icon: Bell, children: [
     { to: "/notification/templates", label: "通知模板", icon: Bell, key: "notification" },
