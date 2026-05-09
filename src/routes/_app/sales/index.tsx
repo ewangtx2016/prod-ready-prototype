@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/dev/PageHeader";
 import { DevNote } from "@/components/dev/DevNote";
 import { PermissionTip } from "@/components/dev/PermissionTip";
 import { RoleGate } from "@/components/dev/RoleGate";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
