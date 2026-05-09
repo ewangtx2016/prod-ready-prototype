@@ -216,7 +216,6 @@ function Dashboard() {
         <Select defaultValue="all_course">
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all_course">全部课程类型</SelectItem>
             <SelectItem value="subject">学科课</SelectItem>
             <SelectItem value="quality">素养课</SelectItem>
             <SelectItem value="trial">体验课</SelectItem>
