@@ -82,7 +82,7 @@ function Inner() {
             <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 用户 / 手机号 / 课程 / 规划师" className="h-9 pl-7" />
           </div>
-          <Select value={courseType} onValueChange={setCourseType}>
+          {productTab !== "benefit" && <Select value={courseType} onValueChange={setCourseType}>
             <SelectTrigger className="h-9 w-[130px]"><SelectValue placeholder="课程类型" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部类型</SelectItem>
@@ -90,7 +90,7 @@ function Inner() {
               <SelectItem value="素养课">素养课</SelectItem>
               <SelectItem value="体验课">体验课</SelectItem>
             </SelectContent>
-          </Select>
+          </Select>}
           <Select value={source} onValueChange={setSource}>
             <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="用户来源" /></SelectTrigger>
             <SelectContent>
@@ -130,7 +130,7 @@ function Inner() {
         <Table>
             <TableHeader><TableRow>
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
-              <TableHead>产品</TableHead><TableHead>类型</TableHead><TableHead>金额</TableHead>
+              <TableHead>产品</TableHead>{productTab !== "benefit" && <TableHead>类型</TableHead>}<TableHead>金额</TableHead>
               <TableHead>来源</TableHead><TableHead>渠道</TableHead><TableHead>状态</TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>
             <TableBody>
@@ -140,7 +140,7 @@ function Inner() {
                   <TableCell>{maskName(o.userName, role)}</TableCell>
                   <TableCell className="font-mono text-xs">{maskPhone(o.userPhone, role)}</TableCell>
                   <TableCell>{o.course}</TableCell>
-                  <TableCell><Badge variant="outline">{o.courseType}</Badge></TableCell>
+                  {productTab !== "benefit" && <TableCell><Badge variant="outline">{o.courseType}</Badge></TableCell>}
                   <TableCell className="font-medium">¥{o.amount.toLocaleString()}</TableCell>
                   <TableCell><Badge className={o.source === "机构老用户" ? "bg-info text-info-foreground" : "bg-success text-success-foreground"}>{o.source}</Badge></TableCell>
                   <TableCell><span className="text-xs text-muted-foreground">{o.channel}</span></TableCell>
@@ -148,7 +148,7 @@ function Inner() {
                   <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={10} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={productTab === "benefit" ? 9 : 10} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
             </TableBody>
         </Table>
         <Pagination />
