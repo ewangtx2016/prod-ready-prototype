@@ -21,7 +21,7 @@ function Login() {
   const loginAs = (r: Role) => {
     setRole(r);
     toast.success(`已以「${ROLE_META[r].name}」身份登录`);
-    nav({ to: "/dashboard" });
+    nav({ to: r === "tutor" ? "/service/records" : "/dashboard" });
   };
 
   return (

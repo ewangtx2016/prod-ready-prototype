@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, FileText, Bell, ShoppingCart, BookOpen,
+  LayoutDashboard, FileText, ShoppingCart, BookOpen,
   Settings, ShieldCheck, Users, History, ChevronDown,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
@@ -19,10 +19,6 @@ const GROUPS: Group[] = [
   { key: "sales", label: "销售管理", icon: ShoppingCart, children: [{ to: "/sales", label: "销售明细", icon: ShoppingCart, key: "sales" }] },
   { key: "ledger", label: "台账管理", icon: BookOpen, children: [
     { to: "/ledger", label: "台账管理", icon: BookOpen, key: "ledger" },
-  ] },
-  { key: "notification", label: "通知管理", icon: Bell, children: [
-    { to: "/notification/templates", label: "通知模板", icon: Bell, key: "notification" },
-    { to: "/settings/notification-events", label: "通知事件", icon: Bell, key: "notification" },
   ] },
   { key: "settings", label: "系统设置", icon: Settings, children: [
     { to: "/settings/org", label: "机构信息", icon: Settings, key: "settings" },

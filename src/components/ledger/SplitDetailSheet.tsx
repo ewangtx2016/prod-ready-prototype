@@ -171,9 +171,6 @@ function SimpleSplitRow({ name, accent, pct, amount, base }: { name: string; acc
         </span>
         <span className={`font-mono ${cls}`}>¥{amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
       </div>
-      <div className="mt-1 ml-4 text-[11px] text-muted-foreground">
-        ¥{base.toLocaleString()} × {pct.toFixed(1)}% = ¥{amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-      </div>
       <div className="mt-1 ml-4 h-1 rounded bg-muted overflow-hidden">
         <div className={`h-full ${barCls}`} style={{ width: `${Math.min(100, pct)}%` }} />
       </div>

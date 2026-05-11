@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { db, type LedgerItem } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
@@ -12,9 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, X, Download, Coins, AlertTriangle } from "lucide-react";
+import { Download, Coins, AlertTriangle } from "lucide-react";
 import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
 import { usePagination } from "@/components/dev/TablePagination";
 import { toast } from "sonner";
@@ -38,33 +39,47 @@ function Page() {
   // 筛选条件
   const [status, setStatus] = useState<string>("all");
   const [keyword, setKeyword] = useState("");
+  const [productType, setProductType] = useState<string>("all");
   const [planner, setPlanner] = useState<string>("all");
-  const [dateField, setDateField] = useState<"settledAt" | "createdAt">("settledAt");
+  const [org, setOrg] = useState<string>("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const isPlanner = role === "planner";
+  const orders = useMemo(() => db.orders(), []);
+  const orderById = useMemo(() => new Map(orders.map((o) => [o.id, o])), [orders]);
+  const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
+  const getLedgerProductType = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.courseType ?? "", [orderById]);
+  const productTypeOptions = ["学科课", "素养课", "体验课", "学习机", "会员服务"];
 
   useEffect(() => {
     let arr = db.ledger();
-    if (role === "planner") arr = arr.filter((l) => l.plannerName === "李规划");
+    if (isPlanner) arr = arr.filter((l) => l.plannerName === "李规划");
     setList(arr);
-  }, [role]);
+  }, [isPlanner]);
 
   const planners = useMemo(() => Array.from(new Set(list.map((l) => l.plannerName))), [list]);
+  const orgs = useMemo(() => Array.from(new Set(list.map(getLedgerOrg).filter(Boolean))), [list, getLedgerOrg]);
 
   const kw = keyword.trim().toLowerCase();
   const filtered = list.filter((l) => {
     if (status !== "all" && l.status !== status) return false;
+    if (productType !== "all" && getLedgerProductType(l) !== productType) return false;
     if (planner !== "all" && l.plannerName !== planner) return false;
+    if (org !== "all" && getLedgerOrg(l) !== org) return false;
     if (kw && !(
       l.id.toLowerCase().includes(kw) ||
       l.orderId.toLowerCase().includes(kw) ||
       l.userName.toLowerCase().includes(kw) ||
-      l.course.toLowerCase().includes(kw)
+      l.course.toLowerCase().includes(kw) ||
+      getLedgerProductType(l).toLowerCase().includes(kw) ||
+      l.plannerName.toLowerCase().includes(kw) ||
+      getLedgerOrg(l).toLowerCase().includes(kw) ||
+      (l.abnormalReason ?? "").toLowerCase().includes(kw)
     )) return false;
-    const dateVal = (dateField === "settledAt" ? l.settledAt : undefined) ?? "";
+    const dateVal = l.settledAt ?? "";
     if (startDate && dateVal && dateVal.slice(0, 10) < startDate) return false;
     if (endDate && dateVal && dateVal.slice(0, 10) > endDate) return false;
-    if ((startDate || endDate) && dateField === "settledAt" && !l.settledAt) return false;
+    if ((startDate || endDate) && !l.settledAt) return false;
     return true;
   });
 
@@ -76,8 +91,7 @@ function Page() {
   const platTotal  = filtered.reduce((s, x) => s + x.platformAmount, 0);
   const abnormalCount = filtered.filter((l) => l.status === "abnormal").length;
 
-  const hasFilter = !!(kw || status !== "all" || planner !== "all" || startDate || endDate);
-  const reset = () => { setKeyword(""); setStatus("all"); setPlanner("all"); setStartDate(""); setEndDate(""); };
+  const reset = () => { setKeyword(""); setStatus("all"); setProductType("all"); setPlanner("all"); setOrg("all"); setStartDate(""); setEndDate(""); };
 
   const onExport = () => {
     db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "台账管理", action: "导出", detail: `${filtered.length} 条 (脱敏)` });
@@ -111,14 +125,25 @@ function Page() {
         <Card className="p-4"><div className="text-xs text-muted-foreground">平台分成</div><div className="text-2xl font-semibold mt-1">¥{platTotal.toLocaleString()}</div></Card>
       </div>
 
-      <div className="mb-3 rounded-lg border bg-card p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[260px] flex-1">
-            <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 结算单号 / 用户" className="h-9 pl-7" />
-          </div>
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-8">
+        <div className="space-y-1 md:col-span-2">
+          <Label className="text-xs text-muted-foreground">关键词</Label>
+          <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 结算单号 / 用户 / 机构 / 规划师" className="h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">产品类型</Label>
+          <Select value={productType} onValueChange={setProductType}>
+            <SelectTrigger className="h-8"><SelectValue placeholder="产品类型" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部类型</SelectItem>
+              {productTypeOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">状态</Label>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="状态" /></SelectTrigger>
+            <SelectTrigger className="h-8"><SelectValue placeholder="状态" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部状态</SelectItem>
               <SelectItem value="settled">已结算</SelectItem>
@@ -129,33 +154,45 @@ function Page() {
               <SelectItem value="abnormal">异常</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">机构</Label>
+          <Select value={org} onValueChange={setOrg}>
+            <SelectTrigger className="h-8"><SelectValue placeholder="机构" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部机构</SelectItem>
+              {orgs.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">规划师</Label>
           <Select value={planner} onValueChange={setPlanner}>
-            <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="规划师" /></SelectTrigger>
+            <SelectTrigger className="h-8"><SelectValue placeholder="规划师" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部规划师</SelectItem>
               {planners.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={dateField} onValueChange={(v) => setDateField(v as "settledAt" | "createdAt")}>
-            <SelectTrigger className="h-9 w-[120px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="settledAt">结算时间</SelectItem>
-              <SelectItem value="createdAt">创建时间</SelectItem>
-            </SelectContent>
-          </Select>
-          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 w-[150px]" />
-          <span className="text-xs text-muted-foreground">至</span>
-          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 w-[150px]" />
-          {hasFilter && <Button size="sm" variant="ghost" onClick={reset}><X className="h-3.5 w-3.5" /> 清空</Button>}
-          <span className="ml-auto text-xs text-muted-foreground">共 {filtered.length} 条</span>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">开始日期</Label>
+          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">结束日期</Label>
+          <div className="flex gap-2">
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-8" />
+            <Button variant="ghost" size="sm" className="h-8" onClick={reset}>重置</Button>
+          </div>
         </div>
       </div>
 
       <Card>
         <Table>
           <TableHeader><TableRow>
-            <TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>课程</TableHead>
-            <TableHead>订单金额</TableHead><TableHead>机构</TableHead><TableHead>规划师</TableHead><TableHead>平台</TableHead>
+            <TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>产品名称</TableHead><TableHead>产品类型</TableHead>
+            <TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>订单金额</TableHead><TableHead>机构分成</TableHead><TableHead>规划师分成</TableHead><TableHead>平台</TableHead>
             <TableHead>状态</TableHead><TableHead>结算时间</TableHead><TableHead className="text-right">操作</TableHead>
           </TableRow></TableHeader>
           <TableBody>
@@ -168,6 +205,9 @@ function Page() {
                   <TableCell className="font-mono text-xs">{l.orderId}</TableCell>
                   <TableCell>{maskName(l.userName, role)}</TableCell>
                   <TableCell>{l.course}</TableCell>
+                  <TableCell><Badge variant="outline">{getLedgerProductType(l) || "-"}</Badge></TableCell>
+                  <TableCell>{getLedgerOrg(l) || "-"}</TableCell>
+                  <TableCell>{l.plannerName}</TableCell>
                   <TableCell className="font-medium">¥{l.amount.toLocaleString()}</TableCell>
                   <TableCell className={isRefund ? "text-destructive" : "text-info"}>{isRefund ? "-" : ""}¥{l.orgAmount.toLocaleString()}</TableCell>
                   <TableCell className={isRefund ? "text-destructive" : "text-success"}>{isRefund ? "-" : ""}¥{l.plannerAmount.toLocaleString()}</TableCell>
@@ -183,7 +223,7 @@ function Page() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <TableRow><TableCell colSpan={11} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+            {filtered.length === 0 && <TableRow><TableCell colSpan={14} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
           </TableBody>
         </Table>
         <Pagination />

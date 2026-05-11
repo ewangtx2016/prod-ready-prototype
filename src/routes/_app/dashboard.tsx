@@ -10,10 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState, type ReactElement } from "react";
-import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info, Wallet, GraduationCap, UserCheck, Repeat, Link2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { useState, useEffect, type ReactElement } from "react";
+import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info, Wallet, GraduationCap, UserCheck, Repeat, Link2, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/mock";
+import { cn } from "@/lib/utils";
 import { RoleGate } from "@/components/dev/RoleGate";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart,
@@ -148,6 +151,18 @@ function Dashboard() {
   const { role } = useApp();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>(ALL_METRICS.map((m) => m.key));
+  const [planners, setPlanners] = useState<string[]>([]);
+  const [plannerFilter, setPlannerFilter] = useState("all");
+  const [orgs, setOrgs] = useState<string[]>([]);
+  const [orgFilter, setOrgFilter] = useState("all");
+
+  useEffect(() => {
+    const orderList = db.orders();
+    const names = Array.from(new Set(orderList.map((o) => o.plannerName))).filter(Boolean);
+    const orgNames = Array.from(new Set(orderList.map((o) => o.orgName))).filter(Boolean);
+    setPlanners(names);
+    setOrgs(orgNames);
+  }, []);
 
   const visible = ALL_METRICS.filter((m) => selected.includes(m.key));
   const isPlanner = role === "planner";
@@ -160,7 +175,7 @@ function Dashboard() {
   const visibleMetrics = isOrg ? visible : allMetrics; // 个人视角固定布局，不参与"自定义指标"
 
   return (
-    <RoleGate allow={["org_admin", "super_admin", "planner", "tutor"]}>
+    <RoleGate allow={["org_admin", "super_admin", "planner"]}>
     <div>
       <PageHeader
         title="数据看板"
@@ -213,23 +228,56 @@ function Dashboard() {
             <SelectItem value="quarter">本季度</SelectItem>
           </SelectContent>
         </Select>
-        <Select defaultValue="subject">
+        <Select defaultValue="all">
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="subject">学科课</SelectItem>
-            <SelectItem value="quality">素养课</SelectItem>
-            <SelectItem value="trial">体验课</SelectItem>
+            <SelectItem value="all">全部类型</SelectItem>
+            <SelectItem value="course">课程</SelectItem>
+            <SelectItem value="device">学习机</SelectItem>
+            <SelectItem value="service">服务权益</SelectItem>
           </SelectContent>
         </Select>
-        {isOrg && (
-          <Select defaultValue="all_channel">
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all_channel">全部来源渠道</SelectItem>
-              <SelectItem value="dingtuan">鼎团团</SelectItem>
-              <SelectItem value="zhenxuan">甄选</SelectItem>
-            </SelectContent>
-          </Select>
+        {(isOrg || isPlanner) && (
+          <>
+            {isOrg && (
+              <>
+                <SearchSelect
+                  value={orgFilter}
+                  onChange={setOrgFilter}
+                  options={["all", ...orgs]}
+                  labels={{ all: "全部机构" }}
+                  placeholder="搜索机构"
+                  width="w-40"
+                />
+                <SearchSelect
+                  value={plannerFilter}
+                  onChange={setPlannerFilter}
+                  options={["all", ...planners]}
+                  labels={{ all: "全部规划师" }}
+                  placeholder="搜索规划师"
+                  width="w-40"
+                />
+              </>
+            )}
+            {isPlanner && (
+              <SearchSelect
+                value={orgFilter}
+                onChange={setOrgFilter}
+                options={["all", ...orgs]}
+                labels={{ all: "全部机构" }}
+                placeholder="搜索机构"
+                width="w-40"
+              />
+            )}
+            <Select defaultValue="all_channel">
+              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all_channel">全部来源渠道</SelectItem>
+                <SelectItem value="dingtuan">鼎团团</SelectItem>
+                <SelectItem value="zhenxuan">甄选</SelectItem>
+              </SelectContent>
+            </Select>
+          </>
         )}
       </div>
 
@@ -554,4 +602,67 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
       );
     }
   }
+}
+
+/** 可搜索下拉选择器（Combobox） */
+function SearchSelect({
+  value,
+  onChange,
+  options,
+  labels,
+  placeholder,
+  width = "w-40",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  labels?: Record<string, string>;
+  placeholder?: string;
+  width?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const display = labels?.[value] ?? value;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("justify-between", width)}
+        >
+          {display}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className={cn("p-0", width)}>
+        <Command>
+          <CommandInput placeholder={placeholder ?? "搜索..."} />
+          <CommandList>
+            <CommandEmpty>未找到</CommandEmpty>
+            <CommandGroup>
+              {options.map((opt) => (
+                <CommandItem
+                  key={opt}
+                  value={opt}
+                  onSelect={() => {
+                    onChange(opt);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === opt ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {labels?.[opt] ?? opt}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 }

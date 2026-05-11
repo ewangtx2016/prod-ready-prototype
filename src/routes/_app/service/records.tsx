@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import { db, type ServiceRecord, type Order } from "@/lib/mock";
+import { useState, useEffect, useMemo } from "react";
+import { db, type ServiceRecord } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
 import { maskName, maskPhone } from "@/lib/mask";
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePagination } from "@/components/dev/TablePagination";
+import { SearchSelect } from "@/components/dev/SearchSelect";
 
 export const Route = createFileRoute("/_app/service/records")({ component: Page });
 
@@ -149,26 +150,29 @@ function Page() {
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
   const [fUser, setFUser] = useState("");
   const [fSubmitter, setFSubmitter] = useState("");
+  const [fOrgName, setFOrgName] = useState("all");
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
   const [fRecordType, setFRecordType] = useState<"all" | "delivery" | "presales">("all");
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [fServantRole, setFServantRole] = useState<"all" | "planner" | "tutor">("all");
 
-  useEffect(() => { setRecords(db.services()); setOrders(db.orders()); }, []);
-  const orderMap = new Map(orders.map((o) => [o.id, o]));
+  useEffect(() => { setRecords(db.services()); }, []);
+  const orgOptions = useMemo(() => Array.from(new Set(records.map((r) => r.orgName ?? "").filter(Boolean))), [records]);
   const filtered = records.filter((r) => {
       if (fUser.trim()) {
         const q = fUser.trim().toLowerCase();
         if (!r.userName.toLowerCase().includes(q) && !r.userPhone.includes(q)) return false;
       }
       if (fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
+      if (fOrgName !== "all" && (r.orgName ?? "") !== fOrgName) return false;
+      if (fServantRole !== "all" && r.createdByRole !== fServantRole) return false;
       if (fStart && r.createdAt < fStart) return false;
       if (fEnd && r.createdAt > fEnd + " 23:59") return false;
       if (fRecordType !== "all" && (r.recordType ?? "presales") !== fRecordType) return false;
       return true;
     });
   const { paged, Pagination } = usePagination(filtered, 10);
-  const resetFilters = () => { setFUser(""); setFSubmitter(""); setFStart(""); setFEnd(""); setFRecordType("all"); };
+  const resetFilters = () => { setFUser(""); setFSubmitter(""); setFOrgName("all"); setFServantRole("all"); setFStart(""); setFEnd(""); setFRecordType("all"); };
 
   return (
     <div>
@@ -192,7 +196,7 @@ function Page() {
         <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
       </DevNote>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-5">
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-7">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">记录类型</Label>
           <Select value={fRecordType} onValueChange={(v) => setFRecordType(v as any)}>
@@ -209,8 +213,29 @@ function Page() {
           <Input value={fUser} onChange={(e) => setFUser(e.target.value)} placeholder="搜索用户" className="h-8" />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">服务人</Label>
-          <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索服务人" className="h-8" />
+          <Label className="text-xs text-muted-foreground">机构名称</Label>
+          <SearchSelect
+            value={fOrgName}
+            onChange={setFOrgName}
+            options={["all", ...orgOptions]}
+            labels={{ all: "全部机构" }}
+            placeholder="搜索机构名称"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">服务人类型</Label>
+          <Select value={fServantRole} onValueChange={(v) => setFServantRole(v as any)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部</SelectItem>
+              <SelectItem value="planner">规划师</SelectItem>
+              <SelectItem value="tutor">学管师</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">服务人姓名</Label>
+          <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索服务人姓名" className="h-8" />
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">开始日期</Label>
@@ -233,6 +258,7 @@ function Page() {
                 <TableHead>手机号</TableHead>
                 <TableHead>记录类型</TableHead>
                 <TableHead>内容</TableHead>
+                <TableHead>机构名称</TableHead>
                 <TableHead>服务人</TableHead>
                 <TableHead>提交时间</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -274,6 +300,7 @@ function Page() {
                       </div>
                     )}
                   </TableCell>
+                  <TableCell>{r.orgName || "-"}</TableCell>
                   <TableCell><ServantBadge name={r.createdBy} r={r.createdByRole} /></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{r.createdAt}</TableCell>
                   <TableCell className="text-right space-x-1">
@@ -281,7 +308,7 @@ function Page() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-12">暂无数据</TableCell></TableRow>}
             </TableBody>
           </Table>
           <Pagination />
@@ -344,8 +371,8 @@ function Page() {
               <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-auto">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg border bg-muted/30 p-3">
-                    <div className="text-[11px] text-muted-foreground mb-1">服务类型</div>
-                    <div className="text-sm font-medium">{viewing.serviceType}</div>
+                    <div className="text-[11px] text-muted-foreground mb-1">记录类型</div>
+                    <div className="text-sm font-medium">{(viewing.recordType ?? "presales") === "delivery" ? "交付服务" : "日常跟进"}</div>
                   </div>
                   <div className="rounded-lg border bg-muted/30 p-3">
                     <div className="text-[11px] text-muted-foreground mb-1">提交时间</div>

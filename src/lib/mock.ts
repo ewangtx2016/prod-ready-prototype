@@ -13,6 +13,8 @@ export type ServiceRecord = {
   status: "submitted" | "pending_audit" | "approved" | "rejected";
   /** 记录类型：交付类(绑定订单) / 日常跟进(售前或一般沟通) */
   recordType?: "delivery" | "presales";
+  /** 所属机构名称 */
+  orgName?: string;
   /** 关联订单 id（可多个，仅 delivery 类有意义） */
   orderIds?: string[];
   /** 服务附件：图片 / 视频 / 文件 */
@@ -192,8 +194,12 @@ export function seedIfNeeded(force = false) {
     { id: rid(), userName: "林梓豪", userPhone: "13422223333", serviceType: "答疑", content: "答疑初三物理电路图分析，约 30 分钟。", duration: 30, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-27 20:10", status: "pending_audit", pendingChange: { reason: "时长录入有误，实际为 45 分钟", newContent: "答疑初三物理电路图分析，含 2 道拓展题，实际 45 分钟。", submittedAt: "2026-04-28 08:30" } },
     { id: rid(), userName: "苏婉清", userPhone: "13311114444", serviceType: "社群", content: "组织社群早读打卡，参与 28 人。", duration: 20, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-28 07:30", status: "pending_audit", pendingChange: { reason: "补充服务对象明细", newContent: "组织社群早读打卡，参与 28 人，重点跟进 5 名落后学员。", submittedAt: "2026-04-28 22:00" } },
   ];
-  // 存量服务记录默认全部标记为「日常跟进」（无订单绑定）
-  services.forEach((s) => { s.recordType = "presales"; s.orderIds = []; });
+  // 存量服务记录默认全部标记为「日常跟进」（无订单绑定），并补充机构名称
+  const orgMap: Record<string, string> = {
+    张明轩: "启明教育", 王小宇: "启明教育", 赵晓彤: "启明教育",
+    李思琪: "卓越学堂", 孙文博: "卓越学堂",
+  };
+  services.forEach((s) => { s.recordType = "presales"; s.orderIds = []; s.orgName = orgMap[s.userName] || "启明教育"; });
 
   // 演示用附件：图片 / 视频 / 文件（外链 mock）
   const PIC = (seed: string) => `https://picsum.photos/seed/${seed}/800/600`;
@@ -223,18 +229,18 @@ export function seedIfNeeded(force = false) {
 
   // 演示用「交付类」服务记录，绑定到具体订单
   const deliveryServices: ServiceRecord[] = [
-    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "督学", content: "高三数学冲刺班开课首周督学，确认每日刷题计划。", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-21 20:30", status: "approved", recordType: "delivery", orderIds: [orders[0].id], attachments: [
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "督学", content: "高三数学冲刺班开课首周督学，确认每日刷题计划。", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-21 20:30", status: "approved", recordType: "delivery", orderIds: [orders[0].id], orgName: orders[0].orgName, attachments: [
       { id: rid(), type: "image", name: "刷题计划表.png", url: PIC("d1a"), thumb: PIC_THUMB("d1a"), size: 256000 },
       { id: rid(), type: "image", name: "首周打卡截图.png", url: PIC("d1b"), thumb: PIC_THUMB("d1b"), size: 198000 },
     ] },
-    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "答疑", content: "数学函数综合题答疑 4 道，已发送视频讲解。", duration: 35, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-25 19:00", status: "approved", recordType: "delivery", orderIds: [orders[0].id], attachments: [
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "答疑", content: "数学函数综合题答疑 4 道，已发送视频讲解。", duration: 35, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-25 19:00", status: "approved", recordType: "delivery", orderIds: [orders[0].id], orgName: orders[0].orgName, attachments: [
       { id: rid(), type: "video", name: "函数题讲解.mp4", url: SAMPLE_VIDEO, thumb: PIC_THUMB("d2v"), size: 8 * 1024 * 1024 },
       { id: rid(), type: "file", name: "函数综合题.pdf", url: "#mock-pdf", size: 614400 },
     ] },
-    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "少儿编程素养课入学沟通，确认上课时间与班级群。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id], attachments: [
+    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "少儿编程素养课入学沟通，确认上课时间与班级群。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id], orgName: orders[1].orgName, attachments: [
       { id: rid(), type: "image", name: "班级群二维码.png", url: PIC("d3a"), thumb: PIC_THUMB("d3a"), size: 102400 },
     ] },
-    { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "沟通", content: "艺考素养课退费沟通，已记录原因并提交退费流程。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id], attachments: [
+    { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "沟通", content: "艺考素养课退费沟通，已记录原因并提交退费流程。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id], orgName: orders[3].orgName, attachments: [
       { id: rid(), type: "file", name: "退费申请书.pdf", url: "#mock-pdf", size: 245760 },
       { id: rid(), type: "file", name: "沟通录音.m4a", url: "#mock-audio", size: 1048576 },
     ] },
@@ -285,14 +291,14 @@ export function seedIfNeeded(force = false) {
   ];
 
   const logs: AuditLog[] = [
-    { id: rid(), time: "2026-04-28 09:55", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "登录成功", detail: "Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/Windows", location: "北京" } },
-    { id: rid(), time: "2026-04-28 09:52", operator: "王老师", role: "辅导老师", ip: "10.0.3.18", module: "登录", action: "登录失败", detail: "密码错误（第 2 次）", before: null, after: { method: "password", reason: "wrong_password", attempts: 2 } },
-    { id: rid(), time: "2026-04-28 08:40", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "登录", action: "登录成功", detail: "短信验证码登录 · 新设备", before: null, after: { method: "sms", device: "Safari/iPhone", location: "北京", newDevice: true } },
-    { id: rid(), time: "2026-04-28 08:30", operator: "鼎校超管", role: "超级管理员", ip: "203.0.113.7", module: "登录", action: "登录成功", detail: "Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/macOS", location: "上海" } },
-    { id: rid(), time: "2026-04-27 19:10", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "退出登录", detail: "用户主动退出", before: null, after: null },
-    { id: rid(), time: "2026-04-28 10:00", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "服务记录", action: "新增", detail: "新增服务记录 #" + services[0].id, before: null, after: { id: services[0].id, userName: "张明轩", serviceType: "沟通", duration: 30 } },
-    { id: rid(), time: "2026-04-28 11:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "分成规则", action: "短信验证通过", detail: "Q3 续报激励规则", before: { status: "draft" }, after: { status: "pending_audit" } },
-    { id: rid(), time: "2026-04-28 18:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "台账", action: "导出", detail: "导出 4 月已结算明细 (脱敏)", before: null, after: { exportType: "已结算", month: "2026-04", rows: 128, masked: true } },
+    { id: rid(), time: "2026-04-28 09:55", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "登录", detail: "登录成功 · Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/Windows", location: "北京" } },
+    { id: rid(), time: "2026-04-28 09:52", operator: "王老师", role: "辅导老师", ip: "10.0.3.18", module: "登录", action: "登录", detail: "登录失败 · 密码错误（第 2 次）", before: null, after: { method: "password", reason: "wrong_password", attempts: 2 } },
+    { id: rid(), time: "2026-04-28 08:40", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "登录", action: "登录", detail: "登录成功 · 短信验证码登录 · 新设备", before: null, after: { method: "sms", device: "Safari/iPhone", location: "北京", newDevice: true } },
+    { id: rid(), time: "2026-04-28 08:30", operator: "鼎校超管", role: "超级管理员", ip: "203.0.113.7", module: "登录", action: "登录", detail: "登录成功 · Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/macOS", location: "上海" } },
+    { id: rid(), time: "2026-04-27 19:10", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "登录", detail: "退出登录 · 用户主动退出", before: null, after: null },
+    { id: rid(), time: "2026-04-28 18:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "台账管理", action: "导出", detail: "导出 4 月已结算明细（脱敏）", before: null, after: { exportType: "已结算", month: "2026-04", rows: 128, masked: true } },
+    { id: rid(), time: "2026-04-28 17:45", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "销售明细", action: "导出", detail: "导出销售明细 86 条（脱敏）", before: null, after: { rows: 86, masked: true } },
+    { id: rid(), time: "2026-04-28 16:20", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "服务记录", action: "导出", detail: "导出服务记录 42 条（脱敏）", before: null, after: { rows: 42, masked: true } },
   ];
 
   write(KEYS.service, services);

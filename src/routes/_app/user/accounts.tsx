@@ -32,6 +32,13 @@ const sample: Account[] = [
   { id: "U4", username: "wang.tutor", name: "王学管", phone: "13900139003", role: "tutor", enabled: false, createdAt: "2026-03-01" },
 ];
 
+function accessScope(a: Account) {
+  if (a.role === "super_admin") return "全部机构";
+  if (a.role === "org_admin") return "本机构";
+  if (a.role === "planner") return "启明教育、卓越学堂";
+  return "按服务分配机构";
+}
+
 function Page() {
   const { role } = useApp();
   const { roles: dynRoles } = usePermStore();
@@ -64,7 +71,7 @@ function Page() {
       if (statusFilter === "enabled" && !a.enabled) return false;
       if (statusFilter === "disabled" && a.enabled) return false;
       if (kw) {
-        const hay = `${a.username} ${a.name} ${a.phone}`.toLowerCase();
+        const hay = `${a.username} ${a.name} ${a.phone} ${accessScope(a)}`.toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
@@ -82,29 +89,40 @@ function Page() {
         </PermissionTip>
       } />
       <DevNote prd="§13" title="账号管理"><div>· 单账号单角色 (PRD §13.2)</div><div>· 重置密码：发送短信链接，链接 24h 有效</div><div>· 停用：账号立即下线，登录态清除</div></DevNote>
-      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
-        <Input placeholder="搜索用户名 / 姓名 / 手机号" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="w-64" />
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-5">
+        <div className="space-y-1 md:col-span-2">
+          <Label className="text-xs text-muted-foreground">关键词</Label>
+          <Input placeholder="搜索用户名 / 姓名 / 手机号" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">角色</Label>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-36"><SelectValue placeholder="全部角色" /></SelectTrigger>
+          <SelectTrigger className="h-8"><SelectValue placeholder="全部角色" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部角色</SelectItem>
             {dynRoles.map((r) => <SelectItem key={r.key} value={r.key}>{r.name}</SelectItem>)}
           </SelectContent>
         </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">状态</Label>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-32"><SelectValue placeholder="全部状态" /></SelectTrigger>
+          <SelectTrigger className="h-8"><SelectValue placeholder="全部状态" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部状态</SelectItem>
             <SelectItem value="enabled">启用</SelectItem>
             <SelectItem value="disabled">停用</SelectItem>
           </SelectContent>
         </Select>
-        {hasFilter && <Button variant="ghost" size="sm" onClick={reset}><X className="h-3.5 w-3.5" /> 清空</Button>}
-        <div className="ml-auto text-xs text-muted-foreground">共 {filtered.length} / {list.length} 条</div>
+        </div>
+        <div className="flex items-end justify-between gap-2">
+          {hasFilter && <Button variant="ghost" size="sm" className="h-8" onClick={reset}><X className="h-3.5 w-3.5" /> 清空</Button>}
+          <div className="ml-auto pb-2 text-xs text-muted-foreground">共 {filtered.length} / {list.length} 条</div>
+        </div>
       </div>
       <Card>
         <Table>
-          <TableHeader><TableRow><TableHead>用户名</TableHead><TableHead>姓名</TableHead><TableHead>手机号</TableHead><TableHead>角色</TableHead><TableHead>状态</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>用户名</TableHead><TableHead>姓名</TableHead><TableHead>手机号</TableHead><TableHead>角色</TableHead><TableHead>可访问机构</TableHead><TableHead>状态</TableHead><TableHead>创建时间</TableHead><TableHead className="text-right">操作</TableHead></TableRow></TableHeader>
           <TableBody>
             {paged.map(a => (
               <TableRow key={a.id}>
@@ -112,6 +130,7 @@ function Page() {
                 <TableCell>{a.name}</TableCell>
                 <TableCell className="font-mono text-xs">{a.phone}</TableCell>
                 <TableCell><Badge className={`text-white ${dynRoles.find(r=>r.key===a.role)?.color ?? "bg-slate-500"}`}>{dynRoles.find(r=>r.key===a.role)?.name ?? a.role}</Badge></TableCell>
+                <TableCell className="max-w-[180px] text-xs text-muted-foreground">{accessScope(a)}</TableCell>
                 <TableCell><Switch checked={a.enabled} disabled={!canEdit} onCheckedChange={() => toggle(a)} /></TableCell>
                 <TableCell className="text-xs text-muted-foreground">{a.createdAt}</TableCell>
                 <TableCell className="text-right space-x-1">
@@ -120,7 +139,7 @@ function Page() {
                 </TableCell>
               </TableRow>
             ))}
-            {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="py-12 text-center text-muted-foreground">暂无匹配账号</TableCell></TableRow>}
+            {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="py-12 text-center text-muted-foreground">暂无匹配账号</TableCell></TableRow>}
           </TableBody>
         </Table>
         <Pagination />

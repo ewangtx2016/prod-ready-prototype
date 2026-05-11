@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
 import { toast } from "sonner";
-import { Search, Mail, MessageSquare, Inbox, Users } from "lucide-react";
+import { Mail, MessageSquare, Inbox, Users } from "lucide-react";
 import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/settings/notification-events")({
@@ -75,18 +75,21 @@ function Page() {
         <div>· 服务审核命中 → 引用 <code>service.audit.hit</code>；操作预警 → 引用 <code>alert.*</code></div>
       </DevNote>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input className="h-8 w-56 pl-7" placeholder="搜索事件名 / key" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-4">
+        <div className="space-y-1 md:col-span-2">
+          <Label className="text-xs text-muted-foreground">关键词</Label>
+          <Input className="h-8" placeholder="搜索事件名 / key" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">分类</Label>
         <Select value={cat} onValueChange={(v) => setCat(v as any)}>
-          <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部分类</SelectItem>
             {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
+        </div>
       </div>
 
       <Card className="overflow-hidden">
