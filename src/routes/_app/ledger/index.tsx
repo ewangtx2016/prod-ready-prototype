@@ -31,6 +31,10 @@ const STATUS_META: Record<LedgerItem["status"], { label: string; tone: "default"
   abnormal:       { label: "异常",     tone: "destructive" },
 };
 
+function productTypeLabel(type: string) {
+  return ["学科课", "素养课", "体验课"].includes(type) ? "课程" : type;
+}
+
 function Page() {
   const { role } = useApp();
   const [list, setList] = useState<LedgerItem[]>([]);
@@ -49,10 +53,10 @@ function Page() {
   const orders = useMemo(() => db.orders(), []);
   const orderById = useMemo(() => new Map(orders.map((o) => [o.id, o])), [orders]);
   const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
-  const getLedgerProductType = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.courseType ?? "", [orderById]);
+  const getLedgerProductType = useCallback((item: LedgerItem) => productTypeLabel(orderById.get(item.orderId)?.courseType ?? ""), [orderById]);
   const getLedgerChannel = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.channel ?? "", [orderById]);
   const getLedgerTutor = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.tutorName ?? "", [orderById]);
-  const productTypeOptions = ["学科课", "素养课", "体验课", "学习机", "会员服务"];
+  const productTypeOptions = ["课程", "学习机", "会员服务"];
 
   useEffect(() => {
     let arr = db.ledger();

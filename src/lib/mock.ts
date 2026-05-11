@@ -40,7 +40,7 @@ export type Order = {
   userName: string;
   userPhone: string;
   course: string;
-  courseType: "学科课" | "素养课" | "体验课";
+  courseType: "课程" | "学习机" | "会员服务" | "学科课" | "素养课" | "体验课";
   amount: number;
   source: "机构老用户" | "规划师新拓";
   channel: "鼎团团" | "甄选";
@@ -221,11 +221,11 @@ export function seedIfNeeded(force = false) {
   ];
 
   const orders: Order[] = [
-    { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "学科课", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "启明教育", createdAt: "2026-04-20 11:00" },
-    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "少儿编程素养课", courseType: "素养课", amount: 3600, source: "规划师新拓", channel: "甄选", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "王规划", tutorName: "王学管", orgName: "启明教育", createdAt: "2026-04-22 15:00" },
-    { id: "O" + rid(), userName: "李思琪", userPhone: "13511112222", course: "物理体验课", courseType: "体验课", amount: 199, source: "规划师新拓", channel: "鼎团团", payMethod: "微信", status: "待支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "卓越学堂", createdAt: "2026-04-28 10:00" },
-    { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "素养课", amount: 12800, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "周规划", tutorName: "陈学管", orgName: "启明教育", createdAt: "2026-04-15 09:00" },
-    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "英语口语班", courseType: "学科课", amount: 4800, source: "机构老用户", channel: "甄选", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", tutorName: "王学管", orgName: "卓越学堂", createdAt: "2026-04-10 14:00" },
+    { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "课程", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "启明教育", createdAt: "2026-04-20 11:00" },
+    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "AI 学习机 Pro", courseType: "学习机", amount: 3600, source: "规划师新拓", channel: "甄选", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "王规划", tutorName: "王学管", orgName: "启明教育", createdAt: "2026-04-22 15:00" },
+    { id: "O" + rid(), userName: "李思琪", userPhone: "13511112222", course: "物理体验课", courseType: "课程", amount: 199, source: "规划师新拓", channel: "鼎团团", payMethod: "微信", status: "待支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "卓越学堂", createdAt: "2026-04-28 10:00" },
+    { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "课程", amount: 12800, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "周规划", tutorName: "陈学管", orgName: "启明教育", createdAt: "2026-04-15 09:00" },
+    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "会员服务年卡", courseType: "会员服务", amount: 4800, source: "机构老用户", channel: "甄选", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", tutorName: "王学管", orgName: "卓越学堂", createdAt: "2026-04-10 14:00" },
   ];
 
   // 演示用「交付类」服务记录，绑定到具体订单
@@ -238,8 +238,8 @@ export function seedIfNeeded(force = false) {
       { id: rid(), type: "video", name: "函数题讲解.mp4", url: SAMPLE_VIDEO, thumb: PIC_THUMB("d2v"), size: 8 * 1024 * 1024 },
       { id: rid(), type: "file", name: "函数综合题.pdf", url: "#mock-pdf", size: 614400 },
     ] },
-    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "少儿编程素养课入学沟通，确认上课时间与班级群。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id], orgName: orders[1].orgName, attachments: [
-      { id: rid(), type: "image", name: "班级群二维码.png", url: PIC("d3a"), thumb: PIC_THUMB("d3a"), size: 102400 },
+    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "AI 学习机 Pro 开通沟通，确认设备激活、账号绑定与学习计划。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id], orgName: orders[1].orgName, attachments: [
+      { id: rid(), type: "image", name: "设备激活截图.png", url: PIC("d3a"), thumb: PIC_THUMB("d3a"), size: 102400 },
     ] },
     { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "沟通", content: "艺考素养课退费沟通，已记录原因并提交退费流程。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id], orgName: orders[3].orgName, attachments: [
       { id: rid(), type: "file", name: "退费申请书.pdf", url: "#mock-pdf", size: 245760 },
@@ -285,10 +285,10 @@ export function seedIfNeeded(force = false) {
 
   const ledger: LedgerItem[] = [
     { id: "L" + rid(), orderId: orders[0].id, userName: "张明轩", course: "高三数学冲刺班", amount: 6800, orgAmount: 4080, plannerAmount: 2040, platformAmount: 680, status: "settled", plannerName: "李规划", settledAt: "2026-04-21 00:30" },
-    { id: "L" + rid(), orderId: orders[1].id, userName: "王小宇", course: "少儿编程素养课", amount: 3600, orgAmount: 1620, plannerAmount: 1620, platformAmount: 360, status: "pending", plannerName: "李规划" },
+    { id: "L" + rid(), orderId: orders[1].id, userName: "王小宇", course: "AI 学习机 Pro", amount: 3600, orgAmount: 1620, plannerAmount: 1620, platformAmount: 360, status: "pending", plannerName: "李规划" },
     { id: "L" + rid(), orderId: orders[2].id, userName: "李思琪", course: "物理体验课", amount: 199, orgAmount: 80, plannerAmount: 99, platformAmount: 20, status: "estimated", plannerName: "李规划" },
     { id: "L" + rid(), orderId: orders[3].id, userName: "赵晓彤", course: "艺考素养课", amount: 12800, orgAmount: 5760, plannerAmount: 5760, platformAmount: 1280, status: "refund_pending", plannerName: "李规划" },
-    { id: "L" + rid(), orderId: orders[4].id, userName: "孙文博", course: "英语口语班", amount: 4800, orgAmount: 2880, plannerAmount: 1440, platformAmount: 480, status: "abnormal", abnormalReason: "规划师账户余额不足，退回款待补齐", plannerName: "李规划" },
+    { id: "L" + rid(), orderId: orders[4].id, userName: "孙文博", course: "会员服务年卡", amount: 4800, orgAmount: 2880, plannerAmount: 1440, platformAmount: 480, status: "abnormal", abnormalReason: "规划师账户余额不足，退回款待补齐", plannerName: "李规划" },
   ];
 
   const logs: AuditLog[] = [

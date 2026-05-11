@@ -21,6 +21,10 @@ import { usePagination } from "@/components/dev/TablePagination";
 
 export const Route = createFileRoute("/_app/sales/")({ component: () => <RoleGate allow={["org_admin", "super_admin", "planner"]}><Inner /></RoleGate> });
 
+function productTypeLabel(type: string) {
+  return ["学科课", "素养课", "体验课"].includes(type) ? "课程" : type;
+}
+
 function Inner() {
   const { role } = useApp();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -39,12 +43,12 @@ function Inner() {
   const scopedOrders = isPlanner ? orders.filter((o) => o.plannerName === "李规划") : orders;
   const plannerOptions = Array.from(new Set(scopedOrders.map((o) => o.plannerName)));
   const orgOptions = Array.from(new Set(scopedOrders.map((o) => o.orgName)));
-  const productTypeOptions = ["学科课", "素养课", "体验课", "学习机", "会员服务"];
+  const productTypeOptions = ["课程", "学习机", "会员服务"];
 
   const kw = keyword.trim().toLowerCase();
   const filtered = scopedOrders.filter((o) => {
     if (tab !== "all" && o.status !== tab) return false;
-    if (productType !== "all" && o.courseType !== productType) return false;
+    if (productType !== "all" && productTypeLabel(o.courseType) !== productType) return false;
     if (channel !== "all" && o.channel !== channel) return false;
     if (!isPlanner && planner !== "all" && o.plannerName !== planner) return false;
     if (org !== "all" && o.orgName !== org) return false;
@@ -53,6 +57,7 @@ function Inner() {
       o.userName.toLowerCase().includes(kw) ||
       o.userPhone.includes(kw) ||
       o.course.toLowerCase().includes(kw) ||
+      productTypeLabel(o.courseType).toLowerCase().includes(kw) ||
       o.plannerName.toLowerCase().includes(kw) ||
       (o.tutorName ?? "").toLowerCase().includes(kw) ||
       o.orgName.toLowerCase().includes(kw)
@@ -165,7 +170,7 @@ function Inner() {
                   <TableCell>{maskName(o.userName, role)}</TableCell>
                   <TableCell className="font-mono text-xs">{maskPhone(o.userPhone, role)}</TableCell>
                   <TableCell>{o.course}</TableCell>
-                  <TableCell><Badge variant="outline">{o.courseType}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{productTypeLabel(o.courseType)}</Badge></TableCell>
                   <TableCell className="font-medium">¥{o.amount.toLocaleString()}</TableCell>
                   <TableCell className="text-xs">{o.orgName}</TableCell>
                   <TableCell className="text-xs">{o.plannerName}</TableCell>
