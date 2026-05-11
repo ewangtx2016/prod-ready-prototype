@@ -40,6 +40,7 @@ function Page() {
   const [status, setStatus] = useState<string>("all");
   const [keyword, setKeyword] = useState("");
   const [productType, setProductType] = useState<string>("all");
+  const [channel, setChannel] = useState<string>("all");
   const [planner, setPlanner] = useState<string>("all");
   const [org, setOrg] = useState<string>("all");
   const [startDate, setStartDate] = useState("");
@@ -49,6 +50,7 @@ function Page() {
   const orderById = useMemo(() => new Map(orders.map((o) => [o.id, o])), [orders]);
   const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
   const getLedgerProductType = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.courseType ?? "", [orderById]);
+  const getLedgerChannel = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.channel ?? "", [orderById]);
   const productTypeOptions = ["学科课", "素养课", "体验课", "学习机", "会员服务"];
 
   useEffect(() => {
@@ -64,7 +66,8 @@ function Page() {
   const filtered = list.filter((l) => {
     if (status !== "all" && l.status !== status) return false;
     if (productType !== "all" && getLedgerProductType(l) !== productType) return false;
-    if (planner !== "all" && l.plannerName !== planner) return false;
+    if (channel !== "all" && getLedgerChannel(l) !== channel) return false;
+    if (!isPlanner && planner !== "all" && l.plannerName !== planner) return false;
     if (org !== "all" && getLedgerOrg(l) !== org) return false;
     if (kw && !(
       l.id.toLowerCase().includes(kw) ||
@@ -72,6 +75,7 @@ function Page() {
       l.userName.toLowerCase().includes(kw) ||
       l.course.toLowerCase().includes(kw) ||
       getLedgerProductType(l).toLowerCase().includes(kw) ||
+      getLedgerChannel(l).toLowerCase().includes(kw) ||
       l.plannerName.toLowerCase().includes(kw) ||
       getLedgerOrg(l).toLowerCase().includes(kw) ||
       (l.abnormalReason ?? "").toLowerCase().includes(kw)
@@ -91,7 +95,7 @@ function Page() {
   const platTotal  = filtered.reduce((s, x) => s + x.platformAmount, 0);
   const abnormalCount = filtered.filter((l) => l.status === "abnormal").length;
 
-  const reset = () => { setKeyword(""); setStatus("all"); setProductType("all"); setPlanner("all"); setOrg("all"); setStartDate(""); setEndDate(""); };
+  const reset = () => { setKeyword(""); setStatus("all"); setProductType("all"); setChannel("all"); setPlanner("all"); setOrg("all"); setStartDate(""); setEndDate(""); };
 
   const onExport = () => {
     db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "台账管理", action: "导出", detail: `${filtered.length} 条 (脱敏)` });
@@ -125,10 +129,10 @@ function Page() {
         <Card className="p-4"><div className="text-xs text-muted-foreground">平台分成</div><div className="text-2xl font-semibold mt-1">¥{platTotal.toLocaleString()}</div></Card>
       </div>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-8">
+      <div className={`mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 ${isPlanner ? "md:grid-cols-8" : "md:grid-cols-9"}`}>
         <div className="space-y-1 md:col-span-2">
           <Label className="text-xs text-muted-foreground">关键词</Label>
-          <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 结算单号 / 用户 / 机构 / 规划师" className="h-8" />
+          <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={isPlanner ? "搜索订单号 / 结算单号 / 用户 / 机构" : "搜索订单号 / 结算单号 / 用户 / 机构 / 规划师"} className="h-8" />
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">产品类型</Label>
@@ -156,6 +160,17 @@ function Page() {
           </Select>
         </div>
         <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">渠道</Label>
+          <Select value={channel} onValueChange={setChannel}>
+            <SelectTrigger className="h-8"><SelectValue placeholder="渠道" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部渠道</SelectItem>
+              <SelectItem value="鼎团团">鼎团团</SelectItem>
+              <SelectItem value="甄选">甄选</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">机构</Label>
           <Select value={org} onValueChange={setOrg}>
             <SelectTrigger className="h-8"><SelectValue placeholder="机构" /></SelectTrigger>
@@ -165,16 +180,18 @@ function Page() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">规划师</Label>
-          <Select value={planner} onValueChange={setPlanner}>
-            <SelectTrigger className="h-8"><SelectValue placeholder="规划师" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部规划师</SelectItem>
-              {planners.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        {!isPlanner && (
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">规划师</Label>
+            <Select value={planner} onValueChange={setPlanner}>
+              <SelectTrigger className="h-8"><SelectValue placeholder="规划师" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部规划师</SelectItem>
+                {planners.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">开始日期</Label>
           <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-8" />
@@ -192,7 +209,7 @@ function Page() {
         <Table>
           <TableHeader><TableRow>
             <TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>产品名称</TableHead><TableHead>产品类型</TableHead>
-            <TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>订单金额</TableHead><TableHead>机构分成</TableHead><TableHead>规划师分成</TableHead><TableHead>平台</TableHead>
+            <TableHead>渠道</TableHead><TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>订单金额</TableHead><TableHead>机构分成</TableHead><TableHead>规划师分成</TableHead><TableHead>平台</TableHead>
             <TableHead>状态</TableHead><TableHead>结算时间</TableHead><TableHead className="text-right">操作</TableHead>
           </TableRow></TableHeader>
           <TableBody>
@@ -206,6 +223,7 @@ function Page() {
                   <TableCell>{maskName(l.userName, role)}</TableCell>
                   <TableCell>{l.course}</TableCell>
                   <TableCell><Badge variant="outline">{getLedgerProductType(l) || "-"}</Badge></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{getLedgerChannel(l) || "-"}</span></TableCell>
                   <TableCell>{getLedgerOrg(l) || "-"}</TableCell>
                   <TableCell>{l.plannerName}</TableCell>
                   <TableCell className="font-medium">¥{l.amount.toLocaleString()}</TableCell>
@@ -223,7 +241,7 @@ function Page() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <TableRow><TableCell colSpan={14} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+            {filtered.length === 0 && <TableRow><TableCell colSpan={15} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
           </TableBody>
         </Table>
         <Pagination />

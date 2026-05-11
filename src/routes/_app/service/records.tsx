@@ -157,15 +157,21 @@ function Page() {
   const [fServantRole, setFServantRole] = useState<"all" | "planner" | "tutor">("all");
 
   useEffect(() => { setRecords(db.services()); }, []);
-  const orgOptions = useMemo(() => Array.from(new Set(records.map((r) => r.orgName ?? "").filter(Boolean))), [records]);
-  const filtered = records.filter((r) => {
+  const isServantView = role === "planner" || role === "tutor";
+  const currentServantName = role === "planner" ? "李规划" : role === "tutor" ? "陈学管" : "";
+  const scopedRecords = useMemo(() => {
+    if (!isServantView) return records;
+    return records.filter((r) => r.createdByRole === role && r.createdBy === currentServantName);
+  }, [records, isServantView, role, currentServantName]);
+  const orgOptions = useMemo(() => Array.from(new Set(scopedRecords.map((r) => r.orgName ?? "").filter(Boolean))), [scopedRecords]);
+  const filtered = scopedRecords.filter((r) => {
       if (fUser.trim()) {
         const q = fUser.trim().toLowerCase();
         if (!r.userName.toLowerCase().includes(q) && !r.userPhone.includes(q)) return false;
       }
-      if (fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
+      if (!isServantView && fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
       if (fOrgName !== "all" && (r.orgName ?? "") !== fOrgName) return false;
-      if (fServantRole !== "all" && r.createdByRole !== fServantRole) return false;
+      if (!isServantView && fServantRole !== "all" && r.createdByRole !== fServantRole) return false;
       if (fStart && r.createdAt < fStart) return false;
       if (fEnd && r.createdAt > fEnd + " 23:59") return false;
       if (fRecordType !== "all" && (r.recordType ?? "presales") !== fRecordType) return false;
@@ -192,11 +198,11 @@ function Page() {
 
       <DevNote prd="§6.2 §6.5" title="服务列表（只读）">
         <div>· 规划师/学管师不在本系统新增或修改记录，记录由外部系统同步</div>
-        <div>· 数据范围：全部记录</div>
-        <div>· 当前列表条数：{filtered.length} / 全部 {records.length}</div>
+        <div>· 数据范围：{isServantView ? "本人名下记录" : "全部记录"}</div>
+        <div>· 当前列表条数：{filtered.length} / 可见 {scopedRecords.length}</div>
       </DevNote>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-7">
+      <div className={`mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 ${isServantView ? "md:grid-cols-5" : "md:grid-cols-7"}`}>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">记录类型</Label>
           <Select value={fRecordType} onValueChange={(v) => setFRecordType(v as any)}>
@@ -222,21 +228,25 @@ function Page() {
             placeholder="搜索机构名称"
           />
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">服务人类型</Label>
-          <Select value={fServantRole} onValueChange={(v) => setFServantRole(v as any)}>
-            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部</SelectItem>
-              <SelectItem value="planner">规划师</SelectItem>
-              <SelectItem value="tutor">学管师</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">服务人姓名</Label>
-          <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索服务人姓名" className="h-8" />
-        </div>
+        {!isServantView && (
+          <>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">服务人类型</Label>
+              <Select value={fServantRole} onValueChange={(v) => setFServantRole(v as any)}>
+                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部</SelectItem>
+                  <SelectItem value="planner">规划师</SelectItem>
+                  <SelectItem value="tutor">学管师</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">服务人姓名</Label>
+              <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索服务人姓名" className="h-8" />
+            </div>
+          </>
+        )}
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">开始日期</Label>
           <Input type="date" value={fStart} onChange={(e) => setFStart(e.target.value)} className="h-8" />

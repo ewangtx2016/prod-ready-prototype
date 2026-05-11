@@ -33,18 +33,20 @@ function Inner() {
   const [org, setOrg] = useState<string>("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const isPlanner = role === "planner";
   useEffect(() => { setOrders(db.orders()); }, []);
 
-  const plannerOptions = Array.from(new Set(orders.map((o) => o.plannerName)));
-  const orgOptions = Array.from(new Set(orders.map((o) => o.orgName)));
+  const scopedOrders = isPlanner ? orders.filter((o) => o.plannerName === "李规划") : orders;
+  const plannerOptions = Array.from(new Set(scopedOrders.map((o) => o.plannerName)));
+  const orgOptions = Array.from(new Set(scopedOrders.map((o) => o.orgName)));
   const productTypeOptions = ["学科课", "素养课", "体验课", "学习机", "会员服务"];
 
   const kw = keyword.trim().toLowerCase();
-  const filtered = orders.filter((o) => {
+  const filtered = scopedOrders.filter((o) => {
     if (tab !== "all" && o.status !== tab) return false;
     if (productType !== "all" && o.courseType !== productType) return false;
     if (channel !== "all" && o.channel !== channel) return false;
-    if (planner !== "all" && o.plannerName !== planner) return false;
+    if (!isPlanner && planner !== "all" && o.plannerName !== planner) return false;
     if (org !== "all" && o.orgName !== org) return false;
     if (kw && !(
       o.id.toLowerCase().includes(kw) ||
@@ -74,7 +76,7 @@ function Inner() {
         <div>· 退费仅在源系统发起，本系统只读；不支持部分退费</div>
         <div>· <b>待确认</b>：字段映射 Q9-Q14（接口设计阻塞中）</div>
       </DevNote>
-      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-8">
+      <div className={`mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 ${isPlanner ? "md:grid-cols-7" : "md:grid-cols-8"}`}>
         <div className="space-y-1 md:col-span-2">
           <Label className="text-xs text-muted-foreground">关键词</Label>
           <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 用户 / 手机号" className="h-8" />
@@ -110,16 +112,18 @@ function Inner() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">规划师</Label>
-          <Select value={planner} onValueChange={setPlanner}>
-            <SelectTrigger className="h-8"><SelectValue placeholder="规划师" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部规划师</SelectItem>
-              {plannerOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        {!isPlanner && (
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">规划师</Label>
+            <Select value={planner} onValueChange={setPlanner}>
+              <SelectTrigger className="h-8"><SelectValue placeholder="规划师" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部规划师</SelectItem>
+                {plannerOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">状态</Label>
           <Select value={tab} onValueChange={setTab}>
