@@ -292,7 +292,6 @@ function Dashboard() {
                 <div className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="h-4.5 w-4.5" />
                 </div>
-                <span className="absolute left-4 top-4 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">核心</span>
                 <FormulaTip label={m.label} formula={m.formula} />
                 <div className="mt-2 text-3xl font-semibold tracking-tight">{m.value}</div>
                 {m.trend && <div className="mt-1 text-xs text-success">{m.trend}</div>}
@@ -316,14 +315,13 @@ function Dashboard() {
 
         {/* 五大模块 · 每个指标独立图表卡片 */}
         <div className="space-y-8">
-          {MODULES.map((mod, idx) => {
+          {MODULES.map((mod) => {
             const items = visibleMetrics.filter((m) => m.module === mod.key);
             if (items.length === 0) return null;
             const ModIcon = mod.icon;
             return (
               <section key={mod.key}>
                 <div className="mb-3 flex items-center gap-2 border-l-2 border-primary pl-3">
-                  <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-primary/10 px-1.5 text-[11px] font-medium text-primary">M{idx + 1}</span>
                   <ModIcon className="h-4 w-4 text-primary" />
                   <h2 className="text-base font-semibold">{mod.name}</h2>
                   <span className="text-xs text-muted-foreground">· {mod.desc}</span>

@@ -21,6 +21,8 @@ function auditType(log: AuditLog) {
   return log.action;
 }
 
+const ROLE_OPTIONS = ["机构管理员", "规划师", "学管师", "鼎校管理后台"];
+
 function Inner() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -29,7 +31,7 @@ function Inner() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   useEffect(() => { setLogs(db.logs()); const t = setInterval(() => setLogs(db.logs()), 1500); return () => clearInterval(t); }, []);
-  const roles = useMemo(() => Array.from(new Set(logs.map((l) => l.role))), [logs]);
+  const roles = useMemo(() => Array.from(new Set([...ROLE_OPTIONS, ...logs.map((l) => l.role)])), [logs]);
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
     return logs.filter((l) => {

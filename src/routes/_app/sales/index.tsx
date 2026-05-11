@@ -54,6 +54,7 @@ function Inner() {
       o.userPhone.includes(kw) ||
       o.course.toLowerCase().includes(kw) ||
       o.plannerName.toLowerCase().includes(kw) ||
+      (o.tutorName ?? "").toLowerCase().includes(kw) ||
       o.orgName.toLowerCase().includes(kw)
     )) return false;
     if (startDate && o.createdAt.slice(0, 10) < startDate) return false;
@@ -154,7 +155,7 @@ function Inner() {
             <TableHeader><TableRow>
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
               <TableHead>产品名称</TableHead><TableHead>产品类型</TableHead><TableHead>金额</TableHead>
-              <TableHead>机构</TableHead><TableHead>规划师</TableHead>
+              <TableHead>机构</TableHead><TableHead>规划师</TableHead><TableHead>学管师</TableHead>
               <TableHead>渠道</TableHead><TableHead>状态</TableHead><TableHead>下单时间</TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>
             <TableBody>
@@ -168,13 +169,14 @@ function Inner() {
                   <TableCell className="font-medium">¥{o.amount.toLocaleString()}</TableCell>
                   <TableCell className="text-xs">{o.orgName}</TableCell>
                   <TableCell className="text-xs">{o.plannerName}</TableCell>
+                  <TableCell className="text-xs">{o.tutorName || "-"}</TableCell>
                   <TableCell><span className="text-xs text-muted-foreground">{o.channel}</span></TableCell>
                   <TableCell><Badge variant={o.status === "已退费" ? "destructive" : o.status === "退费中" ? "secondary" : "default"}>{o.status}</Badge></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{o.createdAt}</TableCell>
                   <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={12} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={13} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
             </TableBody>
         </Table>
         <Pagination />

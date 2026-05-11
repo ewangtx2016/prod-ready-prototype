@@ -51,6 +51,7 @@ function Page() {
   const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
   const getLedgerProductType = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.courseType ?? "", [orderById]);
   const getLedgerChannel = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.channel ?? "", [orderById]);
+  const getLedgerTutor = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.tutorName ?? "", [orderById]);
   const productTypeOptions = ["学科课", "素养课", "体验课", "学习机", "会员服务"];
 
   useEffect(() => {
@@ -77,6 +78,7 @@ function Page() {
       getLedgerProductType(l).toLowerCase().includes(kw) ||
       getLedgerChannel(l).toLowerCase().includes(kw) ||
       l.plannerName.toLowerCase().includes(kw) ||
+      getLedgerTutor(l).toLowerCase().includes(kw) ||
       getLedgerOrg(l).toLowerCase().includes(kw) ||
       (l.abnormalReason ?? "").toLowerCase().includes(kw)
     )) return false;
@@ -209,7 +211,7 @@ function Page() {
         <Table>
           <TableHeader><TableRow>
             <TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>产品名称</TableHead><TableHead>产品类型</TableHead>
-            <TableHead>渠道</TableHead><TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>订单金额</TableHead><TableHead>机构分成</TableHead><TableHead>规划师分成</TableHead><TableHead>平台</TableHead>
+            <TableHead>渠道</TableHead><TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>学管师</TableHead><TableHead>订单金额</TableHead><TableHead>机构分成</TableHead><TableHead>规划师分成</TableHead><TableHead>平台</TableHead>
             <TableHead>状态</TableHead><TableHead>结算时间</TableHead><TableHead className="text-right">操作</TableHead>
           </TableRow></TableHeader>
           <TableBody>
@@ -226,6 +228,7 @@ function Page() {
                   <TableCell><span className="text-xs text-muted-foreground">{getLedgerChannel(l) || "-"}</span></TableCell>
                   <TableCell>{getLedgerOrg(l) || "-"}</TableCell>
                   <TableCell>{l.plannerName}</TableCell>
+                  <TableCell>{getLedgerTutor(l) || "-"}</TableCell>
                   <TableCell className="font-medium">¥{l.amount.toLocaleString()}</TableCell>
                   <TableCell className={isRefund ? "text-destructive" : "text-info"}>{isRefund ? "-" : ""}¥{l.orgAmount.toLocaleString()}</TableCell>
                   <TableCell className={isRefund ? "text-destructive" : "text-success"}>{isRefund ? "-" : ""}¥{l.plannerAmount.toLocaleString()}</TableCell>
@@ -241,7 +244,7 @@ function Page() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <TableRow><TableCell colSpan={15} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+            {filtered.length === 0 && <TableRow><TableCell colSpan={16} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
           </TableBody>
         </Table>
         <Pagination />

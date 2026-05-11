@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useApp } from "@/lib/store";
+import { DEFAULT_ORG_NAME, ORG_STORAGE_KEY, useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
 import { db } from "@/lib/mock";
 import { PageHeader } from "@/components/dev/PageHeader";
@@ -16,20 +16,30 @@ import { Upload, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/settings/org")({ component: Page });
-const KEY = "demo.org";
 type Org = { name: string; logo: string; phone: string; email: string; address: string };
-const init: Org = { name: "示例教育科技有限公司", logo: "", phone: "400-888-0000", email: "contact@example.com", address: "北京市海淀区中关村大街 1 号" };
+const LEGACY_DEFAULT_ORG_NAME = "示例教育科技有限公司";
+const init: Org = { name: DEFAULT_ORG_NAME, logo: "", phone: "400-888-0000", email: "contact@example.com", address: "北京市海淀区中关村大街 1 号" };
 
 function Page() {
-  const { role } = useApp();
+  const { role, setOrgName } = useApp();
   const [org, setOrg] = useState<Org>(init);
   const [pwd, setPwd] = useState(false);
   const [pwdData, setPwdData] = useState({ old: "", n1: "", n2: "" });
-  useEffect(() => { const raw = localStorage.getItem(KEY); if (raw) setOrg(JSON.parse(raw)); }, []);
+  useEffect(() => {
+    const raw = localStorage.getItem(ORG_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as Org;
+    const next = { ...parsed, name: parsed.name === LEGACY_DEFAULT_ORG_NAME ? DEFAULT_ORG_NAME : parsed.name };
+    setOrg(next);
+    setOrgName(next.name);
+  }, [setOrgName]);
   const canEdit = role === "org_admin";
   const save = () => {
-    localStorage.setItem(KEY, JSON.stringify(org));
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "机构信息", action: "更新", detail: org.name });
+    const next = { ...org, name: org.name.trim() || DEFAULT_ORG_NAME };
+    setOrg(next);
+    setOrgName(next.name);
+    localStorage.setItem(ORG_STORAGE_KEY, JSON.stringify(next));
+    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "机构信息", action: "更新", detail: next.name });
     toast.success("已保存机构信息");
   };
   const doPwd = () => {

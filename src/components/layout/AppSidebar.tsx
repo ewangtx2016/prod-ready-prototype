@@ -31,7 +31,7 @@ const GROUPS: Group[] = [
 ];
 
 export function AppSidebar() {
-  const { role } = useApp();
+  const { role, orgName } = useApp();
   const { tree, roles } = usePermStore();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const allowedPaths = useMemo(() => {
@@ -47,8 +47,8 @@ export function AppSidebar() {
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r bg-card">
       <div className="flex h-14 items-center gap-2 border-b px-4">
-        <div className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground font-bold text-sm">鼎</div>
-        <span className="text-sm font-semibold">鼎校管理后台</span>
+        <div className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground font-bold text-sm">{orgName.slice(0, 1)}</div>
+        <span className="truncate text-sm font-semibold">{orgName}</span>
       </div>
       <nav className="flex-1 overflow-y-auto p-2 text-sm">
         {visible.map((g) => (
