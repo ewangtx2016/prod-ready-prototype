@@ -287,6 +287,11 @@ function Dashboard() {
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {coreMetrics.map((m) => {
             const Icon = m.icon || BookOpen;
+            const sparkColor =
+              m.key === "core_old_user_in_subject" ? "var(--color-success)"
+              : m.key === "core_freq_renew_corr" ? "var(--color-info)"
+              : m.key === "core_alert_count" ? "var(--color-destructive)"
+              : "var(--color-primary)";
             return (
               <Card key={m.key} className="relative overflow-hidden p-5">
                 <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/5" />
@@ -301,11 +306,11 @@ function Dashboard() {
                     <AreaChart data={SPARK[m.key] || SPARK._default}>
                       <defs>
                         <linearGradient id={`sp-${m.key}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.4} />
-                          <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+                          <stop offset="0%" stopColor={sparkColor} stopOpacity={0.4} />
+                          <stop offset="100%" stopColor={sparkColor} stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <Area type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} fill={`url(#sp-${m.key})`} />
+                      <Area type="monotone" dataKey="v" stroke={sparkColor} strokeWidth={2} fill={`url(#sp-${m.key})`} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -593,18 +598,15 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
     }
     // M3 分成数据
     case "settled":
-    case "pending":
-    case "estimated": {
+    case "pending": {
       const palette: Record<string, string> = {
         settled: "var(--color-success)",
         pending: "var(--color-info)",
-        estimated: "var(--color-warning)",
       };
       const data = TREND_12M.slice(-6).map((x, i) => ({
         x,
         v: m.key === "settled" ? [120, 135, 150, 162, 175, 186.3][i]
-          : m.key === "pending" ? [70, 78, 84, 90, 94, 98.2][i]
-          : [22, 28, 32, 36, 40, 43.8][i],
+          : [70, 78, 84, 90, 94, 98.2][i],
       }));
       return (
         <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -613,6 +615,26 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
           <YAxis tick={axis} tickLine={false} axisLine={false} />
           {tip}
           <Bar dataKey="v" fill={palette[m.key]} radius={[4, 4, 0, 0]} />
+        </BarChart>
+      );
+    }
+    case "estimated": {
+      const now = new Date();
+      const values = [18, 25, 32, 28, 35, 42];
+      const data = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() + i + 1, 1);
+        return {
+          x: `${d.getMonth() + 1}月`,
+          v: values[i],
+        };
+      });
+      return (
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          {grid}
+          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Bar dataKey="v" fill="var(--color-warning)" radius={[4, 4, 0, 0]} />
         </BarChart>
       );
     }
