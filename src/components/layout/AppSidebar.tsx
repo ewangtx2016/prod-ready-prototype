@@ -3,7 +3,7 @@ import {
   LayoutDashboard, FileText, ShoppingCart, BookOpen,
   Settings, ShieldCheck, Users, History, ChevronDown,
 } from "lucide-react";
-import { useApp } from "@/lib/store";
+import { DEFAULT_ORG_LOGO, useApp } from "@/lib/store";
 import { usePermStore, flattenTree } from "@/lib/permissions";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
@@ -47,7 +47,9 @@ export function AppSidebar() {
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r bg-card">
       <div className="flex h-14 items-center gap-2 border-b px-4">
-        <div className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground font-bold text-sm">{orgName.slice(0, 1)}</div>
+        <div className="grid h-8 w-8 place-items-center overflow-hidden rounded-md border bg-background">
+          <img src={DEFAULT_ORG_LOGO} alt="logo" className="h-full w-full object-contain p-0.5" />
+        </div>
         <span className="truncate text-sm font-semibold">{orgName}</span>
       </div>
       <nav className="flex-1 overflow-y-auto p-2 text-sm">

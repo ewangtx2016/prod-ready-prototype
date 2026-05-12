@@ -1,0 +1,8 @@
+# 排除编译产物和依赖
+.lovable/
+.tanstack/
+.wrangler/
+
+# 排除大型数据文件
+*.csv
+*.json.gz

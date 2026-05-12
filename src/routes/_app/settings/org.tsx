@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { DEFAULT_ORG_NAME, ORG_STORAGE_KEY, useApp } from "@/lib/store";
+import { DEFAULT_ORG_LOGO, DEFAULT_ORG_NAME, ORG_STORAGE_KEY, useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
 import { db } from "@/lib/mock";
 import { PageHeader } from "@/components/dev/PageHeader";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Upload, KeyRound } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/settings/org")({ component: Page });
@@ -70,7 +70,7 @@ function Page() {
         <Card className="p-4 space-y-3">
           <div><Label>品牌 LOGO</Label>
             <div className="mt-2 flex h-32 w-full items-center justify-center rounded-md border border-dashed bg-muted/40">
-              {org.logo ? <img src={org.logo} alt="logo" className="max-h-full" /> : <div className="text-xs text-muted-foreground text-center"><Upload className="mx-auto h-6 w-6 mb-1" />点击上传<br />建议 200×200 PNG</div>}
+              <img src={org.logo || DEFAULT_ORG_LOGO} alt="logo" className="max-h-full" />
             </div>
             <Button variant="outline" size="sm" disabled={!canEdit} className="mt-2 w-full" onClick={() => toast.info("文件选择器（mock）")}>选择图片</Button>
           </div>

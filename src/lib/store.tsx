@@ -5,6 +5,7 @@ const LS_ROLE = "demo.role";
 const LS_DEVNOTE = "demo.devNote";
 export const ORG_STORAGE_KEY = "demo.org";
 export const DEFAULT_ORG_NAME = "机构用户平台";
+export const DEFAULT_ORG_LOGO = "/logo.png";
 const LEGACY_DEFAULT_ORG_NAME = "示例教育科技有限公司";
 
 type AppState = {

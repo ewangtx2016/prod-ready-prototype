@@ -415,11 +415,68 @@ function MetricChartCard({ metric }: { metric: typeof ALL_METRICS[number] }) {
         </div>
       </div>
       <div className="mt-3 h-36">
-        <ResponsiveContainer width="100%" height="100%">
-          {renderChart(metric)}
-        </ResponsiveContainer>
+        {metric.key === "served_user" ? (
+          <ServedUserCoverage />
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            {renderChart(metric)}
+          </ResponsiveContainer>
+        )}
       </div>
     </Card>
+  );
+}
+
+function ServedUserCoverage() {
+  const served = 701;
+  const total = 892;
+  const percent = 78.5;
+  const unserved = total - served;
+
+  return (
+    <div className="flex h-full flex-col justify-between rounded-md border bg-muted/20 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-xs text-muted-foreground">服务覆盖率</div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums leading-none">{percent}%</div>
+        </div>
+        <div className="space-y-1 text-right text-xs text-muted-foreground">
+          <div>
+            <span className="font-medium tabular-nums text-foreground">{served.toLocaleString()}</span>
+            <span className="ml-1">已服务</span>
+          </div>
+          <div>
+            <span className="font-medium tabular-nums text-foreground">{unserved.toLocaleString()}</span>
+            <span className="ml-1">未服务</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
+          <span>覆盖进度</span>
+          <span className="tabular-nums">{served.toLocaleString()} / {total.toLocaleString()}</span>
+        </div>
+        <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
+        <div className="rounded border bg-background/70 py-1.5">
+          <div className="font-medium tabular-nums text-foreground">{percent}%</div>
+          <div className="text-muted-foreground">覆盖</div>
+        </div>
+        <div className="rounded border bg-background/70 py-1.5">
+          <div className="font-medium tabular-nums text-foreground">+9.3%</div>
+          <div className="text-muted-foreground">环比</div>
+        </div>
+        <div className="rounded border bg-background/70 py-1.5">
+          <div className="font-medium text-foreground">近30天</div>
+          <div className="text-muted-foreground">周期</div>
+        </div>
+      </div>
+    </div>
   );
 }
 

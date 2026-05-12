@@ -15,8 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Download, Coins, AlertTriangle } from "lucide-react";
-import { SplitDetailSheet } from "@/components/ledger/SplitDetailSheet";
+import { Download, AlertTriangle } from "lucide-react";
 import { usePagination } from "@/components/dev/TablePagination";
 import { toast } from "sonner";
 
@@ -35,10 +34,13 @@ function productTypeLabel(type: string) {
   return ["学科课", "素养课", "体验课"].includes(type) ? "课程" : type;
 }
 
+function money(v: number) {
+  return `¥${v.toLocaleString()}`;
+}
+
 function Page() {
   const { role } = useApp();
   const [list, setList] = useState<LedgerItem[]>([]);
-  const [detail, setDetail] = useState<LedgerItem | null>(null);
 
   // 筛选条件
   const [status, setStatus] = useState<string>("all");
@@ -95,10 +97,44 @@ function Page() {
 
   const { paged, Pagination } = usePagination(filtered, 10);
 
-  const total      = filtered.reduce((s, x) => s + x.amount, 0);
-  const orgTotal   = filtered.reduce((s, x) => s + x.orgAmount, 0);
-  const planTotal  = filtered.reduce((s, x) => s + x.plannerAmount, 0);
-  const platTotal  = filtered.reduce((s, x) => s + x.platformAmount, 0);
+  const normalRows = filtered.filter((x) => x.status === "settled" || x.status === "pending" || x.status === "estimated");
+  const refundRows = filtered.filter((x) => x.status === "refund_pending" || x.status === "refund_settled");
+  const abnormalRows = filtered.filter((x) => x.status === "abnormal");
+  const sum = (rows: LedgerItem[], pick: (x: LedgerItem) => number) => rows.reduce((s, x) => s + pick(x), 0);
+  const summaryRows = (() => {
+    if (status === "refund_pending" || status === "refund_settled") {
+      return [
+        { label: "退回订单总额", value: money(sum(refundRows, (x) => x.amount)), className: "text-destructive" },
+        { label: "影响机构分成", value: money(sum(refundRows, (x) => x.orgAmount)), className: "text-destructive" },
+        { label: "影响规划师分成", value: money(sum(refundRows, (x) => x.plannerAmount)), className: "text-destructive" },
+        { label: "影响平台分成", value: money(sum(refundRows, (x) => x.platformAmount)), className: "text-destructive" },
+      ];
+    }
+    if (status === "abnormal") {
+      return [
+        { label: "异常订单总额", value: money(sum(abnormalRows, (x) => x.amount)), className: "text-destructive" },
+        { label: "异常笔数", value: `${abnormalRows.length} 笔`, className: "text-destructive" },
+        { label: "涉及机构分成", value: money(sum(abnormalRows, (x) => x.orgAmount)), className: "text-info" },
+        { label: "涉及规划师分成", value: money(sum(abnormalRows, (x) => x.plannerAmount)), className: "text-success" },
+      ];
+    }
+    if (status === "all") {
+      return [
+        { label: "订单总额", value: money(sum(normalRows, (x) => x.amount)), className: "" },
+        { label: "机构分成", value: money(sum(normalRows, (x) => x.orgAmount)), className: "text-info" },
+        { label: "规划师分成", value: money(sum(normalRows, (x) => x.plannerAmount)), className: "text-success" },
+        { label: "平台分成", value: money(sum(normalRows, (x) => x.platformAmount)), className: "" },
+        { label: "异常订单", value: `${abnormalRows.length} 笔`, className: abnormalRows.length ? "text-destructive" : "" },
+        { label: "退单金额", value: money(sum(refundRows, (x) => x.amount)), className: "text-destructive" },
+      ];
+    }
+    return [
+      { label: "订单总额", value: money(sum(normalRows, (x) => x.amount)), className: "" },
+      { label: "机构分成", value: money(sum(normalRows, (x) => x.orgAmount)), className: "text-info" },
+      { label: "规划师分成", value: money(sum(normalRows, (x) => x.plannerAmount)), className: "text-success" },
+      { label: "平台分成", value: money(sum(normalRows, (x) => x.platformAmount)), className: "" },
+    ];
+  })();
   const abnormalCount = filtered.filter((l) => l.status === "abnormal").length;
 
   const reset = () => { setKeyword(""); setStatus("all"); setProductType("all"); setChannel("all"); setPlanner("all"); setOrg("all"); setStartDate(""); setEndDate(""); };
@@ -128,11 +164,13 @@ function Page() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-4 gap-3 mb-4">
-        <Card className="p-4"><div className="text-xs text-muted-foreground">订单总额</div><div className="text-2xl font-semibold mt-1">¥{total.toLocaleString()}</div></Card>
-        <Card className="p-4"><div className="text-xs text-muted-foreground">机构分成</div><div className="text-2xl font-semibold mt-1 text-info">¥{orgTotal.toLocaleString()}</div></Card>
-        <Card className="p-4"><div className="text-xs text-muted-foreground">规划师分成</div><div className="text-2xl font-semibold mt-1 text-success">¥{planTotal.toLocaleString()}</div></Card>
-        <Card className="p-4"><div className="text-xs text-muted-foreground">平台分成</div><div className="text-2xl font-semibold mt-1">¥{platTotal.toLocaleString()}</div></Card>
+      <div className={`mb-4 grid gap-3 ${status === "all" ? "grid-cols-6" : "grid-cols-4"}`}>
+        {summaryRows.map((item) => (
+          <Card key={item.label} className="p-4">
+            <div className="text-xs text-muted-foreground">{item.label}</div>
+            <div className={`mt-1 text-2xl font-semibold ${item.className}`}>{item.value}</div>
+          </Card>
+        ))}
       </div>
 
       <div className={`mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 ${isPlanner ? "md:grid-cols-8" : "md:grid-cols-9"}`}>
@@ -216,7 +254,7 @@ function Page() {
           <TableHeader><TableRow>
             <TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>产品名称</TableHead><TableHead>产品类型</TableHead>
             <TableHead>渠道</TableHead><TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>学管师</TableHead><TableHead>订单金额</TableHead><TableHead>机构分成</TableHead><TableHead>规划师分成</TableHead><TableHead>平台</TableHead>
-            <TableHead>状态</TableHead><TableHead>结算时间</TableHead><TableHead className="text-right">操作</TableHead>
+            <TableHead>状态</TableHead><TableHead>结算时间</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {paged.map((l) => {
@@ -242,18 +280,14 @@ function Page() {
                     {l.status === "abnormal" && l.abnormalReason && <div className="mt-1 text-xs text-destructive">{l.abnormalReason}</div>}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{l.settledAt || "-"}</TableCell>
-                  <TableCell className="text-right">
-                    <Button size="sm" variant="ghost" onClick={() => setDetail(l)}><Coins className="h-3.5 w-3.5" /> 分成明细</Button>
-                  </TableCell>
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <TableRow><TableCell colSpan={16} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+            {filtered.length === 0 && <TableRow><TableCell colSpan={15} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
           </TableBody>
         </Table>
         <Pagination />
       </Card>
-      <SplitDetailSheet item={detail} onOpenChange={(v) => !v && setDetail(null)} />
     </div>
   );
 }

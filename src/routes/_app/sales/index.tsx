@@ -11,6 +11,7 @@ import { RoleGate } from "@/components/dev/RoleGate";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,6 +68,16 @@ function Inner() {
     return true;
   });
   const { paged, Pagination } = usePagination(filtered, 10);
+  const sumAmount = (rows: Order[]) => rows.reduce((total, order) => total + order.amount, 0);
+  const paidOrders = filtered.filter((order) => order.status === "已支付");
+  const pendingOrders = filtered.filter((order) => order.status === "待支付");
+  const refundedOrders = filtered.filter((order) => order.status === "已退费");
+  const summaryRows = [
+    { label: "订单总额", value: sumAmount(filtered), countLabel: "订单总量", count: filtered.length, className: "" },
+    { label: "已支付金额", value: sumAmount(paidOrders), countLabel: "已支付订单量", count: paidOrders.length, className: "text-success" },
+    { label: "待支付金额", value: sumAmount(pendingOrders), countLabel: "待支付订单量", count: pendingOrders.length, className: "text-warning" },
+    { label: "已退费金额", value: sumAmount(refundedOrders), countLabel: "已退费订单量", count: refundedOrders.length, className: "text-destructive" },
+  ];
   const resetFilters = () => { setKeyword(""); setProductType("all"); setChannel("all"); setPlanner("all"); setOrg("all"); setStartDate(""); setEndDate(""); };
 
   return (
@@ -82,6 +93,15 @@ function Inner() {
         <div>· 退费仅在源系统发起，本系统只读；不支持部分退费</div>
         <div>· <b>待确认</b>：字段映射 Q9-Q14（接口设计阻塞中）</div>
       </DevNote>
+      <div className="mb-4 grid gap-3 md:grid-cols-4">
+        {summaryRows.map((item) => (
+          <Card key={item.label} className="p-4">
+            <div className="text-xs text-muted-foreground">{item.label}</div>
+            <div className={`mt-1 text-2xl font-semibold ${item.className}`}>¥{item.value.toLocaleString()}</div>
+            <div className="mt-2 text-xs text-muted-foreground">{item.countLabel} {item.count} 笔</div>
+          </Card>
+        ))}
+      </div>
       <div className={`mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 ${isPlanner ? "md:grid-cols-7" : "md:grid-cols-8"}`}>
         <div className="space-y-1 md:col-span-2">
           <Label className="text-xs text-muted-foreground">关键词</Label>
