@@ -51,11 +51,11 @@ const CORE_METRICS: { key: string; label: string; value: string; trend?: string;
   },
   {
     key: "core_old_user_in_subject",
-    label: "学科课转化用户中机构老用户占比",
+    label: "转化用户中机构老用户占比",
     value: "67.8%",
     trend: "194 / 286",
     icon: Repeat,
-    formula: "已购学科课程的用户中，属于机构老用户（注册≥90天且历史有付费记录）的人数 / 学科课转化用户总数 × 100%。",
+    formula: "已转化的用户中，属于机构老用户（注册≥90天且历史有付费记录）的人数 / 转化用户总数 × 100%。",
   },
   {
     key: "core_freq_renew_corr",
@@ -82,7 +82,8 @@ const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: strin
   { key: "served_user",    module: "user", label: "规划师服务用户数", value: "701",  trend: "覆盖 78.5%", icon: Activity, formula: "周期内被规划师提供过 1V1 服务记录的去重用户数。" },
   { key: "converted_user", module: "user", label: "转化用户数",     value: "286",   trend: "转化率 22.9%", icon: TrendingUp, formula: "周期内由意向 / 体验状态成功转为已付费学员的去重用户数。" },
   // M2 转化数据
-  { key: "order_count",    module: "conversion", label: "学科课订单数", value: "156", icon: TrendingUp, formula: "周期内课程类型为「学科课」且订单状态非「已取消」的订单数量。" },
+  { key: "order_count",    module: "conversion", label: "订单数", value: "156", icon: TrendingUp, formula: "周期内全部产品类型（课程/学习机/会员服务等）且订单状态非「已取消」的订单数量。" },
+  { key: "product_order_dist", module: "conversion", label: "产品类型订单分布", value: "156", icon: TrendingUp, formula: "周期内各产品类型（课程/学习机/会员服务等）的有效订单数量分布。" },
   { key: "order_amount",   module: "conversion", label: "订单金额",     value: "¥328,400", icon: Wallet, formula: "周期内全部有效订单的应收金额合计（含未结算部分，不扣退款）。" },
   { key: "conv_rate",      module: "conversion", label: "转化率",       value: "22.9%", trend: "+3.1pp", icon: TrendingUp, formula: "周期内转化用户数 / 周期内进入服务流程的意向用户数 × 100%。" },
   // M3 分成数据
@@ -109,7 +110,7 @@ const PLANNER_METRICS: typeof ALL_METRICS = [
   { key: "active_user",    module: "user", label: "活跃用户数",     value: "128", trend: "+6.2%", icon: Users, formula: "近 30 天内有过登录、上课或本人服务记录的去重用户数（仅本人名下）。" },
   { key: "converted_user", module: "user", label: "我的转化用户数", value: "42",  trend: "转化率 32.8%", icon: TrendingUp, formula: "周期内由本人服务并成功转化的去重用户数。" },
   // M2 我的转化
-  { key: "order_count",    module: "conversion", label: "我的学科课订单数", value: "26",      icon: TrendingUp, formula: "周期内本人名下学科课且非取消的订单数量。" },
+  { key: "order_count",    module: "conversion", label: "我的订单数", value: "26",      icon: TrendingUp, formula: "周期内本人名下全部产品类型且非取消的订单数量。" },
   { key: "order_amount",   module: "conversion", label: "我的订单金额",     value: "¥58,200", icon: Wallet, formula: "周期内本人名下全部有效订单的应收金额合计（含未结算，不扣退款）。" },
   { key: "conv_rate",      module: "conversion", label: "我的转化率",       value: "32.8%",   trend: "+2.4pp", icon: TrendingUp, formula: "本人转化用户数 / 本人服务用户数 × 100%。" },
   // M3 我的分成
@@ -431,52 +432,47 @@ function ServedUserCoverage() {
   const served = 701;
   const total = 892;
   const percent = 78.5;
-  const unserved = total - served;
+  const data = [
+    { name: "已服务", value: served, fill: "var(--color-primary)" },
+    { name: "未服务", value: total - served, fill: "var(--color-muted)" },
+  ];
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-md border bg-muted/20 p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-xs text-muted-foreground">服务覆盖率</div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums leading-none">{percent}%</div>
-        </div>
-        <div className="space-y-1 text-right text-xs text-muted-foreground">
-          <div>
-            <span className="font-medium tabular-nums text-foreground">{served.toLocaleString()}</span>
-            <span className="ml-1">已服务</span>
-          </div>
-          <div>
-            <span className="font-medium tabular-nums text-foreground">{unserved.toLocaleString()}</span>
-            <span className="ml-1">未服务</span>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>覆盖进度</span>
-          <span className="tabular-nums">{served.toLocaleString()} / {total.toLocaleString()}</span>
-        </div>
-        <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
-        <div className="rounded border bg-background/70 py-1.5">
-          <div className="font-medium tabular-nums text-foreground">{percent}%</div>
-          <div className="text-muted-foreground">覆盖</div>
-        </div>
-        <div className="rounded border bg-background/70 py-1.5">
-          <div className="font-medium tabular-nums text-foreground">+9.3%</div>
-          <div className="text-muted-foreground">环比</div>
-        </div>
-        <div className="rounded border bg-background/70 py-1.5">
-          <div className="font-medium text-foreground">近30天</div>
-          <div className="text-muted-foreground">周期</div>
-        </div>
-      </div>
-    </div>
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          innerRadius="60%"
+          outerRadius="90%"
+          paddingAngle={2}
+          stroke="none"
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.fill} />
+          ))}
+        </Pie>
+        <text
+          x="50%"
+          y="50%"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="fill-foreground"
+          style={{ fontSize: 16, fontWeight: 600 }}
+        >
+          {percent}%
+        </text>
+        <RTooltip
+          contentStyle={{
+            background: "var(--color-popover)",
+            border: "1px solid var(--color-border)",
+            borderRadius: 8,
+            fontSize: 12,
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -566,6 +562,21 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
           {tip}
           <Area type="monotone" dataKey="v" stroke="var(--color-warning)" strokeWidth={2} fill="url(#g-order)" />
         </AreaChart>
+      );
+    }
+    case "product_order_dist": {
+      const data = [
+        { name: "课程", value: 98, fill: "var(--color-primary)" },
+        { name: "学习机", value: 38, fill: "var(--color-info)" },
+        { name: "会员服务", value: 20, fill: "var(--color-success)" },
+      ];
+      return (
+        <PieChart>
+          <Pie data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
+            {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          </Pie>
+          {tip}
+        </PieChart>
       );
     }
     case "conv_rate": {
