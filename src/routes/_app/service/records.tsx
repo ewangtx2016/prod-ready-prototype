@@ -9,6 +9,7 @@ import { DevNote } from "@/components/dev/DevNote";
 import { PermissionTip } from "@/components/dev/PermissionTip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -201,6 +202,49 @@ function Page() {
         <div>· 数据范围：{isServantView ? "本人名下记录" : "全部记录"}</div>
         <div>· 当前列表条数：{filtered.length} / 可见 {scopedRecords.length}</div>
       </DevNote>
+
+      {/* 统计卡片 */}
+      {(() => {
+        const uniqueUsers = new Set(filtered.map((r) => r.userPhone)).size;
+        const plannerUsers = new Set(filtered.filter((r) => r.createdByRole === "planner").map((r) => r.userPhone)).size;
+        const tutorUsers = new Set(filtered.filter((r) => r.createdByRole === "tutor").map((r) => r.userPhone)).size;
+        if (isServantView) {
+          return (
+            <div className="mb-4 grid gap-3 md:grid-cols-2">
+              <Card className="p-4">
+                <div className="text-xs text-muted-foreground">服务用户总数</div>
+                <div className="mt-1 text-2xl font-semibold">{uniqueUsers}</div>
+              </Card>
+              <Card className="p-4">
+                <div className="text-xs text-muted-foreground">服务记录总数</div>
+                <div className="mt-1 text-2xl font-semibold">{filtered.length}</div>
+              </Card>
+            </div>
+          );
+        }
+        return (
+          <>
+            <div className="mb-4 grid gap-3 md:grid-cols-4">
+              <Card className="p-4">
+                <div className="text-xs text-muted-foreground">覆盖用户总数</div>
+                <div className="mt-1 text-2xl font-semibold">{uniqueUsers}</div>
+              </Card>
+              <Card className="p-4">
+                <div className="text-xs text-muted-foreground">服务记录总数</div>
+                <div className="mt-1 text-2xl font-semibold">{filtered.length}</div>
+              </Card>
+              <Card className="p-4">
+                <div className="text-xs text-muted-foreground">规划师覆盖用户</div>
+                <div className="mt-1 text-2xl font-semibold">{plannerUsers}</div>
+              </Card>
+              <Card className="p-4">
+                <div className="text-xs text-muted-foreground">学管师覆盖用户</div>
+                <div className="mt-1 text-2xl font-semibold">{tutorUsers}</div>
+              </Card>
+            </div>
+          </>
+        );
+      })()}
 
       <div className={`mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 ${isServantView ? "md:grid-cols-5" : "md:grid-cols-7"}`}>
         <div className="space-y-1">
@@ -410,31 +454,6 @@ function Page() {
                   )}
                 </div>
 
-                {viewing.pendingChange && (
-                  <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-warning-foreground">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-warning animate-pulse" />修改申请待审核
-                    </div>
-                    <div className="text-xs text-muted-foreground">申请原因：<span className="text-foreground">{viewing.pendingChange.reason}</span></div>
-                    <div className="grid gap-2 md:grid-cols-2">
-                      <div className="rounded-md border bg-background/60 p-3">
-                        <div className="text-[11px] text-muted-foreground mb-1">原内容</div>
-                        <div className="text-xs line-through text-muted-foreground">{viewing.content}</div>
-                      </div>
-                      <div className="rounded-md border border-success/40 bg-success/5 p-3">
-                        <div className="text-[11px] text-success mb-1">新内容</div>
-                        <div className="text-xs">{viewing.pendingChange.newContent}</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {viewing.rejectReason && (
-                  <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
-                    <div className="text-xs font-medium text-destructive mb-1">驳回原因</div>
-                    <div className="text-sm">{viewing.rejectReason}</div>
-                  </div>
-                )}
               </div>
 
               <DialogFooter className="border-t px-6 py-3">
