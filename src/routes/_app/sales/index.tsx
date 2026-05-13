@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { db, type Order } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
+import { filterByDataPerm } from "@/lib/permissions";
 import { maskName, maskPhone } from "@/lib/mask";
 import { PageHeader } from "@/components/dev/PageHeader";
 import { DevNote } from "@/components/dev/DevNote";
@@ -26,8 +27,12 @@ function productTypeLabel(type: string) {
   return ["学科课", "素养课", "体验课"].includes(type) ? "课程" : type;
 }
 
+function defaultOrgValue(_role: string, _orgName: string) {
+  return "all";
+}
+
 function Inner() {
-  const { role } = useApp();
+  const { role, orgName } = useApp();
   const [orders, setOrders] = useState<Order[]>([]);
   const [tab, setTab] = useState<string>("all");
   const [productType, setProductType] = useState<string>("all");
@@ -35,15 +40,16 @@ function Inner() {
   const [keyword, setKeyword] = useState("");
   const [channel, setChannel] = useState<string>("all");
   const [planner, setPlanner] = useState<string>("all");
-  const [org, setOrg] = useState<string>("all");
+  const [org, setOrg] = useState<string>(() => defaultOrgValue(role, orgName));
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const isPlanner = role === "planner";
+  const currentUserName = ROLE_META[role].name;
   useEffect(() => { setOrders(db.orders()); }, []);
 
-  const scopedOrders = isPlanner ? orders.filter((o) => o.plannerName === "李规划") : orders;
+  const scopedOrders = filterByDataPerm(orders, "sales", role, currentUserName, orgName);
   const plannerOptions = Array.from(new Set(scopedOrders.map((o) => o.plannerName)));
-  const orgOptions = Array.from(new Set(scopedOrders.map((o) => o.orgName)));
+  const orgOptions = role === "org_admin" ? [orgName] : Array.from(new Set(scopedOrders.map((o) => o.orgName)));
   const productTypeOptions = ["课程", "学习机", "会员服务"];
 
   const kw = keyword.trim().toLowerCase();
@@ -78,7 +84,7 @@ function Inner() {
     { label: "待支付金额", value: sumAmount(pendingOrders), countLabel: "待支付订单量", count: pendingOrders.length, className: "text-warning" },
     { label: "已退费金额", value: sumAmount(refundedOrders), countLabel: "已退费订单量", count: refundedOrders.length, className: "text-destructive" },
   ];
-  const resetFilters = () => { setKeyword(""); setProductType("all"); setChannel("all"); setPlanner("all"); setOrg("all"); setStartDate(""); setEndDate(""); };
+  const resetFilters = () => { setKeyword(""); setProductType("all"); setChannel("all"); setPlanner("all"); setOrg(defaultOrgValue(role, orgName)); setStartDate(""); setEndDate(""); };
 
   return (
     <div>

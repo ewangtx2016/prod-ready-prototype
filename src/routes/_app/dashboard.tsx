@@ -149,7 +149,7 @@ const SPARK: Record<string, { x: string; v: number }[]> = {
 const TREND_12M = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
 
 function Dashboard() {
-  const { role } = useApp();
+  const { role, orgName } = useApp();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>(ALL_METRICS.map((m) => m.key));
   const [planners, setPlanners] = useState<string[]>([]);
@@ -160,15 +160,21 @@ function Dashboard() {
   useEffect(() => {
     const orderList = db.orders();
     const names = Array.from(new Set(orderList.map((o) => o.plannerName))).filter(Boolean);
-    const orgNames = Array.from(new Set(orderList.map((o) => o.orgName))).filter(Boolean);
     setPlanners(names);
-    setOrgs(orgNames);
-  }, []);
+    if (role === "org_admin") {
+      setOrgs([orgName]);
+    } else {
+      const orgNames = Array.from(new Set(orderList.map((o) => o.orgName))).filter(Boolean);
+      setOrgs(orgNames);
+    }
+  }, [role, orgName]);
 
   const visible = ALL_METRICS.filter((m) => selected.includes(m.key));
   const isPlanner = role === "planner";
   const isTutor = role === "tutor";
-  const isOrg = role === "org_admin" || role === "super_admin";
+  const isOrgAdmin = role === "org_admin";
+  const isSuperAdmin = role === "super_admin";
+  const isOrg = isOrgAdmin || isSuperAdmin;
 
   // 按角色切换指标集合（数据范围：规划师/学管师 = 本人）
   const coreMetrics = isPlanner ? PLANNER_CORE_METRICS : isTutor ? TUTOR_CORE_METRICS : CORE_METRICS;
@@ -240,33 +246,33 @@ function Dashboard() {
         </Select>
         {(isOrg || isPlanner) && (
           <>
-            {isOrg && (
-              <>
-                <SearchSelect
-                  value={orgFilter}
-                  onChange={setOrgFilter}
-                  options={["all", ...orgs]}
-                  labels={{ all: "全部机构" }}
-                  placeholder="搜索机构"
-                  width="w-40"
-                />
-                <SearchSelect
-                  value={plannerFilter}
-                  onChange={setPlannerFilter}
-                  options={["all", ...planners]}
-                  labels={{ all: "全部规划师" }}
-                  placeholder="搜索规划师"
-                  width="w-40"
-                />
-              </>
-            )}
-            {isPlanner && (
+            {/* 机构筛选 */}
+            {isOrgAdmin ? (
+              <SearchSelect
+                value={orgFilter}
+                onChange={setOrgFilter}
+                options={["all", orgName]}
+                labels={{ all: "全部机构", [orgName]: orgName }}
+                placeholder="搜索机构"
+                width="w-40"
+              />
+            ) : (
               <SearchSelect
                 value={orgFilter}
                 onChange={setOrgFilter}
                 options={["all", ...orgs]}
                 labels={{ all: "全部机构" }}
                 placeholder="搜索机构"
+                width="w-40"
+              />
+            )}
+            {isOrg && (
+              <SearchSelect
+                value={plannerFilter}
+                onChange={setPlannerFilter}
+                options={["all", ...planners]}
+                labels={{ all: "全部规划师" }}
+                placeholder="搜索规划师"
                 width="w-40"
               />
             )}

@@ -31,6 +31,70 @@ export const DATA_SCOPE_LABEL: Record<DataScope, string> = {
   assigned: "被分配数据",
 };
 
+/** 数据范围明细 —— 三维度精细化配置（已废弃，由 dataPerms 替代） */
+export interface ScopeDetail {
+  /** 可见机构列表，空数组 = 不限（全部） */
+  orgs: string[];
+  /** 可见规划师列表，空数组 = 不限（全部），["__self__"] = 仅本人 */
+  planners: string[];
+  /** 可见学管师列表，空数组 = 不限（全部），["__self__"] = 仅本人 */
+  tutors: string[];
+}
+
+/* ============================== 数据权限（通用维度） ============================== */
+/** 数据实体（业务模块） */
+export type DataEntity =
+  | "service"
+  | "sales"
+  | "ledger"
+  | "audit"
+  | "org"
+  | "user"
+  | "role";
+
+export const DATA_ENTITIES: DataEntity[] = [
+  "service", "sales", "ledger", "audit", "org", "user", "role",
+];
+
+export const DATA_ENTITY_LABEL: Record<DataEntity, string> = {
+  service: "服务记录",
+  sales: "销售订单",
+  ledger: "台账明细",
+  audit: "审计日志",
+  org: "机构信息",
+  user: "用户账号",
+  role: "角色数据",
+};
+
+/** 机构范围 */
+export type OrgScope = "all" | "self_org" | "specified";
+export const ORG_SCOPE_LABEL: Record<OrgScope, string> = {
+  all: "全部机构",
+  self_org: "本机构",
+  specified: "指定机构",
+};
+
+/** 人员范围（数据归属） */
+export type OwnerScope = "all" | "self" | "specified";
+export const OWNER_SCOPE_LABEL: Record<OwnerScope, string> = {
+  all: "全部人员",
+  self: "仅本人",
+  specified: "指定人员",
+};
+
+/** 数据权限规则 —— 按业务实体配置机构范围 × 人员范围 */
+export interface DataPermRule {
+  entity: DataEntity;
+  /** 该模块数据权限是否启用（禁用后该角色完全看不到此模块数据） */
+  enabled: boolean;
+  orgScope: OrgScope;
+  /** 指定机构列表（orgScope === "specified" 时生效） */
+  orgs: string[];
+  ownerScope: OwnerScope;
+  /** 指定人员列表（ownerScope === "specified" 时生效） */
+  owners: string[];
+}
+
 export interface RoleDef {
   key: string;
   name: string;
@@ -38,7 +102,12 @@ export interface RoleDef {
   color: string; // tailwind bg class
   desc: string;
   builtin?: boolean;
+  /** @deprecated 由 dataPerms 替代 */
   scope: DataScope;
+  /** @deprecated 由 dataPerms 替代 */
+  scopeDetail?: ScopeDetail;
+  /** 数据权限（按业务实体配置） */
+  dataPerms: DataPermRule[];
   /** 已授权的权限节点 id 列表（菜单+按钮统一管理） */
   permIds: string[];
 }
@@ -113,20 +182,15 @@ export const DEFAULT_TREE: PermNode[] = [
     ],
   },
   {
+    id: "m_org", type: "menu", name: "机构管理", code: "org:view", api: "GET /api/org", path: "/settings/org", builtin: true,
+    children: [
+      { id: "b_org_edit", type: "button", name: "编辑机构", code: "org:edit", api: "PUT /api/org", builtin: true },
+    ],
+  },
+  {
     id: "m_settings", type: "menu", name: "系统设置", code: "settings:view", api: "GET /api/settings", builtin: true,
     children: [
-      { id: "m_settings_org", type: "menu", name: "机构信息", code: "settings.org:view", api: "GET /api/settings/org", path: "/settings/org", builtin: true,
-        children: [
-          { id: "b_settings_org_edit", type: "button", name: "编辑机构", code: "settings:org_edit", api: "PUT /api/settings/org", builtin: true },
-        ],
-      },
       { id: "m_settings_ip", type: "menu", name: "IP 白名单", code: "settings.ip:view", api: "GET /api/settings/ip", path: "/settings/ip", builtin: true },
-      { id: "m_settings_backup", type: "menu", name: "备份设置", code: "settings.backup:view", api: "GET /api/settings/backup", path: "/settings/backup", builtin: true,
-        children: [
-          { id: "b_settings_backup_restore", type: "button", name: "恢复备份", code: "settings:backup_restore", api: "POST /api/settings/backup/restore", builtin: true },
-          { id: "b_settings_backup_delete", type: "button", name: "删除备份", code: "settings:backup_delete", api: "DELETE /api/settings/backup", builtin: true },
-        ],
-      },
     ],
   },
   {
@@ -169,19 +233,44 @@ function collectIds(nodes: PermNode[], filter: (n: PermNode) => boolean, parentM
 }
 const ALL_IDS = collectIds(DEFAULT_TREE, () => true);
 
+/** 生成角色的默认数据权限配置 */
+function defaultDataPerms(role: Role): DataPermRule[] {
+  const mk = (entity: DataEntity, enabled: boolean, orgScope: OrgScope, ownerScope: OwnerScope): DataPermRule =>
+    ({ entity, enabled, orgScope, orgs: [], ownerScope, owners: [] });
+
+  switch (role) {
+    case "super_admin":
+      return DATA_ENTITIES.map((e) => mk(e, true, "all", "all"));
+    case "org_admin":
+      return DATA_ENTITIES.map((e) => mk(e, true, "self_org", "all"));
+    case "planner":
+      return DATA_ENTITIES.map((e) => {
+        const disabled = ["audit", "role", "user"].includes(e);
+        return mk(e, !disabled, "self_org", ["service", "sales", "ledger"].includes(e) ? "self" : "all");
+      });
+    case "tutor":
+      return DATA_ENTITIES.map((e) => {
+        const disabled = ["sales", "ledger", "audit", "role", "user"].includes(e);
+        return mk(e, !disabled, "self_org", e === "service" ? "self" : "all");
+      });
+    default:
+      return DATA_ENTITIES.map((e) => mk(e, true, "self_org", "self"));
+  }
+}
+
 /** 按 PRD §14 矩阵给每个角色分配权限 */
 function presetIds(role: Role): string[] {
   const allowedMenus: Record<Role, string[]> = {
-    super_admin: ["dashboard", "service", "notification", "sales", "profit", "ledger", "settings", "role", "user", "audit"],
-    org_admin:   ["dashboard", "service", "notification", "sales", "profit", "ledger", "settings", "role", "user", "audit"],
-    planner:     ["dashboard", "service", "notification", "sales", "ledger"],
-    tutor:       ["service", "notification"],
+    super_admin: ["dashboard", "service", "notification", "sales", "profit", "ledger", "org", "settings", "role", "user", "audit"],
+    org_admin:   ["dashboard", "service", "notification", "sales", "profit", "ledger", "org", "settings", "role", "user", "audit"],
+    planner:     ["dashboard", "service", "notification", "sales", "ledger", "org"],
+    tutor:       ["service", "notification", "org"],
   };
   const allowedBtns: Record<Role, string[]> = {
     super_admin: ["profit:create", "profit:edit", "profit:enable", "profit:disable", "service.records 查看"],
     org_admin: ["dashboard:export", "dashboard:customize", "service:audit", "service:export", "service:mode_switch",
                 "sales:export", "profit:audit", "profit:sms_verify", "ledger:export",
-                "settings:org_edit", "settings:backup_restore", "settings:backup_delete",
+                "org:edit",
                 "user:create", "user:edit", "user:reset_password", "user:toggle",
                 "role:config_scope", "role:create", "role:edit", "role:delete"],
     planner: ["service:create", "service:edit_request", "ledger:export"],
@@ -205,10 +294,10 @@ function presetIds(role: Role): string[] {
 }
 
 export const DEFAULT_ROLES: RoleDef[] = [
-  { key: "super_admin", name: "鼎校超管", short: "超管", color: "bg-purple-500", desc: "平台最高管理权限",   builtin: true, scope: "all", permIds: presetIds("super_admin") },
-  { key: "org_admin",   name: "机构管理员", short: "管理员", color: "bg-blue-500",   desc: "机构资产所有者",   builtin: true, scope: "org", permIds: presetIds("org_admin") },
-  { key: "planner",     name: "规划师",     short: "规划",   color: "bg-emerald-500", desc: "服务与转化执行者", builtin: true, scope: "self", permIds: presetIds("planner") },
-  { key: "tutor",       name: "学管师",     short: "学管",   color: "bg-amber-500",   desc: "日常督学执行者",   builtin: true, scope: "assigned", permIds: presetIds("tutor") },
+  { key: "super_admin", name: "鼎校超管", short: "超管", color: "bg-purple-500", desc: "平台最高管理权限",   builtin: true, scope: "all", scopeDetail: { orgs: [], planners: [], tutors: [] }, dataPerms: defaultDataPerms("super_admin"), permIds: presetIds("super_admin") },
+  { key: "org_admin",   name: "机构管理员", short: "管理员", color: "bg-blue-500",   desc: "机构资产所有者",   builtin: true, scope: "org", scopeDetail: { orgs: [], planners: [], tutors: [] }, dataPerms: defaultDataPerms("org_admin"), permIds: presetIds("org_admin") },
+  { key: "planner",     name: "规划师",     short: "规划",   color: "bg-emerald-500", desc: "服务与转化执行者", builtin: true, scope: "self", scopeDetail: { orgs: [], planners: ["__self__"], tutors: [] }, dataPerms: defaultDataPerms("planner"), permIds: presetIds("planner") },
+  { key: "tutor",       name: "学管师",     short: "学管",   color: "bg-amber-500",   desc: "日常督学执行者",   builtin: true, scope: "assigned", scopeDetail: { orgs: [], planners: [], tutors: ["__self__"] }, dataPerms: defaultDataPerms("tutor"), permIds: presetIds("tutor") },
 ];
 
 /* ============================== 工具 ============================== */
@@ -234,8 +323,8 @@ export function getAncestors(nodes: PermNode[], id: string, trail: string[] = []
 }
 
 /* ============================== Mock Store ============================== */
-const LS_TREE = "demo.permTree.v4";
-const LS_ROLES = "demo.permRoles.v4";
+const LS_TREE = "demo.permTree.v7";
+const LS_ROLES = "demo.permRoles.v7";
 
 type State = { tree: PermNode[]; roles: RoleDef[] };
 let state: State = load();
@@ -288,4 +377,127 @@ export function useCanAction(roleKey: string, code: string): boolean {
   if (!role) return false;
   const node = flattenTree(tree).find((n) => n.code === code);
   return node ? role.permIds.includes(node.id) : false;
+}
+
+/** 数据范围「仅本人」标记（@deprecated 由 dataPerms 替代） */
+export const SCOPE_SELF = "__self__";
+
+/** 获取角色的数据范围明细（@deprecated 由 useDataPerm 替代） */
+export function useScopeDetail(roleKey: string): ScopeDetail | undefined {
+  const { roles } = usePermStore();
+  const role = roles.find((r) => r.key === roleKey);
+  return role?.scopeDetail;
+}
+
+/** 判断某角色是否是「执行者」角色（@deprecated） */
+export function isServantRole(roleKey: string): boolean {
+  return roleKey === "planner" || roleKey === "tutor";
+}
+
+/** 基于数据范围明细过滤数据（@deprecated 由 filterByDataPerm 替代） */
+export function filterByScope<T extends { orgName?: string; plannerName?: string; tutorName?: string; createdBy?: string; createdByRole?: string }>(
+  items: T[],
+  scopeDetail: ScopeDetail | undefined,
+  roleKey: string,
+  currentUserName: string
+): T[] {
+  if (!scopeDetail) return items;
+  const isPlanner = roleKey === "planner";
+  const isTutor = roleKey === "tutor";
+
+  return items.filter((item) => {
+    // 机构维度
+    if (scopeDetail.orgs.length > 0) {
+      const org = item.orgName ?? "";
+      if (org && !scopeDetail.orgs.includes(org)) return false;
+    }
+
+    // 规划师维度
+    if (scopeDetail.planners.length > 0) {
+      if (scopeDetail.planners.includes(SCOPE_SELF)) {
+        if (isPlanner && item.createdByRole === "planner" && item.createdBy !== currentUserName) return false;
+        if (!isPlanner && item.plannerName && item.plannerName !== currentUserName) return false;
+        if (!isPlanner && item.createdByRole === "planner" && item.createdBy && item.createdBy !== currentUserName) return false;
+      } else {
+        const match = (name?: string) => name && scopeDetail.planners.includes(name);
+        if (item.plannerName && !match(item.plannerName)) return false;
+        if (item.createdByRole === "planner" && item.createdBy && !match(item.createdBy)) return false;
+      }
+    }
+
+    // 学管师维度
+    if (scopeDetail.tutors.length > 0) {
+      if (scopeDetail.tutors.includes(SCOPE_SELF)) {
+        if (isTutor && item.createdByRole === "tutor" && item.createdBy !== currentUserName) return false;
+        if (!isTutor && item.tutorName && item.tutorName !== currentUserName) return false;
+        if (!isTutor && item.createdByRole === "tutor" && item.createdBy && item.createdBy !== currentUserName) return false;
+      } else {
+        const match = (name?: string) => name && scopeDetail.tutors.includes(name);
+        if (item.tutorName && !match(item.tutorName)) return false;
+        if (item.createdByRole === "tutor" && item.createdBy && !match(item.createdBy)) return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+/* ============================== 数据权限（新） ============================== */
+/** 获取角色的某个数据实体权限规则 */
+export function getDataPerm(roleKey: string, entity: DataEntity): DataPermRule | undefined {
+  const state = permStore.get();
+  const role = state.roles.find((r) => r.key === roleKey);
+  return role?.dataPerms?.find((p) => p.entity === entity);
+}
+
+/** 基于数据权限过滤数据（通用维度）
+ * 适用于 ServiceRecord / Order / LedgerItem / AuditLog 等含归属信息的数据
+ */
+export function filterByDataPerm<T extends {
+  orgName?: string;
+  plannerName?: string;
+  tutorName?: string;
+  createdBy?: string;
+  createdByRole?: string;
+  operator?: string;
+}>(
+  items: T[],
+  entity: DataEntity,
+  roleKey: string,
+  currentUserName: string,
+  currentOrgName: string
+): T[] {
+  const rule = getDataPerm(roleKey, entity);
+  if (!rule || !rule.enabled) return [];
+
+  return items.filter((item) => {
+    // 机构范围过滤
+    if (rule.orgScope === "self_org") {
+      if (item.orgName && item.orgName !== currentOrgName) return false;
+    } else if (rule.orgScope === "specified" && rule.orgs.length > 0) {
+      if (item.orgName && !rule.orgs.includes(item.orgName)) return false;
+    }
+
+    // 人员范围过滤 —— 通用判断"数据归属人"
+    if (rule.ownerScope === "self") {
+      const creator = item.createdBy ?? item.operator ?? "";
+      const relatedPlanner = item.plannerName ?? "";
+      const relatedTutor = item.tutorName ?? "";
+      if (creator && creator === currentUserName) return true;
+      if (relatedPlanner && relatedPlanner === currentUserName) return true;
+      if (relatedTutor && relatedTutor === currentUserName) return true;
+      if (creator || relatedPlanner || relatedTutor) return false;
+    } else if (rule.ownerScope === "specified" && rule.owners.length > 0) {
+      const match = (name: string) => rule.owners.includes(name);
+      const creator = item.createdBy ?? item.operator ?? "";
+      const relatedPlanner = item.plannerName ?? "";
+      const relatedTutor = item.tutorName ?? "";
+      if (creator && match(creator)) return true;
+      if (relatedPlanner && match(relatedPlanner)) return true;
+      if (relatedTutor && match(relatedTutor)) return true;
+      if (creator || relatedPlanner || relatedTutor) return false;
+    }
+
+    return true;
+  });
 }

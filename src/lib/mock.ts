@@ -98,6 +98,8 @@ export type AuditLog = {
   before?: any;
   /** 操作后快照（JSON），可选 */
   after?: any;
+  /** 所属机构名称 */
+  orgName?: string;
 };
 
 /** 服务记录审核规则（仅在「需要审核」模式下生效） */
@@ -132,12 +134,22 @@ export type ReviewRule = {
 export type AlertRule = ReviewRule;
 export type AlertRuleType = ReviewRuleType;
 
+/** 机构信息 */
+export type Org = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  logo?: string;
+};
+
 /** 通知事件：把"业务事件 → 渠道 → 模板"集中绑定，业务页只引用事件 key */
 export type NotifyChannelKey = "inbox" | "sms" | "group" | "email";
 export type NotifyEvent = {
   key: string;            // 业务代码引用，唯一
   name: string;           // 中文名
-  category: "服务审核" | "操作预警" | "续报提醒" | "财务结算" | "账号安全" | "数据备份";
+  category: "服务审核" | "操作预警" | "续报提醒" | "财务结算" | "账号安全";
   description: string;
   recipients: string[];   // 角色 key 列表
   channels: Record<NotifyChannelKey, { enabled: boolean; templateId?: string }>;
@@ -156,7 +168,8 @@ const KEYS = {
   rule: "demo.rules",
   ledger: "demo.ledger",
   log: "demo.logs",
-  seeded: "demo.seeded.v8",
+  orgs: "demo.orgs",
+  seeded: "demo.seeded.v9",
   // 注：模型变更需提升版本以触发重置
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
@@ -197,10 +210,10 @@ export function seedIfNeeded(force = false) {
   ];
   // 存量服务记录默认全部标记为「日常跟进」（无订单绑定），并补充机构名称
   const orgMap: Record<string, string> = {
-    张明轩: "启明教育", 王小宇: "启明教育", 赵晓彤: "启明教育",
-    李思琪: "卓越学堂", 孙文博: "卓越学堂",
+    张明轩: "机构用户平台", 王小宇: "机构用户平台", 赵晓彤: "机构用户平台",
+    李思琪: "机构用户平台", 孙文博: "机构用户平台",
   };
-  services.forEach((s) => { s.recordType = "presales"; s.orderIds = []; s.orgName = orgMap[s.userName] || "启明教育"; });
+  services.forEach((s) => { s.recordType = "presales"; s.orderIds = []; s.orgName = orgMap[s.userName] || "机构用户平台"; });
 
   // 演示用附件：图片 / 视频 / 文件（外链 mock）
   const PIC = (seed: string) => `https://picsum.photos/seed/${seed}/800/600`;
@@ -221,11 +234,11 @@ export function seedIfNeeded(force = false) {
   ];
 
   const orders: Order[] = [
-    { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "课程", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "启明教育", createdAt: "2026-04-20 11:00" },
-    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "AI 学习机 Pro", courseType: "学习机", amount: 3600, source: "规划师新拓", channel: "甄选", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "王规划", tutorName: "王学管", orgName: "启明教育", createdAt: "2026-04-22 15:00" },
-    { id: "O" + rid(), userName: "李思琪", userPhone: "13511112222", course: "物理体验课", courseType: "课程", amount: 199, source: "规划师新拓", channel: "鼎团团", payMethod: "微信", status: "待支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "卓越学堂", createdAt: "2026-04-28 10:00" },
-    { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "课程", amount: 12800, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "周规划", tutorName: "陈学管", orgName: "启明教育", createdAt: "2026-04-15 09:00" },
-    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "会员服务年卡", courseType: "会员服务", amount: 4800, source: "机构老用户", channel: "甄选", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", tutorName: "王学管", orgName: "卓越学堂", createdAt: "2026-04-10 14:00" },
+    { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "课程", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-20 11:00" },
+    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "AI 学习机 Pro", courseType: "学习机", amount: 3600, source: "规划师新拓", channel: "甄选", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "王规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-22 15:00" },
+    { id: "O" + rid(), userName: "李思琪", userPhone: "13511112222", course: "物理体验课", courseType: "课程", amount: 199, source: "规划师新拓", channel: "鼎团团", payMethod: "微信", status: "待支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-28 10:00" },
+    { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "课程", amount: 12800, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "周规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-15 09:00" },
+    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "会员服务年卡", courseType: "会员服务", amount: 4800, source: "机构老用户", channel: "甄选", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-10 14:00" },
   ];
 
   // 演示用「交付类」服务记录，绑定到具体订单
@@ -292,14 +305,14 @@ export function seedIfNeeded(force = false) {
   ];
 
   const logs: AuditLog[] = [
-    { id: rid(), time: "2026-04-28 09:55", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "登录", detail: "登录成功 · Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/Windows", location: "北京" } },
-    { id: rid(), time: "2026-04-28 09:52", operator: "陈学管", role: "学管师", ip: "10.0.3.18", module: "登录", action: "登录", detail: "登录失败 · 密码错误（第 2 次）", before: null, after: { method: "password", reason: "wrong_password", attempts: 2 } },
-    { id: rid(), time: "2026-04-28 08:40", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "登录", action: "登录", detail: "登录成功 · 短信验证码登录 · 新设备", before: null, after: { method: "sms", device: "Safari/iPhone", location: "北京", newDevice: true } },
-    { id: rid(), time: "2026-04-28 08:30", operator: "鼎校管理后台", role: "鼎校管理后台", ip: "203.0.113.7", module: "登录", action: "登录", detail: "登录成功 · Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/macOS", location: "上海" } },
-    { id: rid(), time: "2026-04-27 19:10", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "登录", detail: "退出登录 · 用户主动退出", before: null, after: null },
-    { id: rid(), time: "2026-04-28 18:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "台账管理", action: "导出", detail: "导出 4 月已结算明细（脱敏）", before: null, after: { exportType: "已结算", month: "2026-04", rows: 128, masked: true } },
-    { id: rid(), time: "2026-04-28 17:45", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "销售明细", action: "导出", detail: "导出销售明细 86 条（脱敏）", before: null, after: { rows: 86, masked: true } },
-    { id: rid(), time: "2026-04-28 16:20", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "服务记录", action: "导出", detail: "导出服务记录 42 条（脱敏）", before: null, after: { rows: 42, masked: true } },
+    { id: rid(), time: "2026-04-28 09:55", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "登录", detail: "登录成功 · Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/Windows", location: "北京" }, orgName: "机构用户平台" },
+    { id: rid(), time: "2026-04-28 09:52", operator: "陈学管", role: "学管师", ip: "10.0.3.18", module: "登录", action: "登录", detail: "登录失败 · 密码错误（第 2 次）", before: null, after: { method: "password", reason: "wrong_password", attempts: 2 }, orgName: "机构用户平台" },
+    { id: rid(), time: "2026-04-28 08:40", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "登录", action: "登录", detail: "登录成功 · 短信验证码登录 · 新设备", before: null, after: { method: "sms", device: "Safari/iPhone", location: "北京", newDevice: true }, orgName: "机构用户平台" },
+    { id: rid(), time: "2026-04-28 08:30", operator: "鼎校管理后台", role: "鼎校管理后台", ip: "203.0.113.7", module: "登录", action: "登录", detail: "登录成功 · Web 端账号密码登录", before: null, after: { method: "password", device: "Chrome/macOS", location: "上海" }, orgName: "" },
+    { id: rid(), time: "2026-04-27 19:10", operator: "李规划", role: "规划师", ip: "192.168.1.20", module: "登录", action: "登录", detail: "退出登录 · 用户主动退出", before: null, after: null, orgName: "机构用户平台" },
+    { id: rid(), time: "2026-04-28 18:30", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "台账管理", action: "导出", detail: "导出 4 月已结算明细（脱敏）", before: null, after: { exportType: "已结算", month: "2026-04", rows: 128, masked: true }, orgName: "机构用户平台" },
+    { id: rid(), time: "2026-04-28 17:45", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "销售明细", action: "导出", detail: "导出销售明细 86 条（脱敏）", before: null, after: { rows: 86, masked: true }, orgName: "机构用户平台" },
+    { id: rid(), time: "2026-04-28 16:20", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "服务记录", action: "导出", detail: "导出服务记录 42 条（脱敏）", before: null, after: { rows: 42, masked: true }, orgName: "机构用户平台" },
   ];
 
   write(KEYS.service, services);
@@ -307,6 +320,11 @@ export function seedIfNeeded(force = false) {
   write(KEYS.rule, rules);
   write(KEYS.ledger, ledger);
   write(KEYS.log, logs);
+
+  const orgs: Org[] = [
+    { id: rid(), name: "机构用户平台", phone: "400-888-0001", email: "contact@orguser.edu", address: "北京市海淀区中关村大街 1 号" },
+  ];
+  write(KEYS.orgs, orgs);
 
   const alertRules: AlertRule[] = [
     { id: rid(), type: "sensitive_word", name: "敏感词 · 投诉/退费/转介", enabled: true, config: { words: ["投诉", "退费", "转介", "举报", "差评"] }, notify: { inbox: true, sms: false, group: false }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
@@ -324,10 +342,6 @@ export function seedIfNeeded(force = false) {
     { key: "alert.split.abnormal", name: "操作预警 · 异常分账", category: "操作预警", description: "异常分账次数超阈值。", recipients: ["org_admin", "super_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 3, unit: "次/日" } },
     { key: "alert.audit.reject_rate", name: "操作预警 · 服务记录驳回率", category: "操作预警", description: "服务记录驳回率超阈值。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: false, threshold: { value: 30, unit: "%" } },
     { key: "alert.login.failure", name: "操作预警 · 登录失败次数", category: "操作预警", description: "登录失败次数超阈值。", recipients: ["org_admin"], channels: { inbox: { enabled: false }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: true, threshold: { value: 5, unit: "次/小时" } },
-    { key: "backup.failed", name: "数据备份 · 备份失败", category: "数据备份", description: "任意备份目标写入失败时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 1, unit: "次/日" } },
-    { key: "backup.capacity", name: "数据备份 · 目标容量超阈值", category: "数据备份", description: "任一备份目标占用空间超过阈值时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 80, unit: "%" } },
-    { key: "backup.success", name: "数据备份 · 备份成功", category: "数据备份", description: "自动/手动备份成功完成时触发。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: false },
-    { key: "backup.restore", name: "数据备份 · 数据恢复", category: "数据备份", description: "管理员发起或完成数据恢复（覆盖当前数据库）时触发。", recipients: ["org_admin", "super_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true },
     { key: "renewal.expiring.7d", name: "续报提醒 · 7 天到期", category: "续报提醒", description: "课程将于 7 天内到期，提醒家长续报。", recipients: ["planner"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: true }, email: { enabled: false } }, system: true },
     { key: "settlement.arrived", name: "财务 · 分润到账", category: "财务结算", description: "结算款到账后通知规划师。", recipients: ["planner"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true },
     { key: "ledger.abnormal", name: "财务 · 异常台账", category: "财务结算", description: "出现异常台账时通知机构管理员。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: true } }, system: true },
@@ -349,6 +363,8 @@ export const db = {
   setLedger: (v: LedgerItem[]) => write(KEYS.ledger, v),
   logs: () => read<AuditLog[]>(KEYS.log, []),
   setLogs: (v: AuditLog[]) => write(KEYS.log, v),
+  orgs: () => read<Org[]>(KEYS.orgs, []),
+  setOrgs: (v: Org[]) => write(KEYS.orgs, v),
   auditMode: () => (localStorage.getItem(KEYS.auditMode) as "realtime" | "review") || "realtime",
   setAuditMode: (v: "realtime" | "review") => localStorage.setItem(KEYS.auditMode, v),
   alertRules: () => read<AlertRule[]>(KEYS.alertRule, []),
@@ -356,9 +372,14 @@ export const db = {
   notifyEvents: () => read<NotifyEvent[]>(KEYS.notifyEvent, []),
   setNotifyEvents: (v: NotifyEvent[]) => write(KEYS.notifyEvent, v),
   notifyEvent: (key: string) => read<NotifyEvent[]>(KEYS.notifyEvent, []).find((e) => e.key === key),
-  log: (entry: Omit<AuditLog, "id" | "time" | "ip">) => {
+  log: (entry: Omit<AuditLog, "id" | "time" | "ip" | "orgName">) => {
     const logs = read<AuditLog[]>(KEYS.log, []);
-    logs.unshift({ id: rid(), time: new Date().toLocaleString("zh-CN"), ip: "192.168.1." + (Math.floor(Math.random() * 200) + 1), ...entry });
+    let orgName = "";
+    try {
+      const raw = localStorage.getItem("demo.org");
+      if (raw) orgName = (JSON.parse(raw) as { name?: string }).name || "";
+    } catch {}
+    logs.unshift({ id: rid(), time: new Date().toLocaleString("zh-CN"), ip: "192.168.1." + (Math.floor(Math.random() * 200) + 1), orgName, ...entry });
     write(KEYS.log, logs.slice(0, 200));
   },
   addService: (s: ServiceRecord) => {

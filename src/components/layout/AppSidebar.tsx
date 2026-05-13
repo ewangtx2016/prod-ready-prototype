@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, FileText, ShoppingCart, BookOpen,
-  Settings, ShieldCheck, Users, History, ChevronDown,
+  Settings, ShieldCheck, Users, History, ChevronDown, Building2,
 } from "lucide-react";
 import { DEFAULT_ORG_LOGO, useApp } from "@/lib/store";
 import { usePermStore, flattenTree } from "@/lib/permissions";
@@ -20,9 +20,7 @@ const GROUPS: Group[] = [
   { key: "ledger", label: "台账管理", icon: BookOpen, children: [
     { to: "/ledger", label: "台账管理", icon: BookOpen, key: "ledger" },
   ] },
-  { key: "settings", label: "系统设置", icon: Settings, children: [
-    { to: "/settings/org", label: "机构信息", icon: Settings, key: "settings" },
-  ] },
+  { key: "org", label: "机构管理", icon: Building2, children: [{ to: "/settings/org", label: "机构管理", icon: Building2, key: "org" }] },
   { key: "role", label: "角色管理", icon: ShieldCheck, children: [{ to: "/role", label: "角色管理", icon: ShieldCheck, key: "role" }] },
   { key: "user", label: "账号管理", icon: Users, children: [
     { to: "/user/accounts", label: "后台账号", icon: Users, key: "user" },

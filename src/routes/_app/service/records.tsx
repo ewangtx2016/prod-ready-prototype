@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { db, type ServiceRecord } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
+import { filterByDataPerm } from "@/lib/permissions";
 import { maskName, maskPhone } from "@/lib/mask";
 import { PageHeader } from "@/components/dev/PageHeader";
 import { DevNote } from "@/components/dev/DevNote";
@@ -145,13 +146,17 @@ function AttachmentGallery({ items }: { items: import("@/lib/mock").ServiceAttac
   );
 }
 
+function defaultOrgValue(_role: string, _orgName: string) {
+  return "all";
+}
+
 function Page() {
-  const { role } = useApp();
+  const { role, orgName } = useApp();
   const [records, setRecords] = useState<ServiceRecord[]>([]);
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
   const [fUser, setFUser] = useState("");
   const [fSubmitter, setFSubmitter] = useState("");
-  const [fOrgName, setFOrgName] = useState("all");
+  const [fOrgName, setFOrgName] = useState(() => defaultOrgValue(role, orgName));
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
   const [fRecordType, setFRecordType] = useState<"all" | "delivery" | "presales">("all");
@@ -159,12 +164,14 @@ function Page() {
 
   useEffect(() => { setRecords(db.services()); }, []);
   const isServantView = role === "planner" || role === "tutor";
-  const currentServantName = role === "planner" ? "李规划" : role === "tutor" ? "陈学管" : "";
+  const currentUserName = ROLE_META[role].name;
   const scopedRecords = useMemo(() => {
-    if (!isServantView) return records;
-    return records.filter((r) => r.createdByRole === role && r.createdBy === currentServantName);
-  }, [records, isServantView, role, currentServantName]);
-  const orgOptions = useMemo(() => Array.from(new Set(scopedRecords.map((r) => r.orgName ?? "").filter(Boolean))), [scopedRecords]);
+    return filterByDataPerm(records, "service", role, currentUserName, orgName);
+  }, [records, role, currentUserName, orgName]);
+  const orgOptions = useMemo(() => {
+    if (role === "org_admin") return [orgName];
+    return Array.from(new Set(scopedRecords.map((r) => r.orgName ?? "").filter(Boolean)));
+  }, [scopedRecords, role, orgName]);
   const filtered = scopedRecords.filter((r) => {
       if (fUser.trim()) {
         const q = fUser.trim().toLowerCase();
@@ -179,7 +186,7 @@ function Page() {
       return true;
     });
   const { paged, Pagination } = usePagination(filtered, 10);
-  const resetFilters = () => { setFUser(""); setFSubmitter(""); setFOrgName("all"); setFServantRole("all"); setFStart(""); setFEnd(""); setFRecordType("all"); };
+  const resetFilters = () => { setFUser(""); setFSubmitter(""); setFOrgName(defaultOrgValue(role, orgName)); setFServantRole("all"); setFStart(""); setFEnd(""); setFRecordType("all"); };
 
   return (
     <div>

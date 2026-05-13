@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/dev/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,17 +7,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ChevronRight, FolderTree, MousePointerClick, Plus, Trash2, Pencil, RotateCcw } from "lucide-react";
+import { ChevronRight, FolderTree, MousePointerClick, Plus, Trash2, Pencil, RotateCcw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
-  permStore, usePermStore, DATA_SCOPE_LABEL, flattenTree, getAncestors,
-  type PermNode, type RoleDef, type DataScope,
+  permStore, usePermStore, flattenTree, getAncestors,
+  DATA_ENTITIES, DATA_ENTITY_LABEL, ORG_SCOPE_LABEL, OWNER_SCOPE_LABEL,
+  type PermNode, type RoleDef, type DataEntity, type OrgScope, type OwnerScope, type DataPermRule,
 } from "@/lib/permissions";
+import { db } from "@/lib/mock";
 
 export const Route = createFileRoute("/_app/role/")({ component: Page });
 
@@ -36,9 +39,11 @@ function Page() {
       <Tabs defaultValue="roles" className="space-y-4">
         <TabsList>
           <TabsTrigger value="roles"><MousePointerClick className="h-4 w-4 mr-1.5" />角色与授权</TabsTrigger>
+          <TabsTrigger value="data"><ShieldCheck className="h-4 w-4 mr-1.5" />数据权限</TabsTrigger>
           <TabsTrigger value="tree"><FolderTree className="h-4 w-4 mr-1.5" />权限资源（菜单 / 按钮）</TabsTrigger>
         </TabsList>
         <TabsContent value="roles"><RolesTab /></TabsContent>
+        <TabsContent value="data"><DataPermTab /></TabsContent>
         <TabsContent value="tree"><TreeTab /></TabsContent>
       </Tabs>
     </div>
@@ -63,7 +68,7 @@ function RolesTab() {
       <Card className="col-span-4 p-3">
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm font-medium">角色列表</div>
-          <Button size="sm" variant="ghost" onClick={() => setEditing({ key: "", name: "", short: "", color: "bg-slate-500", desc: "", scope: "org", permIds: [] })}>
+          <Button size="sm" variant="ghost" onClick={() => setEditing({ key: "", name: "", short: "", color: "bg-slate-500", desc: "", scope: "org", dataPerms: DATA_ENTITIES.map((e) => ({ entity: e, enabled: true, orgScope: "self_org" as OrgScope, orgs: [], ownerScope: "self" as OwnerScope, owners: [] })), permIds: [] })}>
             <Plus className="h-4 w-4" /> 新增
           </Button>
         </div>
@@ -92,16 +97,8 @@ function RolesTab() {
                 {active.builtin && <Badge variant="outline" className="text-[10px]">预设</Badge>}
               </div>
               <div className="mt-1 text-xs text-muted-foreground">{active.desc}</div>
-              <div className="mt-2 flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">数据范围：</span>
-                <Select value={active.scope} onValueChange={(v) => { updateRole({ ...active, scope: v as DataScope }); toast.success("已更新数据范围"); }}>
-                  <SelectTrigger className="h-7 w-44"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(DATA_SCOPE_LABEL) as DataScope[]).map((s) => (
-                      <SelectItem key={s} value={s}>{DATA_SCOPE_LABEL[s]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="mt-2 text-xs text-muted-foreground">
+                数据权限请切换到「数据权限」Tab 进行配置
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -196,6 +193,215 @@ function TreeRows({ nodes, depth, checked, onToggle }: { nodes: PermNode[]; dept
   );
 }
 
+/* ============================== 数据范围明细配置 ============================== */
+/* ============================== 数据权限 Tab ============================== */
+function DataPermTab() {
+  const { roles } = usePermStore();
+  const [activeKey, setActiveKey] = useState<string>(roles[0]?.key ?? "");
+  const active = roles.find((r) => r.key === activeKey) ?? roles[0];
+  const [editing, setEditing] = useState<DataPermRule | null>(null);
+
+  const updateRole = (next: RoleDef) => {
+    permStore.setRoles(roles.map((r) => (r.key === next.key ? next : r)));
+  };
+
+  const updateDataPerm = (entity: DataEntity, patch: Partial<DataPermRule>) => {
+    if (!active) return;
+    const nextPerms = active.dataPerms.map((p) =>
+      p.entity === entity ? { ...p, ...patch } : p
+    );
+    updateRole({ ...active, dataPerms: nextPerms });
+    toast.success("已更新数据权限");
+  };
+
+  return (
+    <div className="grid grid-cols-12 gap-4">
+      <Card className="col-span-4 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-sm font-medium">角色列表</div>
+        </div>
+        <div className="space-y-1">
+          {roles.map((r) => (
+            <button
+              key={r.key}
+              onClick={() => setActiveKey(r.key)}
+              className={`w-full flex items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-accent ${active?.key === r.key ? "bg-accent" : ""}`}
+            >
+              <span className={`h-2 w-2 rounded-full ${r.color}`} />
+              <span className="text-sm font-medium">{r.name}</span>
+              {r.builtin && <Badge variant="outline" className="ml-auto text-[10px]">预设</Badge>}
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      {active && (
+        <Card className="col-span-8 p-4">
+          <div className="flex items-start justify-between gap-3 border-b pb-3 mb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex h-6 w-6 items-center justify-center rounded text-[10px] text-white ${active.color}`}>{active.short}</span>
+                <span className="text-base font-semibold">{active.name}</span>
+                {active.builtin && <Badge variant="outline" className="text-[10px]">预设</Badge>}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">{active.desc}</div>
+            </div>
+          </div>
+          <div className="text-sm font-medium mb-2">数据权限配置</div>
+          <div className="text-xs text-muted-foreground mb-2">按业务模块配置机构范围与人员范围，两者取交集。</div>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>数据模块</TableHead>
+                  <TableHead>状态</TableHead>
+                  <TableHead>机构范围</TableHead>
+                  <TableHead>人员范围</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {active.dataPerms.map((rule) => (
+                  <TableRow key={rule.entity} className={!rule.enabled ? "opacity-50" : ""}>
+                    <TableCell className="font-medium">{DATA_ENTITY_LABEL[rule.entity]}</TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={rule.enabled}
+                        onCheckedChange={(v) => updateDataPerm(rule.entity, { enabled: v })}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{rule.enabled ? ORG_SCOPE_LABEL[rule.orgScope] : "—"}</div>
+                      {rule.enabled && rule.orgScope === "specified" && rule.orgs.length > 0 && (
+                        <div className="text-[11px] text-muted-foreground mt-0.5">{rule.orgs.join("、")}</div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{rule.enabled ? OWNER_SCOPE_LABEL[rule.ownerScope] : "—"}</div>
+                      {rule.enabled && rule.ownerScope === "specified" && rule.owners.length > 0 && (
+                        <div className="text-[11px] text-muted-foreground mt-0.5">{rule.owners.join("、")}</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="ghost" disabled={!rule.enabled} onClick={() => setEditing(rule)}><Pencil className="h-3.5 w-3.5" /> 编辑</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <DataPermEditDialog
+            open={!!editing}
+            rule={editing}
+            onOpenChange={(v) => !v && setEditing(null)}
+            onSave={(rule) => {
+              updateDataPerm(rule.entity, rule);
+              setEditing(null);
+            }}
+          />
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function DataPermEditDialog({ open, rule, onOpenChange, onSave }: {
+  open: boolean;
+  rule: DataPermRule | null;
+  onOpenChange: (v: boolean) => void;
+  onSave: (r: DataPermRule) => void;
+}) {
+  const [draft, setDraft] = useState<DataPermRule | null>(rule);
+  const [options, setOptions] = useState({ orgs: [] as string[], persons: [] as string[] });
+
+  useEffect(() => {
+    const services = db.services();
+    const orgs = Array.from(new Set(db.orgs().map((o) => o.name)));
+    const persons = Array.from(new Set(services.map((s) => s.createdBy)));
+    setOptions({ orgs, persons });
+  }, []);
+
+  useMemo(() => { setDraft(rule); }, [rule]);
+  if (!draft) return null;
+
+  const toggleOrg = (v: string) => {
+    if (draft.orgs.includes(v)) setDraft({ ...draft, orgs: draft.orgs.filter((x) => x !== v) });
+    else setDraft({ ...draft, orgs: [...draft.orgs, v] });
+  };
+  const togglePerson = (v: string) => {
+    if (draft.owners.includes(v)) setDraft({ ...draft, owners: draft.owners.filter((x) => x !== v) });
+    else setDraft({ ...draft, owners: [...draft.owners, v] });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>编辑数据权限 · {DATA_ENTITY_LABEL[draft.entity]}</DialogTitle>
+          <DialogDescription>配置该角色对「{DATA_ENTITY_LABEL[draft.entity]}」的数据可见范围。</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>机构范围</Label>
+            <Select value={draft.orgScope} onValueChange={(v) => setDraft({ ...draft, orgScope: v as OrgScope, orgs: [] })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(Object.keys(ORG_SCOPE_LABEL) as OrgScope[]).map((s) => (
+                  <SelectItem key={s} value={s}>{ORG_SCOPE_LABEL[s]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {draft.orgScope === "specified" && (
+            <div className="space-y-2">
+              <Label className="text-xs">指定机构</Label>
+              <div className="flex flex-wrap gap-2">
+                {options.orgs.map((o) => (
+                  <label key={o} className="flex items-center gap-1.5 rounded border bg-background px-2 py-1 text-xs cursor-pointer hover:bg-accent">
+                    <Checkbox checked={draft.orgs.includes(o)} onCheckedChange={() => toggleOrg(o)} />
+                    <span>{o}</span>
+                  </label>
+                ))}
+                {options.orgs.length === 0 && <span className="text-xs text-muted-foreground">暂无可选机构</span>}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <Label>人员范围</Label>
+            <Select value={draft.ownerScope} onValueChange={(v) => setDraft({ ...draft, ownerScope: v as OwnerScope, owners: [] })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(Object.keys(OWNER_SCOPE_LABEL) as OwnerScope[]).map((s) => (
+                  <SelectItem key={s} value={s}>{OWNER_SCOPE_LABEL[s]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {draft.ownerScope === "specified" && (
+            <div className="space-y-2">
+              <Label className="text-xs">指定人员</Label>
+              <div className="flex flex-wrap gap-2">
+                {options.persons.map((p) => (
+                  <label key={p} className="flex items-center gap-1.5 rounded border bg-background px-2 py-1 text-xs cursor-pointer hover:bg-accent">
+                    <Checkbox checked={draft.owners.includes(p)} onCheckedChange={() => togglePerson(p)} />
+                    <span>{p}</span>
+                  </label>
+                ))}
+                {options.persons.length === 0 && <span className="text-xs text-muted-foreground">暂无可选人员</span>}
+              </div>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={() => { if (draft) onSave(draft); }}>保存</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function RoleEditDialog({ open, role, onOpenChange, onSave }: { open: boolean; role: RoleDef | null; onOpenChange: (v: boolean) => void; onSave: (r: RoleDef) => void }) {
   const [draft, setDraft] = useState<RoleDef | null>(role);
   // 同步 props -> draft
@@ -230,20 +436,16 @@ function RoleEditDialog({ open, role, onOpenChange, onSave }: { open: boolean; r
             </div>
           </div>
           <div><Label>描述</Label><Input value={draft.desc} onChange={(e) => setDraft({ ...draft, desc: e.target.value })} /></div>
-          <div><Label>数据范围</Label>
-            <Select value={draft.scope} onValueChange={(v) => setDraft({ ...draft, scope: v as DataScope })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {(Object.keys(DATA_SCOPE_LABEL) as DataScope[]).map((s) => <SelectItem key={s} value={s}>{DATA_SCOPE_LABEL[s]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button onClick={() => {
             if (!draft.name || !draft.key) { toast.error("请填写名称与 key"); return; }
-            onSave({ ...draft, short: draft.short || draft.name.slice(0, 2) });
+            const scopeDetail = draft.scopeDetail ?? { orgs: [], planners: [], tutors: [] };
+            const dataPerms = draft.dataPerms?.length ? draft.dataPerms : DATA_ENTITIES.map((e) => ({
+              entity: e, enabled: true, orgScope: "self_org" as OrgScope, orgs: [], ownerScope: "self" as OwnerScope, owners: [],
+            }));
+            onSave({ ...draft, short: draft.short || draft.name.slice(0, 2), scopeDetail, dataPerms });
           }}>保存</Button>
         </DialogFooter>
       </DialogContent>

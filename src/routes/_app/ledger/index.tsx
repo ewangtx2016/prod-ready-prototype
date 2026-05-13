@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { db, type LedgerItem } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
+import { filterByDataPerm } from "@/lib/permissions";
 import { maskName } from "@/lib/mask";
 import { PageHeader } from "@/components/dev/PageHeader";
 import { DevNote } from "@/components/dev/DevNote";
@@ -38,9 +39,14 @@ function money(v: number) {
   return `¥${v.toLocaleString()}`;
 }
 
+function defaultOrgValue(_role: string, _orgName: string) {
+  return "all";
+}
+
 function Page() {
-  const { role } = useApp();
+  const { role, orgName } = useApp();
   const [list, setList] = useState<LedgerItem[]>([]);
+  const allOrders = useMemo(() => db.orders(), []);
 
   // 筛选条件
   const [status, setStatus] = useState<string>("all");
@@ -48,11 +54,12 @@ function Page() {
   const [productType, setProductType] = useState<string>("all");
   const [channel, setChannel] = useState<string>("all");
   const [planner, setPlanner] = useState<string>("all");
-  const [org, setOrg] = useState<string>("all");
+  const [org, setOrg] = useState<string>(() => defaultOrgValue(role, orgName));
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const isPlanner = role === "planner";
-  const orders = useMemo(() => db.orders(), []);
+  const currentUserName = ROLE_META[role].name;
+  const orders = allOrders;
   const orderById = useMemo(() => new Map(orders.map((o) => [o.id, o])), [orders]);
   const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
   const getLedgerProductType = useCallback((item: LedgerItem) => productTypeLabel(orderById.get(item.orderId)?.courseType ?? ""), [orderById]);
@@ -62,12 +69,15 @@ function Page() {
 
   useEffect(() => {
     let arr = db.ledger();
-    if (isPlanner) arr = arr.filter((l) => l.plannerName === "李规划");
+    arr = filterByDataPerm(arr, "ledger", role, currentUserName, orgName);
     setList(arr);
-  }, [isPlanner]);
+  }, [role, currentUserName, orgName]);
 
   const planners = useMemo(() => Array.from(new Set(list.map((l) => l.plannerName))), [list]);
-  const orgs = useMemo(() => Array.from(new Set(list.map(getLedgerOrg).filter(Boolean))), [list, getLedgerOrg]);
+  const orgs = useMemo(() => {
+    if (role === "org_admin") return [orgName];
+    return Array.from(new Set(list.map(getLedgerOrg).filter(Boolean)));
+  }, [list, getLedgerOrg, role, orgName]);
 
   const kw = keyword.trim().toLowerCase();
   const filtered = list.filter((l) => {
@@ -137,7 +147,7 @@ function Page() {
   })();
   const abnormalCount = filtered.filter((l) => l.status === "abnormal").length;
 
-  const reset = () => { setKeyword(""); setStatus("all"); setProductType("all"); setChannel("all"); setPlanner("all"); setOrg("all"); setStartDate(""); setEndDate(""); };
+  const reset = () => { setKeyword(""); setStatus("all"); setProductType("all"); setChannel("all"); setPlanner("all"); setOrg(defaultOrgValue(role, orgName)); setStartDate(""); setEndDate(""); };
 
   const onExport = () => {
     db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "台账管理", action: "导出", detail: `${filtered.length} 条 (脱敏)` });

@@ -51,8 +51,6 @@ export function can(role: Role, action: string): boolean {
     "profit.sms_verify": ["org_admin"],
     "ledger.export": ["org_admin", "planner"],
     "settings.org_edit": ["org_admin"],
-    "settings.backup_delete": ["org_admin"],
-    "settings.backup_restore": ["org_admin"],
     "user.manage": ["org_admin"],
     "role.config_scope": ["org_admin"],
     "audit.view": ["org_admin", "super_admin"],

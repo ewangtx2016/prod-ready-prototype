@@ -22,7 +22,6 @@ import { Route as AppUserAccountsRouteImport } from './routes/_app/user/accounts
 import { Route as AppSettingsOrgRouteImport } from './routes/_app/settings/org'
 import { Route as AppSettingsNotificationEventsRouteImport } from './routes/_app/settings/notification-events'
 import { Route as AppSettingsIpRouteImport } from './routes/_app/settings/ip'
-import { Route as AppSettingsBackupRouteImport } from './routes/_app/settings/backup'
 import { Route as AppServiceSettingsRouteImport } from './routes/_app/service/settings'
 import { Route as AppServiceRecordsRouteImport } from './routes/_app/service/records'
 import { Route as AppProfitRulesRouteImport } from './routes/_app/profit/rules'
@@ -94,11 +93,6 @@ const AppSettingsIpRoute = AppSettingsIpRouteImport.update({
   path: '/settings/ip',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSettingsBackupRoute = AppSettingsBackupRouteImport.update({
-  id: '/settings/backup',
-  path: '/settings/backup',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppServiceSettingsRoute = AppServiceSettingsRouteImport.update({
   id: '/service/settings',
   path: '/service/settings',
@@ -137,7 +131,6 @@ export interface FileRoutesByFullPath {
   '/profit/rules': typeof AppProfitRulesRoute
   '/service/records': typeof AppServiceRecordsRoute
   '/service/settings': typeof AppServiceSettingsRoute
-  '/settings/backup': typeof AppSettingsBackupRoute
   '/settings/ip': typeof AppSettingsIpRoute
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
@@ -157,7 +150,6 @@ export interface FileRoutesByTo {
   '/profit/rules': typeof AppProfitRulesRoute
   '/service/records': typeof AppServiceRecordsRoute
   '/service/settings': typeof AppServiceSettingsRoute
-  '/settings/backup': typeof AppSettingsBackupRoute
   '/settings/ip': typeof AppSettingsIpRoute
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
@@ -179,7 +171,6 @@ export interface FileRoutesById {
   '/_app/profit/rules': typeof AppProfitRulesRoute
   '/_app/service/records': typeof AppServiceRecordsRoute
   '/_app/service/settings': typeof AppServiceSettingsRoute
-  '/_app/settings/backup': typeof AppSettingsBackupRoute
   '/_app/settings/ip': typeof AppSettingsIpRoute
   '/_app/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/_app/settings/org': typeof AppSettingsOrgRoute
@@ -201,7 +192,6 @@ export interface FileRouteTypes {
     | '/profit/rules'
     | '/service/records'
     | '/service/settings'
-    | '/settings/backup'
     | '/settings/ip'
     | '/settings/notification-events'
     | '/settings/org'
@@ -221,7 +211,6 @@ export interface FileRouteTypes {
     | '/profit/rules'
     | '/service/records'
     | '/service/settings'
-    | '/settings/backup'
     | '/settings/ip'
     | '/settings/notification-events'
     | '/settings/org'
@@ -242,7 +231,6 @@ export interface FileRouteTypes {
     | '/_app/profit/rules'
     | '/_app/service/records'
     | '/_app/service/settings'
-    | '/_app/settings/backup'
     | '/_app/settings/ip'
     | '/_app/settings/notification-events'
     | '/_app/settings/org'
@@ -351,13 +339,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsIpRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/settings/backup': {
-      id: '/_app/settings/backup'
-      path: '/settings/backup'
-      fullPath: '/settings/backup'
-      preLoaderRoute: typeof AppSettingsBackupRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/service/settings': {
       id: '/_app/service/settings'
       path: '/service/settings'
@@ -405,7 +386,6 @@ interface AppRouteChildren {
   AppProfitRulesRoute: typeof AppProfitRulesRoute
   AppServiceRecordsRoute: typeof AppServiceRecordsRoute
   AppServiceSettingsRoute: typeof AppServiceSettingsRoute
-  AppSettingsBackupRoute: typeof AppSettingsBackupRoute
   AppSettingsIpRoute: typeof AppSettingsIpRoute
   AppSettingsNotificationEventsRoute: typeof AppSettingsNotificationEventsRoute
   AppSettingsOrgRoute: typeof AppSettingsOrgRoute
@@ -424,7 +404,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfitRulesRoute: AppProfitRulesRoute,
   AppServiceRecordsRoute: AppServiceRecordsRoute,
   AppServiceSettingsRoute: AppServiceSettingsRoute,
-  AppSettingsBackupRoute: AppSettingsBackupRoute,
   AppSettingsIpRoute: AppSettingsIpRoute,
   AppSettingsNotificationEventsRoute: AppSettingsNotificationEventsRoute,
   AppSettingsOrgRoute: AppSettingsOrgRoute,
