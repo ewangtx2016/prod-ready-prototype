@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Download, AlertTriangle } from "lucide-react";
+import { Download, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { usePagination } from "@/components/dev/TablePagination";
 import { toast } from "sonner";
 
@@ -57,8 +57,22 @@ function Page() {
   const [org, setOrg] = useState<string>(() => defaultOrgValue(role, orgName));
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
   const isPlanner = role === "planner";
   const currentUserName = ROLE_META[role].name;
+
+  function toggleSort(field: string) {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortField(null);
+      setSortDir(null);
+    }
+  }
   const orders = allOrders;
   const orderById = useMemo(() => new Map(orders.map((o) => [o.id, o])), [orders]);
   const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
@@ -263,8 +277,12 @@ function Page() {
         <Table>
           <TableHeader><TableRow>
             <TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>产品名称</TableHead><TableHead>产品类型</TableHead>
-            <TableHead>渠道</TableHead><TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>学管师</TableHead><TableHead>订单金额</TableHead><TableHead>机构分成</TableHead><TableHead>规划师分成</TableHead><TableHead>平台</TableHead>
-            <TableHead>状态</TableHead><TableHead>结算时间</TableHead>
+            <TableHead>渠道</TableHead><TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>学管师</TableHead><TableHead>订单金额</TableHead>
+            <TableHead onClick={() => toggleSort("orgAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">机构分成{sortField === "orgAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "orgAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "orgAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
+            <TableHead onClick={() => toggleSort("plannerAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">规划师分成{sortField === "plannerAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "plannerAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "plannerAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
+            <TableHead onClick={() => toggleSort("platformAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">平台{sortField === "platformAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "platformAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "platformAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
+            <TableHead>状态</TableHead>
+            <TableHead onClick={() => toggleSort("settledAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">结算时间{sortField === "settledAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "settledAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "settledAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {paged.map((l) => {

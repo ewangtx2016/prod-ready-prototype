@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download } from "lucide-react";
+import { Download, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,9 +43,23 @@ function Inner() {
   const [org, setOrg] = useState<string>(() => defaultOrgValue(role, orgName));
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
   const isPlanner = role === "planner";
   const currentUserName = ROLE_META[role].name;
   useEffect(() => { setOrders(db.orders()); }, []);
+
+  function toggleSort(field: string) {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortField(null);
+      setSortDir(null);
+    }
+  }
 
   const scopedOrders = filterByDataPerm(orders, "sales", role, currentUserName, orgName);
   const plannerOptions = Array.from(new Set(scopedOrders.map((o) => o.plannerName)));
@@ -185,9 +199,9 @@ function Inner() {
         <Table>
             <TableHeader><TableRow>
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
-              <TableHead>产品名称</TableHead><TableHead>产品类型</TableHead><TableHead>金额</TableHead>
+              <TableHead>产品名称</TableHead><TableHead>产品类型</TableHead><TableHead onClick={() => toggleSort("amount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">金额{sortField === "amount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "amount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "amount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
               <TableHead>机构</TableHead><TableHead>规划师</TableHead><TableHead>学管师</TableHead>
-              <TableHead>渠道</TableHead><TableHead>状态</TableHead><TableHead>下单时间</TableHead><TableHead className="text-right">操作</TableHead>
+              <TableHead>渠道</TableHead><TableHead>状态</TableHead><TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">下单时间{sortField === "createdAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "createdAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "createdAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {paged.map((o) => (

@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, Download, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play, User as UserIcon, Cake, IdCard, School, BookOpen } from "lucide-react";
+import { Eye, Download, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play, User as UserIcon, Cake, IdCard, School, BookOpen, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -161,6 +161,20 @@ function Page() {
   const [fEnd, setFEnd] = useState("");
   const [fRecordType, setFRecordType] = useState<"all" | "delivery" | "presales">("all");
   const [fServantRole, setFServantRole] = useState<"all" | "planner" | "tutor">("all");
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
+
+  function toggleSort(field: string) {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortField(null);
+      setSortDir(null);
+    }
+  }
 
   useEffect(() => { setRecords(db.services()); }, []);
   const isServantView = role === "planner" || role === "tutor";
@@ -321,7 +335,14 @@ function Page() {
                 <TableHead>内容</TableHead>
                 <TableHead>机构名称</TableHead>
                 <TableHead>服务人</TableHead>
-                <TableHead>提交时间</TableHead>
+                <TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none">
+                  <div className="flex items-center gap-1">
+                    提交时间
+                    {sortField === "createdAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}
+                    {sortField === "createdAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}
+                    {sortField !== "createdAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
+                  </div>
+                </TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
