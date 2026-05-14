@@ -265,7 +265,7 @@ export function seedIfNeeded(force = false) {
     {
       id: "R" + rid(),
       name: "2026 Q2 默认分成规则",
-      version: "v1.0",
+      version: "v0.0.1",
       status: "active",
       createdBy: "鼎校超管",
       createdAt: "2026-03-15 10:00",

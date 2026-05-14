@@ -56,7 +56,7 @@ export function AppSidebar() {
         ))}
       </nav>
       <div className="border-t p-3 text-[10px] text-muted-foreground">
-        v1.0 · 高保真原型
+        v0.0.1 · 高保真原型
       </div>
     </aside>
   );

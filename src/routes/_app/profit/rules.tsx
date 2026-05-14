@@ -236,7 +236,7 @@ function CreateRuleForm({ onClose }: { onClose: (submit: boolean, rule?: ProfitR
     if (!name.trim()) { toast.error("请填写规则名称"); return; }
     if (sum !== 1) { toast.error(`权重之和必须为 1，当前=${sum}`); return; }
     const rule: ProfitRule = {
-      id: "R" + db.rid(), name, version: "v1.0", status: "draft",
+      id: "R" + db.rid(), name, version: "v0.0.1", status: "draft",
       createdBy: "鼎校超管", createdAt: new Date().toLocaleString("zh-CN"),
       dims: {
         courseType: { weight: w1, ratios: { 学科课: { org: 60, planner: 30, platform: 10 }, 素养课: { org: 50, planner: 35, platform: 15 } } },
