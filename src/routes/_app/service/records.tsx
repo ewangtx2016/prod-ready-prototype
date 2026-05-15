@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, Download, UserCog, GraduationCap, Link2, Coffee, Image as ImageIcon, Video, Paperclip, FileText, Play, User as UserIcon, Cake, IdCard, School, BookOpen, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Eye, Download, UserCog, GraduationCap, Image as ImageIcon, Video, Paperclip, FileText, Play, User as UserIcon, Cake, IdCard, School, BookOpen, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -155,12 +155,12 @@ function Page() {
   const [records, setRecords] = useState<ServiceRecord[]>([]);
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
   const [fUser, setFUser] = useState("");
-  const [fSubmitter, setFSubmitter] = useState("");
+  const [fPlanner, setFPlanner] = useState("");
+  const [fTutor, setFTutor] = useState("");
   const [fOrgName, setFOrgName] = useState(() => defaultOrgValue(role, orgName));
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
-  const [fRecordType, setFRecordType] = useState<"all" | "delivery" | "presales">("all");
-  const [fServantRole, setFServantRole] = useState<"all" | "planner" | "tutor">("all");
+  const [fServiceType, setFServiceType] = useState("all");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
 
@@ -191,16 +191,16 @@ function Page() {
         const q = fUser.trim().toLowerCase();
         if (!r.userName.toLowerCase().includes(q) && !r.userPhone.includes(q)) return false;
       }
-      if (!isServantView && fSubmitter.trim() && !r.createdBy.toLowerCase().includes(fSubmitter.trim().toLowerCase())) return false;
       if (fOrgName !== "all" && (r.orgName ?? "") !== fOrgName) return false;
-      if (!isServantView && fServantRole !== "all" && r.createdByRole !== fServantRole) return false;
+      if (!isServantView && fPlanner.trim() && !r.createdBy.toLowerCase().includes(fPlanner.trim().toLowerCase())) return false;
+      if (!isServantView && fTutor.trim() && !r.createdBy.toLowerCase().includes(fTutor.trim().toLowerCase())) return false;
       if (fStart && r.createdAt < fStart) return false;
       if (fEnd && r.createdAt > fEnd + " 23:59") return false;
-      if (fRecordType !== "all" && (r.recordType ?? "presales") !== fRecordType) return false;
+      if (fServiceType !== "all" && r.serviceType !== fServiceType) return false;
       return true;
     });
   const { paged, Pagination } = usePagination(filtered, 10);
-  const resetFilters = () => { setFUser(""); setFSubmitter(""); setFOrgName(defaultOrgValue(role, orgName)); setFServantRole("all"); setFStart(""); setFEnd(""); setFRecordType("all"); };
+  const resetFilters = () => { setFUser(""); setFPlanner(""); setFTutor(""); setFOrgName(defaultOrgValue(role, orgName)); setFStart(""); setFEnd(""); setFServiceType("all"); };
 
   return (
     <div>
@@ -269,20 +269,21 @@ function Page() {
 
       <div className={`mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 ${isServantView ? "md:grid-cols-5" : "md:grid-cols-7"}`}>
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">记录类型</Label>
-          <Select value={fRecordType} onValueChange={(v) => setFRecordType(v as any)}>
-            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部类型</SelectItem>
-              <SelectItem value="delivery">交付服务</SelectItem>
-              <SelectItem value="presales">日常跟进</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">用户（姓名/手机）</Label>
           <Input value={fUser} onChange={(e) => setFUser(e.target.value)} placeholder="搜索用户" className="h-8" />
         </div>
+        {!isServantView && (
+          <>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">规划师</Label>
+              <Input value={fPlanner} onChange={(e) => setFPlanner(e.target.value)} placeholder="搜索规划师" className="h-8" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">学管师</Label>
+              <Input value={fTutor} onChange={(e) => setFTutor(e.target.value)} placeholder="搜索学管师" className="h-8" />
+            </div>
+          </>
+        )}
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">机构名称</Label>
           <SearchSelect
@@ -293,25 +294,21 @@ function Page() {
             placeholder="搜索机构名称"
           />
         </div>
-        {!isServantView && (
-          <>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">服务人类型</Label>
-              <Select value={fServantRole} onValueChange={(v) => setFServantRole(v as any)}>
-                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部</SelectItem>
-                  <SelectItem value="planner">规划师</SelectItem>
-                  <SelectItem value="tutor">学管师</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">服务人姓名</Label>
-              <Input value={fSubmitter} onChange={(e) => setFSubmitter(e.target.value)} placeholder="搜索服务人姓名" className="h-8" />
-            </div>
-          </>
-        )}
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">跟进类型</Label>
+          <Select value={fServiceType} onValueChange={(v) => setFServiceType(v)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部</SelectItem>
+              <SelectItem value="课前服务">课前服务</SelectItem>
+              <SelectItem value="课中服务">课中服务</SelectItem>
+              <SelectItem value="课后服务">课后服务</SelectItem>
+              <SelectItem value="客户关怀">客户关怀</SelectItem>
+              <SelectItem value="学情报告">学情报告</SelectItem>
+              <SelectItem value="家长互动">家长互动</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">开始日期</Label>
           <Input type="date" value={fStart} onChange={(e) => setFStart(e.target.value)} className="h-8" />
@@ -331,8 +328,8 @@ function Page() {
               <TableRow>
                 <TableHead>用户</TableHead>
                 <TableHead>手机号</TableHead>
-                <TableHead>记录类型</TableHead>
-                <TableHead>内容</TableHead>
+                <TableHead>跟进类型</TableHead>
+                <TableHead>跟进内容</TableHead>
                 <TableHead>机构名称</TableHead>
                 <TableHead>服务人</TableHead>
                 <TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none">
@@ -352,16 +349,7 @@ function Page() {
                   <TableCell>{maskName(r.userName, role)}</TableCell>
                   <TableCell className="font-mono text-xs">{maskPhone(r.userPhone, role)}</TableCell>
                   <TableCell>
-                    {(r.recordType ?? "presales") === "delivery" ? (
-                      <div className="space-y-0.5">
-                        <Badge variant="outline" className="gap-1 border-success/40 bg-success/10 text-success"><Link2 className="h-3 w-3" />交付服务</Badge>
-                        {r.orderIds && r.orderIds.length > 0 && (
-                          <div className="text-[10px] text-muted-foreground font-mono">{r.orderIds.length === 1 ? r.orderIds[0] : `${r.orderIds[0]} 等${r.orderIds.length}单`}</div>
-                        )}
-                      </div>
-                    ) : (
-                      <Badge variant="outline" className="gap-1 text-muted-foreground"><Coffee className="h-3 w-3" />日常跟进</Badge>
-                    )}
+                    <Badge variant="outline" className="text-xs font-normal">{r.serviceType}</Badge>
                   </TableCell>
                   <TableCell className="max-w-xs text-xs">
                     <div className="truncate">{r.content}</div>
@@ -453,8 +441,8 @@ function Page() {
               <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-auto">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg border bg-muted/30 p-3">
-                    <div className="text-[11px] text-muted-foreground mb-1">记录类型</div>
-                    <div className="text-sm font-medium">{(viewing.recordType ?? "presales") === "delivery" ? "交付服务" : "日常跟进"}</div>
+                    <div className="text-[11px] text-muted-foreground mb-1">跟进类型</div>
+                    <div className="text-sm font-medium">{viewing.serviceType}</div>
                   </div>
                   <div className="rounded-lg border bg-muted/30 p-3">
                     <div className="text-[11px] text-muted-foreground mb-1">提交时间</div>
@@ -470,7 +458,7 @@ function Page() {
                 </div>
 
                 <div>
-                  <div className="text-xs font-medium text-muted-foreground mb-2">服务内容</div>
+                  <div className="text-xs font-medium text-muted-foreground mb-2">跟进内容</div>
                   <div className="rounded-lg border bg-card p-4 text-sm leading-relaxed whitespace-pre-wrap">{viewing.content}</div>
                   {viewing.attachments && viewing.attachments.length > 0 && (
                     <div className="mt-3">

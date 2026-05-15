@@ -276,14 +276,6 @@ function Dashboard() {
                 width="w-40"
               />
             )}
-            <Select defaultValue="all_channel">
-              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all_channel">全部来源渠道</SelectItem>
-                <SelectItem value="dingtuan">鼎团团</SelectItem>
-                <SelectItem value="zhenxuan">甄选</SelectItem>
-              </SelectContent>
-            </Select>
           </>
         )}
       </div>

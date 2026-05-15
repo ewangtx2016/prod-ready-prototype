@@ -38,7 +38,6 @@ function Inner() {
   const [productType, setProductType] = useState<string>("all");
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
   const [keyword, setKeyword] = useState("");
-  const [channel, setChannel] = useState<string>("all");
   const [planner, setPlanner] = useState<string>("all");
   const [org, setOrg] = useState<string>(() => defaultOrgValue(role, orgName));
   const [startDate, setStartDate] = useState("");
@@ -70,7 +69,6 @@ function Inner() {
   const filtered = scopedOrders.filter((o) => {
     if (tab !== "all" && o.status !== tab) return false;
     if (productType !== "all" && productTypeLabel(o.courseType) !== productType) return false;
-    if (channel !== "all" && o.channel !== channel) return false;
     if (!isPlanner && planner !== "all" && o.plannerName !== planner) return false;
     if (org !== "all" && o.orgName !== org) return false;
     if (kw && !(
@@ -98,7 +96,7 @@ function Inner() {
     { label: "待支付金额", value: sumAmount(pendingOrders), countLabel: "待支付订单量", count: pendingOrders.length, className: "text-warning" },
     { label: "已退费金额", value: sumAmount(refundedOrders), countLabel: "已退费订单量", count: refundedOrders.length, className: "text-destructive" },
   ];
-  const resetFilters = () => { setKeyword(""); setProductType("all"); setChannel("all"); setPlanner("all"); setOrg(defaultOrgValue(role, orgName)); setStartDate(""); setEndDate(""); };
+  const resetFilters = () => { setKeyword(""); setProductType("all"); setPlanner("all"); setOrg(defaultOrgValue(role, orgName)); setStartDate(""); setEndDate(""); };
 
   return (
     <div>
@@ -134,17 +132,6 @@ function Inner() {
             <SelectContent>
               <SelectItem value="all">全部类型</SelectItem>
               {productTypeOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">渠道</Label>
-          <Select value={channel} onValueChange={setChannel}>
-            <SelectTrigger className="h-8"><SelectValue placeholder="渠道" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部渠道</SelectItem>
-              <SelectItem value="鼎团团">鼎团团</SelectItem>
-              <SelectItem value="甄选">甄选</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -201,7 +188,7 @@ function Inner() {
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
               <TableHead>产品名称</TableHead><TableHead>产品类型</TableHead><TableHead onClick={() => toggleSort("amount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">金额{sortField === "amount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "amount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "amount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
               <TableHead>机构</TableHead><TableHead>规划师</TableHead><TableHead>学管师</TableHead>
-              <TableHead>渠道</TableHead><TableHead>状态</TableHead><TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">下单时间{sortField === "createdAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "createdAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "createdAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead><TableHead className="text-right">操作</TableHead>
+              <TableHead>状态</TableHead><TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">下单时间{sortField === "createdAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "createdAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "createdAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {paged.map((o) => (
@@ -215,13 +202,12 @@ function Inner() {
                   <TableCell className="text-xs">{o.orgName}</TableCell>
                   <TableCell className="text-xs">{o.plannerName}</TableCell>
                   <TableCell className="text-xs">{o.tutorName || "-"}</TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{o.channel}</span></TableCell>
                   <TableCell><Badge variant={o.status === "已退费" ? "destructive" : o.status === "退费中" ? "secondary" : "default"}>{o.status}</Badge></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{o.createdAt}</TableCell>
                   <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={13} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={12} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
             </TableBody>
         </Table>
         <Pagination />

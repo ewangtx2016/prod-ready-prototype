@@ -4,7 +4,7 @@ export type ServiceRecord = {
   id: string;
   userName: string;
   userPhone: string;
-  serviceType: string; // 沟通/督学/答疑/打卡/社群
+  serviceType: string; // 课前服务/课中服务/课后服务/客户关怀/学情报告/家长互动
   content: string;
   duration: number; // 分钟
   createdBy: string; // 规划师/学管师 名
@@ -134,6 +134,76 @@ export type ReviewRule = {
 export type AlertRule = ReviewRule;
 export type AlertRuleType = ReviewRuleType;
 
+/** 学员档案 */
+export type Student = {
+  id: string;
+  name: string;
+  gender: "男" | "女";
+  studentNo: string;
+  birthDate: string;
+  school: string;
+  grade: string;
+  orgName?: string;
+  plannerName: string;
+  tutorName: string;
+  status: "pending" | "serving" | "expired";
+  remainingDays: number | null;
+  createdAt: string;
+  // 详情页扩展字段
+  learningMachineAccount?: string;
+  deviceBindCode?: string;
+  holidayType?: string;
+  holidayTime?: string;
+  memberAccount?: string;
+  isTabletMember?: boolean;
+  memberType?: string;
+  memberDuration?: string;
+  benefitStartDate?: string;
+  benefitEndDate?: string;
+  archiveChangeLogs?: ArchiveChangeLog[];
+  followUpRecords?: FollowUpRecord[];
+  parents?: Parent[];
+  historyPlanners?: HistoryPlanner[];
+};
+
+export type ArchiveChangeLog = {
+  id: string;
+  operator: string;
+  operatorId: string;
+  operatorRole: string;
+  operationTime: string;
+  content: string;
+};
+
+export type FollowUpRecord = {
+  id: string;
+  time: string;
+  operatorName: string;
+  operatorRole: string;
+  recordId: string;
+  type: string;
+  relatedTodoId: string;
+  content: string;
+  attachments?: { type: "image" | "video"; url: string; thumb?: string }[];
+};
+
+export type Parent = {
+  name: string;
+  relation: string;
+  phone: string;
+  wechat: string;
+};
+
+export type HistoryPlanner = {
+  id: string;
+  name: string;
+  account: string;
+  level: string;
+  brand: string;
+  club: string;
+  joinTime: string;
+};
+
 /** 机构信息 */
 export type Org = {
   id: string;
@@ -169,7 +239,8 @@ const KEYS = {
   ledger: "demo.ledger",
   log: "demo.logs",
   orgs: "demo.orgs",
-  seeded: "demo.seeded.v9",
+  student: "demo.students",
+  seeded: "demo.seeded.v12",
   // 注：模型变更需提升版本以触发重置
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
@@ -196,17 +267,17 @@ export function seedIfNeeded(force = false) {
   if (!force && localStorage.getItem(KEYS.seeded)) return;
 
   const services: ServiceRecord[] = [
-    { id: rid(), userName: "张明轩", userPhone: "13812345678", serviceType: "沟通", content: "电话沟通孩子近期数学作业情况，建议加练应用题。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-25 10:30", status: "approved" },
-    { id: rid(), userName: "王小宇", userPhone: "13987654321", serviceType: "督学", content: "督促完成今日打卡，已提醒家长配合。", duration: 15, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-26 14:20", status: "submitted" },
-    { id: rid(), userName: "李思琪", userPhone: "13511112222", serviceType: "答疑", content: "答疑物理浮力题，约 20 分钟。", duration: 20, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-27 16:00", status: "submitted" },
-    { id: rid(), userName: "赵晓彤", userPhone: "13633334444", serviceType: "沟通", content: "推荐艺考素养课，家长有意向，待二次回访。", duration: 45, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-28 09:15", status: "pending_audit", pendingChange: { reason: "补充家长反馈", newContent: "推荐艺考素养课，家长已确认报名，下周缴费。", submittedAt: "2026-04-28 18:00" } },
-    { id: rid(), userName: "孙文博", userPhone: "13755556666", serviceType: "社群", content: "社群答疑英语单词记忆方法。", duration: 10, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-28 20:00", status: "rejected", rejectReason: "服务记录内容过于简单，请补充具体场景与时长证明。" },
-    { id: rid(), userName: "周俊辉", userPhone: "13822221111", serviceType: "沟通", content: "电话回访高考志愿规划方案，家长确认主选 985 工科，同步推荐冲刺一对一。", duration: 40, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-22 11:10", status: "approved" },
-    { id: rid(), userName: "陈雨桐", userPhone: "13966667777", serviceType: "答疑", content: "答疑高一化学方程式配平 3 道，已发讲解视频。", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-23 19:40", status: "approved" },
-    { id: rid(), userName: "吴泽凯", userPhone: "13700008888", serviceType: "督学", content: "督学连续 7 天打卡完成，奖励学分 +20。", duration: 12, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-24 21:30", status: "approved" },
-    { id: rid(), userName: "黄诗涵", userPhone: "13599998888", serviceType: "沟通", content: "家长来电咨询艺考集训费用结构，已发送报价单与课程大纲。", duration: 35, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 15:00", status: "pending_audit", pendingChange: { reason: "用户姓名拼写错误，需修正", newContent: "家长来电咨询艺考集训费用结构，已发送报价单与课程大纲；用户姓名修正为 黄诗晗。", submittedAt: "2026-04-27 09:20" } },
-    { id: rid(), userName: "林梓豪", userPhone: "13422223333", serviceType: "答疑", content: "答疑初三物理电路图分析，约 30 分钟。", duration: 30, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-27 20:10", status: "pending_audit", pendingChange: { reason: "时长录入有误，实际为 45 分钟", newContent: "答疑初三物理电路图分析，含 2 道拓展题，实际 45 分钟。", submittedAt: "2026-04-28 08:30" } },
-    { id: rid(), userName: "苏婉清", userPhone: "13311114444", serviceType: "社群", content: "组织社群早读打卡，参与 28 人。", duration: 20, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-28 07:30", status: "pending_audit", pendingChange: { reason: "补充服务对象明细", newContent: "组织社群早读打卡，参与 28 人，重点跟进 5 名落后学员。", submittedAt: "2026-04-28 22:00" } },
+    { id: rid(), userName: "张明轩", userPhone: "13812345678", serviceType: "课前服务", content: "今天已经视频沟通", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-25 10:30", status: "approved" },
+    { id: rid(), userName: "王小宇", userPhone: "13987654321", serviceType: "课中服务", content: "学员今天表现不错", duration: 15, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-26 14:20", status: "submitted" },
+    { id: rid(), userName: "李思琪", userPhone: "13511112222", serviceType: "课后服务", content: "学员今天表现不错", duration: 20, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-27 16:00", status: "submitted" },
+    { id: rid(), userName: "赵晓彤", userPhone: "13633334444", serviceType: "客户关怀", content: "今天已经视频沟通", duration: 45, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-28 09:15", status: "pending_audit", pendingChange: { reason: "补充家长反馈", newContent: "今天已经视频沟通", submittedAt: "2026-04-28 18:00" } },
+    { id: rid(), userName: "孙文博", userPhone: "13755556666", serviceType: "学情报告", content: "学员今天表现不错", duration: 10, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-28 20:00", status: "rejected", rejectReason: "服务记录内容过于简单，请补充具体场景与时长证明。" },
+    { id: rid(), userName: "周俊辉", userPhone: "13822221111", serviceType: "家长互动", content: "今天已经视频沟通", duration: 40, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-22 11:10", status: "approved" },
+    { id: rid(), userName: "陈雨桐", userPhone: "13966667777", serviceType: "课前服务", content: "学员今天表现不错", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-23 19:40", status: "approved" },
+    { id: rid(), userName: "吴泽凯", userPhone: "13700008888", serviceType: "课中服务", content: "学员今天表现不错", duration: 12, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-24 21:30", status: "approved" },
+    { id: rid(), userName: "黄诗涵", userPhone: "13599998888", serviceType: "课后服务", content: "今天已经视频沟通", duration: 35, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 15:00", status: "pending_audit", pendingChange: { reason: "用户姓名拼写错误，需修正", newContent: "今天已经视频沟通", submittedAt: "2026-04-27 09:20" } },
+    { id: rid(), userName: "林梓豪", userPhone: "13422223333", serviceType: "客户关怀", content: "学员今天表现不错", duration: 30, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-27 20:10", status: "pending_audit", pendingChange: { reason: "时长录入有误，实际为 45 分钟", newContent: "学员今天表现不错", submittedAt: "2026-04-28 08:30" } },
+    { id: rid(), userName: "苏婉清", userPhone: "13311114444", serviceType: "学情报告", content: "学员今天表现不错", duration: 20, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-28 07:30", status: "pending_audit", pendingChange: { reason: "补充服务对象明细", newContent: "学员今天表现不错", submittedAt: "2026-04-28 22:00" } },
   ];
   // 存量服务记录默认全部标记为「日常跟进」（无订单绑定），并补充机构名称
   const orgMap: Record<string, string> = {
@@ -243,18 +314,18 @@ export function seedIfNeeded(force = false) {
 
   // 演示用「交付类」服务记录，绑定到具体订单
   const deliveryServices: ServiceRecord[] = [
-    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "督学", content: "高三数学冲刺班开课首周督学，确认每日刷题计划。", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-21 20:30", status: "approved", recordType: "delivery", orderIds: [orders[0].id], orgName: orders[0].orgName, attachments: [
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "家长互动", content: "学员今天表现不错", duration: 25, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-21 20:30", status: "approved", recordType: "delivery", orderIds: [orders[0].id], orgName: orders[0].orgName, attachments: [
       { id: rid(), type: "image", name: "刷题计划表.png", url: PIC("d1a"), thumb: PIC_THUMB("d1a"), size: 256000 },
       { id: rid(), type: "image", name: "首周打卡截图.png", url: PIC("d1b"), thumb: PIC_THUMB("d1b"), size: 198000 },
     ] },
-    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "答疑", content: "数学函数综合题答疑 4 道，已发送视频讲解。", duration: 35, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-25 19:00", status: "approved", recordType: "delivery", orderIds: [orders[0].id], orgName: orders[0].orgName, attachments: [
+    { id: rid(), userName: orders[0].userName, userPhone: orders[0].userPhone, serviceType: "课前服务", content: "学员今天表现不错", duration: 35, createdBy: "陈学管", createdByRole: "tutor", createdAt: "2026-04-25 19:00", status: "approved", recordType: "delivery", orderIds: [orders[0].id], orgName: orders[0].orgName, attachments: [
       { id: rid(), type: "video", name: "函数题讲解.mp4", url: SAMPLE_VIDEO, thumb: PIC_THUMB("d2v"), size: 8 * 1024 * 1024 },
       { id: rid(), type: "file", name: "函数综合题.pdf", url: "#mock-pdf", size: 614400 },
     ] },
-    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "沟通", content: "AI 学习机 Pro 开通沟通，确认设备激活、账号绑定与学习计划。", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id], orgName: orders[1].orgName, attachments: [
+    { id: rid(), userName: orders[1].userName, userPhone: orders[1].userPhone, serviceType: "课中服务", content: "今天已经视频沟通", duration: 20, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-23 10:00", status: "approved", recordType: "delivery", orderIds: [orders[1].id], orgName: orders[1].orgName, attachments: [
       { id: rid(), type: "image", name: "设备激活截图.png", url: PIC("d3a"), thumb: PIC_THUMB("d3a"), size: 102400 },
     ] },
-    { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "沟通", content: "艺考素养课退费沟通，已记录原因并提交退费流程。", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id], orgName: orders[3].orgName, attachments: [
+    { id: rid(), userName: orders[3].userName, userPhone: orders[3].userPhone, serviceType: "课后服务", content: "今天已经视频沟通", duration: 30, createdBy: "李规划", createdByRole: "planner", createdAt: "2026-04-26 16:30", status: "approved", recordType: "delivery", orderIds: [orders[3].id], orgName: orders[3].orgName, attachments: [
       { id: rid(), type: "file", name: "退费申请书.pdf", url: "#mock-pdf", size: 245760 },
       { id: rid(), type: "file", name: "沟通录音.m4a", url: "#mock-audio", size: 1048576 },
     ] },
@@ -323,6 +394,8 @@ export function seedIfNeeded(force = false) {
 
   const orgs: Org[] = [
     { id: rid(), name: "机构用户平台", phone: "400-888-0001", email: "contact@orguser.edu", address: "北京市海淀区中关村大街 1 号" },
+    { id: rid(), name: "鼎校教育朝阳校区", phone: "400-888-0002", email: "chaoyang@dingschool.edu", address: "北京市朝阳区建国路 88 号" },
+    { id: rid(), name: "鼎校教育海淀校区", phone: "400-888-0003", email: "haidian@dingschool.edu", address: "北京市海淀区学院路 35 号" },
   ];
   write(KEYS.orgs, orgs);
 
@@ -333,6 +406,95 @@ export function seedIfNeeded(force = false) {
     { id: rid(), type: "amount", name: "单笔金额异常（< 1 元 或 > 50000 元）", enabled: true, config: { minAmount: 1, maxAmount: 50000 }, notify: { inbox: true, sms: true, group: true }, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
   ];
   write(KEYS.alertRule, alertRules);
+
+  const students: Student[] = (() => {
+    const surnames = ["王", "李", "张", "刘", "陈", "杨", "赵", "黄", "周", "吴", "徐", "孙", "马", "朱", "胡", "林", "郭", "何", "高", "罗"];
+    const names = ["伟", "芳", "娜", "敏", "静", "丽", "强", "磊", "军", "洋", "勇", "艳", "杰", "娟", "涛", "明", "超", "秀英", "华", "鹏", "飞", "婷", "宇", "浩", "欣", "雨", "晨", "轩", "昊", "瑞", "梓", "涵", "彤", "诺", "一", "可", "乐", "安", "然", "逸"];
+    const schools = ["天鹅湖小学", "天鹅湖中学", "实验小学", "实验中学", "市第一中学", "育才小学", "外国语学校", "明德中学", "新华中学", "阳光小学", "博雅中学", "翰林小学", "清风中学", "彩虹小学", "星辰中学"];
+    const planners = ["张三", "李四", "赵六", "孙八", "吴十", "郑十一", "钱七", "周九", "王十二", "冯十三", "陈十四", "褚十五"];
+    const tutors = ["陈学管", "王学管", "李学管", "张学管", "刘学管", "赵学管", "孙学管", "周学管", "吴学管", "郑学管"];
+    const grades = [
+      "小学一年级", "小学二年级", "小学三年级", "小学四年级", "小学五年级", "小学六年级",
+      "初中一年级", "初中二年级", "初中三年级",
+      "高中一年级", "高中二年级", "高中三年级",
+    ];
+    const gradeBirthYear: Record<string, number> = {
+      "小学一年级": 2018, "小学二年级": 2017, "小学三年级": 2016, "小学四年级": 2015, "小学五年级": 2014, "小学六年级": 2013,
+      "初中一年级": 2012, "初中二年级": 2011, "初中三年级": 2010,
+      "高中一年级": 2009, "高中二年级": 2008, "高中三年级": 2007,
+    };
+    const statuses: Student["status"][] = ["pending", "serving", "expired"];
+    const holidayTypes = ["寒假", "暑假", "无"];
+    const memberTypes = ["鼎星会员", "普通会员", "VIP会员"];
+    const levels = ["品牌", "俱乐部", "规划师"];
+    const brands = ["AAA", "BBB", "CCC", "DDD"];
+    const clubs = ["111", "222", "333", "444"];
+    const orgNames = orgs.map((o) => o.name);
+    const out: Student[] = [];
+    for (let i = 0; i < 50; i++) {
+      const s = surnames[i % surnames.length];
+      const orgName = orgNames[i % orgNames.length];
+      const n = names[Math.floor(Math.random() * names.length)];
+      const name = i < 10 ? `${s}${n}${Math.random() > 0.5 ? "子" : ""}` : `${s}${n}`;
+      const gender: "男" | "女" = i % 3 === 0 ? "女" : "男";
+      const grade = grades[i % grades.length];
+      const year = gradeBirthYear[grade] ?? 2015;
+      const month = String((i % 12) + 1).padStart(2, "0");
+      const day = String((i % 27) + 1).padStart(2, "0");
+      const birthDate = `${year}-${month}-${day}`;
+      const studentNo = `6260${String(428800 + i + 1).padStart(6, "0")}`;
+      const school = i % 7 === 0 ? "--" : schools[i % schools.length];
+      const plannerName = planners[i % planners.length];
+      const tutorName = i % 5 === 0 ? "--" : tutors[i % tutors.length];
+      const status = statuses[i % statuses.length];
+      const remainingDays = status === "serving" ? Math.floor(Math.random() * 300) + 30 : null;
+      const createdAt = `2026-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 28) + 1).padStart(2, "0")} ${String((i % 24)).padStart(2, "0")}:${String((i % 60)).padStart(2, "0")}:00`;
+
+      // 详情页扩展数据
+      const learningMachineAccount = `17${String(Math.floor(Math.random() * 9000000000) + 1000000000)}`;
+      const deviceBindCode = `DX2024${String(Math.floor(Math.random() * 90000) + 10000)}`;
+      const holidayType = holidayTypes[i % holidayTypes.length];
+      const holidayTime = holidayType === "无" ? "--" : `2026-07-01 至 2026-09-01`;
+      const memberAccount = `13${String(Math.floor(Math.random() * 9000000000) + 1000000000)}`;
+      const isTabletMember = i % 4 === 0;
+      const memberType = memberTypes[i % memberTypes.length];
+      const memberDuration = `2026-04-07 09:00:00 至 2026-05-07 09:00:00`;
+      const benefitStartDate = "2026-03-10";
+      const benefitEndDate = status === "serving" ? "2026-06-20" : (status === "pending" ? "2026-06-20" : "2026-01-01");
+
+      // 档案修改记录
+      const archiveChangeLogs: ArchiveChangeLog[] = [
+        { id: `REC${String(i + 1).padStart(3, "0")}01`, operator: tutorName === "--" ? planners[i % planners.length] : tutorName, operatorId: `1000${(i % 2) + 1}`, operatorRole: i % 2 === 0 ? "学管师" : "规划师", operationTime: `2026-04-${String((i % 10) + 10).padStart(2, "0")} 15:30:22`, content: "修改学员基本信息" },
+        { id: `REC${String(i + 1).padStart(3, "0")}02`, operator: plannerName, operatorId: `1000${(i % 3) + 1}`, operatorRole: "规划师", operationTime: `2026-04-${String((i % 10) + 5).padStart(2, "0")} 11:20:22`, content: "修改学员学情档案" },
+      ];
+
+      // 跟进记录
+      const followUpRecords: FollowUpRecord[] = [
+        { id: rid(), time: `2026-04-${String((i % 28) + 1).padStart(2, "0")} 10:00`, operatorName: tutorName === "--" ? planners[i % planners.length] : tutorName, operatorRole: "学管师", recordId: `1000${(i % 5) + 1}`, type: "课前服务", relatedTodoId: `db100${(i % 5) + 1}`, content: "学员今天表现不错", attachments: i % 3 === 0 ? [{ type: "image", url: `https://picsum.photos/seed/s${i}a/200/150`, thumb: `https://picsum.photos/seed/s${i}a/200/150` }] : undefined },
+        { id: rid(), time: `2026-04-${String((i % 28) + 2).padStart(2, "0")} 10:00`, operatorName: plannerName, operatorRole: "规划师", recordId: `1000${(i % 5) + 1}`, type: "课后服务", relatedTodoId: `db100${(i % 5) + 2}`, content: "今天已经视频沟通", attachments: i % 4 === 0 ? [{ type: "video", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumb: `https://picsum.photos/seed/s${i}v/200/150` }] : undefined },
+      ];
+
+      // 家长信息
+      const parents: Parent[] = [
+        { name: `${s}爸爸`, relation: "爸爸", phone: `199${String(Math.floor(Math.random() * 90000000) + 10000000)}`, wechat: i % 3 === 0 ? "zahngsna2" : "--" },
+        { name: `${s}妈妈`, relation: "母亲", phone: `188${String(Math.floor(Math.random() * 90000000) + 10000000)}`, wechat: i % 5 === 0 ? "mom_wechat" : "--" },
+      ];
+
+      // 历史规划师
+      const historyPlanners: HistoryPlanner[] = [
+        { id: `REC${String(i + 1).padStart(3, "0")}`, name: planners[(i + 1) % planners.length], account: `199${String(Math.floor(Math.random() * 90000000) + 10000000)}`, level: levels[i % levels.length], brand: brands[i % brands.length], club: clubs[i % clubs.length], joinTime: `2026-04-${String((i % 10) + 11).padStart(2, "0")} 15:30:22` },
+        { id: `REC${String(i + 2).padStart(3, "0")}`, name: planners[(i + 2) % planners.length], account: `199${String(Math.floor(Math.random() * 90000000) + 10000000)}`, level: levels[(i + 1) % levels.length], brand: brands[(i + 1) % brands.length], club: clubs[(i + 1) % clubs.length], joinTime: `2026-04-${String((i % 10) + 11).padStart(2, "0")} 15:30:22` },
+      ];
+
+      out.push({
+        id: rid(), name, gender, studentNo, birthDate, school, grade, orgName, plannerName, tutorName, status, remainingDays, createdAt,
+        learningMachineAccount, deviceBindCode, holidayType, holidayTime, memberAccount, isTabletMember, memberType, memberDuration,
+        benefitStartDate, benefitEndDate, archiveChangeLogs, followUpRecords, parents, historyPlanners,
+      });
+    }
+    return out;
+  })();
+  write(KEYS.student, students);
 
   const events: NotifyEvent[] = [
     { key: "service.audit.hit", name: "服务审核 · 命中规则", category: "服务审核", description: "服务记录命中任一审核规则时触发，提醒管理员处理。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true, updatedBy: "鼎校超管", updatedAt: "2026-04-20 10:00" },
@@ -363,6 +525,8 @@ export const db = {
   setLedger: (v: LedgerItem[]) => write(KEYS.ledger, v),
   logs: () => read<AuditLog[]>(KEYS.log, []),
   setLogs: (v: AuditLog[]) => write(KEYS.log, v),
+  students: () => read<Student[]>(KEYS.student, []),
+  setStudents: (v: Student[]) => write(KEYS.student, v),
   orgs: () => read<Org[]>(KEYS.orgs, []),
   setOrgs: (v: Org[]) => write(KEYS.orgs, v),
   auditMode: () => (localStorage.getItem(KEYS.auditMode) as "realtime" | "review") || "realtime",

@@ -12,6 +12,7 @@ export const ROLE_LIST: Role[] = ["org_admin", "super_admin", "planner", "tutor"
 /** 菜单可见性矩阵（PRD §14） */
 export const MENU_PERMS: Record<string, Role[]> = {
   dashboard: ["org_admin", "super_admin", "planner"],
+  student: ["org_admin", "super_admin"],
   service: ["org_admin", "super_admin", "planner", "tutor"],
   notification: ["org_admin", "super_admin", "planner", "tutor"],
   sales: ["org_admin", "super_admin", "planner"],
@@ -54,6 +55,7 @@ export function can(role: Role, action: string): boolean {
     "user.manage": ["org_admin"],
     "role.config_scope": ["org_admin"],
     "audit.view": ["org_admin", "super_admin"],
+    "student.export": ["org_admin", "super_admin"],
   };
   return matrix[action]?.includes(role) ?? false;
 }

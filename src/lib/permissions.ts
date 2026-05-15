@@ -124,6 +124,13 @@ export const DEFAULT_TREE: PermNode[] = [
     ],
   },
   {
+    id: "m_student", type: "menu", name: "学员管理", code: "student:view",
+    api: "GET /api/students", path: "/student", builtin: true,
+    children: [
+      { id: "b_student_export", type: "button", name: "导出学员", code: "student:export", api: "POST /api/students/export", builtin: true },
+    ],
+  },
+  {
     id: "m_service", type: "menu", name: "服务记录", code: "service:view",
     api: "GET /api/service/records", builtin: true,
     children: [
@@ -261,18 +268,19 @@ function defaultDataPerms(role: Role): DataPermRule[] {
 /** 按 PRD §14 矩阵给每个角色分配权限 */
 function presetIds(role: Role): string[] {
   const allowedMenus: Record<Role, string[]> = {
-    super_admin: ["dashboard", "service", "notification", "sales", "profit", "ledger", "org", "settings", "role", "user", "audit"],
-    org_admin:   ["dashboard", "service", "notification", "sales", "profit", "ledger", "org", "settings", "role", "user", "audit"],
+    super_admin: ["dashboard", "student", "service", "notification", "sales", "profit", "ledger", "org", "settings", "role", "user", "audit"],
+    org_admin:   ["dashboard", "student", "service", "notification", "sales", "profit", "ledger", "org", "settings", "role", "user", "audit"],
     planner:     ["dashboard", "service", "notification", "sales", "ledger", "org"],
     tutor:       ["service", "notification", "org"],
   };
   const allowedBtns: Record<Role, string[]> = {
-    super_admin: ["profit:create", "profit:edit", "profit:enable", "profit:disable", "service.records 查看"],
+    super_admin: ["profit:create", "profit:edit", "profit:enable", "profit:disable", "service.records 查看", "student:export"],
     org_admin: ["dashboard:export", "dashboard:customize", "service:audit", "service:export", "service:mode_switch",
                 "sales:export", "profit:audit", "profit:sms_verify", "ledger:export",
                 "org:edit",
                 "user:create", "user:edit", "user:reset_password", "user:toggle",
-                "role:config_scope", "role:create", "role:edit", "role:delete"],
+                "role:config_scope", "role:create", "role:edit", "role:delete",
+                "student:export"],
     planner: ["service:create", "service:edit_request", "ledger:export"],
     tutor: ["service:create", "service:edit_request"],
   };

@@ -25,7 +25,18 @@ const PATH_LABEL: Record<string, string> = {
   org: "机构信息", ip: "IP 白名单", "notification-events": "通知事件",
   role: "角色管理", user: "用户管理", accounts: "后台账号",
   "audit-log": "审计日志",
+  student: "学员管理",
 };
+
+/** 动态路由参数 → 面包屑显示文本 */
+const DYNAMIC_LABEL: Record<string, string> = {
+  "$id": "学员详情",
+};
+
+/** 根据当前段构造可点击的前置路径 */
+function buildPathTo(segments: string[], index: number): string {
+  return "/" + segments.slice(0, index + 1).join("/");
+}
 
 export function AppHeader() {
   const { role } = useApp();
@@ -49,12 +60,22 @@ export function AppHeader() {
       <header className="flex h-14 items-center gap-4 border-b bg-card px-4">
         <nav className="flex items-center gap-1 text-sm text-muted-foreground">
           <Link to="/dashboard" className="hover:text-foreground">首页</Link>
-          {segments.map((s, i) => (
-            <span key={i} className="flex items-center gap-1">
-              <span>/</span>
-              <span className={i === segments.length - 1 ? "text-foreground font-medium" : ""}>{PATH_LABEL[s] || s}</span>
-            </span>
-          ))}
+          {segments.map((s, i) => {
+            const isLast = i === segments.length - 1;
+            const label = DYNAMIC_LABEL[s] || PATH_LABEL[s] || s;
+            const pathTo = buildPathTo(segments, i);
+            const isDynamic = s.startsWith("$") || /^[a-zA-Z0-9]{8}$/.test(s);
+            return (
+              <span key={i} className="flex items-center gap-1">
+                <span className="text-muted-foreground/50">/</span>
+                {isLast || isDynamic ? (
+                  <span className={isLast ? "text-foreground font-medium" : ""}>{label}</span>
+                ) : (
+                  <Link to={pathTo} className="hover:text-foreground">{label}</Link>
+                )}
+              </span>
+            );
+          })}
         </nav>
         <div className="ml-auto flex items-center gap-3">
           <Button size="icon" variant="ghost" onClick={() => nav({ to: "/messages" })} title="我的消息"><Bell className="h-4 w-4" /></Button>

@@ -15,10 +15,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppMessagesRouteImport } from './routes/_app/messages'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppAuditLogRouteImport } from './routes/_app/audit-log'
+import { Route as AppStudentIndexRouteImport } from './routes/_app/student/index'
 import { Route as AppSalesIndexRouteImport } from './routes/_app/sales/index'
 import { Route as AppRoleIndexRouteImport } from './routes/_app/role/index'
 import { Route as AppLedgerIndexRouteImport } from './routes/_app/ledger/index'
 import { Route as AppUserAccountsRouteImport } from './routes/_app/user/accounts'
+import { Route as AppStudentIdRouteImport } from './routes/_app/student/$id'
 import { Route as AppSettingsOrgRouteImport } from './routes/_app/settings/org'
 import { Route as AppSettingsNotificationEventsRouteImport } from './routes/_app/settings/notification-events'
 import { Route as AppSettingsIpRouteImport } from './routes/_app/settings/ip'
@@ -57,6 +59,11 @@ const AppAuditLogRoute = AppAuditLogRouteImport.update({
   path: '/audit-log',
   getParentRoute: () => AppRoute,
 } as any)
+const AppStudentIndexRoute = AppStudentIndexRouteImport.update({
+  id: '/student/',
+  path: '/student/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
   id: '/sales/',
   path: '/sales/',
@@ -75,6 +82,11 @@ const AppLedgerIndexRoute = AppLedgerIndexRouteImport.update({
 const AppUserAccountsRoute = AppUserAccountsRouteImport.update({
   id: '/user/accounts',
   path: '/user/accounts',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentIdRoute = AppStudentIdRouteImport.update({
+  id: '/student/$id',
+  path: '/student/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsOrgRoute = AppSettingsOrgRouteImport.update({
@@ -134,10 +146,12 @@ export interface FileRoutesByFullPath {
   '/settings/ip': typeof AppSettingsIpRoute
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
+  '/student/$id': typeof AppStudentIdRoute
   '/user/accounts': typeof AppUserAccountsRoute
   '/ledger/': typeof AppLedgerIndexRoute
   '/role/': typeof AppRoleIndexRoute
   '/sales/': typeof AppSalesIndexRoute
+  '/student/': typeof AppStudentIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -153,10 +167,12 @@ export interface FileRoutesByTo {
   '/settings/ip': typeof AppSettingsIpRoute
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
+  '/student/$id': typeof AppStudentIdRoute
   '/user/accounts': typeof AppUserAccountsRoute
   '/ledger': typeof AppLedgerIndexRoute
   '/role': typeof AppRoleIndexRoute
   '/sales': typeof AppSalesIndexRoute
+  '/student': typeof AppStudentIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -174,10 +190,12 @@ export interface FileRoutesById {
   '/_app/settings/ip': typeof AppSettingsIpRoute
   '/_app/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/_app/settings/org': typeof AppSettingsOrgRoute
+  '/_app/student/$id': typeof AppStudentIdRoute
   '/_app/user/accounts': typeof AppUserAccountsRoute
   '/_app/ledger/': typeof AppLedgerIndexRoute
   '/_app/role/': typeof AppRoleIndexRoute
   '/_app/sales/': typeof AppSalesIndexRoute
+  '/_app/student/': typeof AppStudentIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -195,10 +213,12 @@ export interface FileRouteTypes {
     | '/settings/ip'
     | '/settings/notification-events'
     | '/settings/org'
+    | '/student/$id'
     | '/user/accounts'
     | '/ledger/'
     | '/role/'
     | '/sales/'
+    | '/student/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -214,10 +234,12 @@ export interface FileRouteTypes {
     | '/settings/ip'
     | '/settings/notification-events'
     | '/settings/org'
+    | '/student/$id'
     | '/user/accounts'
     | '/ledger'
     | '/role'
     | '/sales'
+    | '/student'
   id:
     | '__root__'
     | '/'
@@ -234,10 +256,12 @@ export interface FileRouteTypes {
     | '/_app/settings/ip'
     | '/_app/settings/notification-events'
     | '/_app/settings/org'
+    | '/_app/student/$id'
     | '/_app/user/accounts'
     | '/_app/ledger/'
     | '/_app/role/'
     | '/_app/sales/'
+    | '/_app/student/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -290,6 +314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuditLogRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/student/': {
+      id: '/_app/student/'
+      path: '/student'
+      fullPath: '/student/'
+      preLoaderRoute: typeof AppStudentIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/sales/': {
       id: '/_app/sales/'
       path: '/sales'
@@ -316,6 +347,13 @@ declare module '@tanstack/react-router' {
       path: '/user/accounts'
       fullPath: '/user/accounts'
       preLoaderRoute: typeof AppUserAccountsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/student/$id': {
+      id: '/_app/student/$id'
+      path: '/student/$id'
+      fullPath: '/student/$id'
+      preLoaderRoute: typeof AppStudentIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/org': {
@@ -389,10 +427,12 @@ interface AppRouteChildren {
   AppSettingsIpRoute: typeof AppSettingsIpRoute
   AppSettingsNotificationEventsRoute: typeof AppSettingsNotificationEventsRoute
   AppSettingsOrgRoute: typeof AppSettingsOrgRoute
+  AppStudentIdRoute: typeof AppStudentIdRoute
   AppUserAccountsRoute: typeof AppUserAccountsRoute
   AppLedgerIndexRoute: typeof AppLedgerIndexRoute
   AppRoleIndexRoute: typeof AppRoleIndexRoute
   AppSalesIndexRoute: typeof AppSalesIndexRoute
+  AppStudentIndexRoute: typeof AppStudentIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -407,10 +447,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsIpRoute: AppSettingsIpRoute,
   AppSettingsNotificationEventsRoute: AppSettingsNotificationEventsRoute,
   AppSettingsOrgRoute: AppSettingsOrgRoute,
+  AppStudentIdRoute: AppStudentIdRoute,
   AppUserAccountsRoute: AppUserAccountsRoute,
   AppLedgerIndexRoute: AppLedgerIndexRoute,
   AppRoleIndexRoute: AppRoleIndexRoute,
   AppSalesIndexRoute: AppSalesIndexRoute,
+  AppStudentIndexRoute: AppStudentIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, FileText, ShoppingCart, BookOpen,
-  Settings, ShieldCheck, Users, History, ChevronDown, Building2,
+  Settings, ShieldCheck, Users, History, ChevronDown, Building2, GraduationCap,
 } from "lucide-react";
 import { DEFAULT_ORG_LOGO, useApp } from "@/lib/store";
 import { usePermStore, flattenTree } from "@/lib/permissions";
@@ -13,6 +13,7 @@ type Group = { key: string; label: string; icon: React.ComponentType<{ className
 
 const GROUPS: Group[] = [
   { key: "dashboard", label: "数据看板", icon: LayoutDashboard, children: [{ to: "/dashboard", label: "数据看板", icon: LayoutDashboard, key: "dashboard" }] },
+  { key: "student", label: "学员管理", icon: GraduationCap, children: [{ to: "/student", label: "学员列表", icon: GraduationCap, key: "student" }] },
   { key: "service", label: "服务记录", icon: FileText, children: [
     { to: "/service/records", label: "服务列表", icon: FileText, key: "service" },
   ] },
