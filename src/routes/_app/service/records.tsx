@@ -154,9 +154,7 @@ function Page() {
   const { role, orgName } = useApp();
   const [records, setRecords] = useState<ServiceRecord[]>([]);
   const [viewing, setViewing] = useState<ServiceRecord | null>(null);
-  const [fUser, setFUser] = useState("");
-  const [fPlanner, setFPlanner] = useState("");
-  const [fTutor, setFTutor] = useState("");
+  const [fPerson, setFPerson] = useState("");
   const [fOrgName, setFOrgName] = useState(() => defaultOrgValue(role, orgName));
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
@@ -187,25 +185,25 @@ function Page() {
     return Array.from(new Set(scopedRecords.map((r) => r.orgName ?? "").filter(Boolean)));
   }, [scopedRecords, role, orgName]);
   const filtered = scopedRecords.filter((r) => {
-      if (fUser.trim()) {
-        const q = fUser.trim().toLowerCase();
-        if (!r.userName.toLowerCase().includes(q) && !r.userPhone.includes(q)) return false;
+      if (fPerson.trim()) {
+        const q = fPerson.trim().toLowerCase();
+        const matchUser = r.userName.toLowerCase().includes(q) || r.userPhone.includes(q);
+        const matchServant = r.createdBy.toLowerCase().includes(q);
+        if (!matchUser && !matchServant) return false;
       }
       if (fOrgName !== "all" && (r.orgName ?? "") !== fOrgName) return false;
-      if (!isServantView && fPlanner.trim() && !r.createdBy.toLowerCase().includes(fPlanner.trim().toLowerCase())) return false;
-      if (!isServantView && fTutor.trim() && !r.createdBy.toLowerCase().includes(fTutor.trim().toLowerCase())) return false;
       if (fStart && r.createdAt < fStart) return false;
       if (fEnd && r.createdAt > fEnd + " 23:59") return false;
       if (fServiceType !== "all" && r.serviceType !== fServiceType) return false;
       return true;
     });
   const { paged, Pagination } = usePagination(filtered, 10);
-  const resetFilters = () => { setFUser(""); setFPlanner(""); setFTutor(""); setFOrgName(defaultOrgValue(role, orgName)); setFStart(""); setFEnd(""); setFServiceType("all"); };
+  const resetFilters = () => { setFPerson(""); setFOrgName(defaultOrgValue(role, orgName)); setFStart(""); setFEnd(""); setFServiceType("all"); };
 
   return (
     <div>
       <PageHeader
-        title="服务记录"
+        title="服务管理"
         subtitle="规划师/学管师与用户交互的全程留痕（由外部系统同步，只读）。"
         actions={
           <>
@@ -218,7 +216,7 @@ function Page() {
         }
       />
 
-      <DevNote prd="§6.2 §6.5" title="服务列表（只读）">
+      <DevNote prd="§6.2 §6.5" title="服务管理（只读）">
         <div>· 规划师/学管师不在本系统新增或修改记录，记录由外部系统同步</div>
         <div>· 数据范围：{isServantView ? "本人名下记录" : "全部记录"}</div>
         <div>· 当前列表条数：{filtered.length} / 可见 {scopedRecords.length}</div>
@@ -267,23 +265,11 @@ function Page() {
         );
       })()}
 
-      <div className={`mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 ${isServantView ? "md:grid-cols-5" : "md:grid-cols-7"}`}>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">用户（姓名/手机）</Label>
-          <Input value={fUser} onChange={(e) => setFUser(e.target.value)} placeholder="搜索用户" className="h-8" />
+      <div className={`mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 ${isServantView ? "md:grid-cols-4" : "md:grid-cols-5"}`}>
+        <div className="space-y-1 md:col-span-2">
+          <Label className="text-xs text-muted-foreground">用户 / 服务人</Label>
+          <Input value={fPerson} onChange={(e) => setFPerson(e.target.value)} placeholder="搜索用户姓名、手机号或服务人" className="h-8" />
         </div>
-        {!isServantView && (
-          <>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">规划师</Label>
-              <Input value={fPlanner} onChange={(e) => setFPlanner(e.target.value)} placeholder="搜索规划师" className="h-8" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">学管师</Label>
-              <Input value={fTutor} onChange={(e) => setFTutor(e.target.value)} placeholder="搜索学管师" className="h-8" />
-            </div>
-          </>
-        )}
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">机构名称</Label>
           <SearchSelect

@@ -13,9 +13,9 @@ type Group = { key: string; label: string; icon: React.ComponentType<{ className
 
 const GROUPS: Group[] = [
   { key: "dashboard", label: "数据看板", icon: LayoutDashboard, children: [{ to: "/dashboard", label: "数据看板", icon: LayoutDashboard, key: "dashboard" }] },
-  { key: "student", label: "学员管理", icon: GraduationCap, children: [{ to: "/student", label: "学员列表", icon: GraduationCap, key: "student" }] },
-  { key: "service", label: "服务记录", icon: FileText, children: [
-    { to: "/service/records", label: "服务列表", icon: FileText, key: "service" },
+  { key: "student", label: "学员管理", icon: GraduationCap, children: [{ to: "/student", label: "学员管理", icon: GraduationCap, key: "student" }] },
+  { key: "service", label: "服务管理", icon: FileText, children: [
+    { to: "/service/records", label: "服务管理", icon: FileText, key: "service" },
   ] },
   { key: "sales", label: "销售管理", icon: ShoppingCart, children: [{ to: "/sales", label: "销售明细", icon: ShoppingCart, key: "sales" }] },
   { key: "ledger", label: "台账管理", icon: BookOpen, children: [
@@ -26,7 +26,7 @@ const GROUPS: Group[] = [
   { key: "user", label: "账号管理", icon: Users, children: [
     { to: "/user/accounts", label: "后台账号", icon: Users, key: "user" },
   ] },
-  { key: "audit", label: "审计日志", icon: History, children: [{ to: "/audit-log", label: "审计日志", icon: History, key: "audit" }] },
+  { key: "audit", label: "日志管理", icon: History, children: [{ to: "/audit-log", label: "日志管理", icon: History, key: "audit" }] },
 ];
 
 export function AppSidebar() {

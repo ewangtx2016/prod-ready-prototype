@@ -79,8 +79,7 @@ export type LedgerItem = {
   orgAmount: number;
   plannerAmount: number;
   platformAmount: number;
-  status: "settled" | "pending" | "estimated" | "refund_settled" | "refund_pending" | "abnormal";
-  abnormalReason?: string;
+  status: "settled" | "pending" | "estimated" | "refund_settled" | "refund_pending";
   plannerName: string;
   settledAt?: string;
 };
@@ -372,7 +371,6 @@ export function seedIfNeeded(force = false) {
     { id: "L" + rid(), orderId: orders[1].id, userName: "王小宇", course: "AI 学习机 Pro", amount: 3600, orgAmount: 1620, plannerAmount: 1620, platformAmount: 360, status: "pending", plannerName: "李规划" },
     { id: "L" + rid(), orderId: orders[2].id, userName: "李思琪", course: "物理体验课", amount: 199, orgAmount: 80, plannerAmount: 99, platformAmount: 20, status: "estimated", plannerName: "李规划" },
     { id: "L" + rid(), orderId: orders[3].id, userName: "赵晓彤", course: "艺考素养课", amount: 12800, orgAmount: 5760, plannerAmount: 5760, platformAmount: 1280, status: "refund_pending", plannerName: "李规划" },
-    { id: "L" + rid(), orderId: orders[4].id, userName: "孙文博", course: "会员服务年卡", amount: 4800, orgAmount: 2880, plannerAmount: 1440, platformAmount: 480, status: "abnormal", abnormalReason: "规划师账户余额不足，退回款待补齐", plannerName: "李规划" },
   ];
 
   const logs: AuditLog[] = [
@@ -501,12 +499,10 @@ export function seedIfNeeded(force = false) {
     { key: "service.audit.pass", name: "服务审核 · 审核通过", category: "服务审核", description: "审核通过后通知服务创建人。", recipients: ["planner", "tutor"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true },
     { key: "service.audit.reject", name: "服务审核 · 审核驳回", category: "服务审核", description: "审核驳回后通知服务创建人。", recipients: ["planner", "tutor"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true },
     { key: "alert.export.bulk", name: "操作预警 · 单日导出超阈值", category: "操作预警", description: "敏感数据批量导出次数超阈值。", recipients: ["org_admin", "super_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: true, threshold: { value: 5, unit: "次/日" } },
-    { key: "alert.split.abnormal", name: "操作预警 · 异常分账", category: "操作预警", description: "异常分账次数超阈值。", recipients: ["org_admin", "super_admin"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true, enabled: true, threshold: { value: 3, unit: "次/日" } },
     { key: "alert.audit.reject_rate", name: "操作预警 · 服务记录驳回率", category: "操作预警", description: "服务记录驳回率超阈值。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: false, threshold: { value: 30, unit: "%" } },
     { key: "alert.login.failure", name: "操作预警 · 登录失败次数", category: "操作预警", description: "登录失败次数超阈值。", recipients: ["org_admin"], channels: { inbox: { enabled: false }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true, enabled: true, threshold: { value: 5, unit: "次/小时" } },
     { key: "renewal.expiring.7d", name: "续报提醒 · 7 天到期", category: "续报提醒", description: "课程将于 7 天内到期，提醒家长续报。", recipients: ["planner"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: true }, email: { enabled: false } }, system: true },
     { key: "settlement.arrived", name: "财务 · 分润到账", category: "财务结算", description: "结算款到账后通知规划师。", recipients: ["planner"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: true } }, system: true },
-    { key: "ledger.abnormal", name: "财务 · 异常台账", category: "财务结算", description: "出现异常台账时通知机构管理员。", recipients: ["org_admin"], channels: { inbox: { enabled: true }, sms: { enabled: false }, group: { enabled: false }, email: { enabled: true } }, system: true },
     { key: "account.login.newDevice", name: "账号安全 · 新设备登录", category: "账号安全", description: "账号在新设备登录时通知本人。", recipients: ["org_admin", "super_admin", "planner", "tutor"], channels: { inbox: { enabled: true }, sms: { enabled: true }, group: { enabled: false }, email: { enabled: false } }, system: true },
   ];
   write(KEYS.notifyEvent, events);

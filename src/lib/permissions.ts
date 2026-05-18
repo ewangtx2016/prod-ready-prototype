@@ -131,10 +131,10 @@ export const DEFAULT_TREE: PermNode[] = [
     ],
   },
   {
-    id: "m_service", type: "menu", name: "服务记录", code: "service:view",
+    id: "m_service", type: "menu", name: "服务管理", code: "service:view",
     api: "GET /api/service/records", builtin: true,
     children: [
-      { id: "m_service_records", type: "menu", name: "服务列表", code: "service.records:view", api: "GET /api/service/records", path: "/service/records", builtin: true,
+      { id: "m_service_records", type: "menu", name: "服务管理", code: "service.records:view", api: "GET /api/service/records", path: "/service/records", builtin: true,
         children: [
           { id: "b_service_create", type: "button", name: "新增服务", code: "service:create", api: "POST /api/service/records", builtin: true },
           { id: "b_service_edit_request", type: "button", name: "申请编辑", code: "service:edit_request", api: "POST /api/service/records/edit-request", builtin: true },
@@ -223,7 +223,7 @@ export const DEFAULT_TREE: PermNode[] = [
     ],
   },
   {
-    id: "m_audit", type: "menu", name: "审计日志", code: "audit:view", api: "GET /api/audit", path: "/audit-log", builtin: true,
+    id: "m_audit", type: "menu", name: "日志管理", code: "audit:view", api: "GET /api/audit", path: "/audit-log", builtin: true,
   },
 ];
 

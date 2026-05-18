@@ -130,7 +130,7 @@ function Page() {
   return (
     <div>
       <PageHeader
-        title="学员列表"
+        title="学员管理"
         subtitle="机构学员档案管理，支持筛选、排序与批量查看。"
         actions={
           <Button size="sm" variant="outline" disabled={role !== "org_admin" && role !== "super_admin"} onClick={() => { toast.success("已导出 students.xlsx (mock)"); }}>
@@ -139,7 +139,7 @@ function Page() {
         }
       />
 
-      <DevNote prd="学员管理" title="学员列表">
+      <DevNote prd="学员管理" title="学员管理">
         <div>· 当前列表条数：{filtered.length} / 总计 {students.length}</div>
       </DevNote>
 
