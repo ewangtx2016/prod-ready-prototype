@@ -129,8 +129,8 @@ function Page() {
     }
     if (activeTab === "abnormal") {
       return [
-        { label: "异常订单总额", value: money(totalAmt), className: "text-destructive" },
-        { label: "异常笔数", value: `${filtered.length} 笔`, className: "text-destructive" },
+        { label: "异常台账总额", value: money(totalAmt), className: "text-destructive" },
+        { label: "异常台账", value: `${filtered.length} 笔`, className: "text-destructive" },
         { label: "涉及机构分成", value: money(orgAmt), className: "text-info" },
       ];
     }
@@ -140,7 +140,7 @@ function Page() {
       return [
         { label: "订单总额", value: money(totalAmt), className: "" },
         { label: "机构分成", value: money(orgAmt), className: "text-info" },
-        { label: "异常订单", value: `${abnormalCnt} 笔`, className: abnormalCnt ? "text-destructive" : "" },
+        { label: "异常台账", value: `${abnormalCnt} 笔`, className: abnormalCnt ? "text-destructive" : "" },
         { label: "退单金额", value: money(refundAmt), className: "text-destructive" },
       ];
     }
