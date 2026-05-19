@@ -19,8 +19,7 @@ export const MENU_PERMS: Record<string, Role[]> = {
   profit: ["org_admin", "super_admin"],
   ledger: ["org_admin", "super_admin", "planner"],
   settings: ["org_admin", "super_admin"],
-  role: ["org_admin", "super_admin"],
-  user: ["org_admin", "super_admin"],
+  permission: ["org_admin", "super_admin"],
   audit: ["org_admin", "super_admin"],
 };
 
@@ -31,6 +30,9 @@ export const SUBMENU_PERMS: Record<string, Role[]> = {
   "/service/settings": [],
   "/notification/templates": ["org_admin", "super_admin", "planner"],
   "/settings/notification-events": ["org_admin", "super_admin"],
+  "/permission/users": ["org_admin", "super_admin"],
+  "/permission/roles": ["org_admin", "super_admin"],
+  "/permission/menus": ["org_admin", "super_admin"],
 };
 
 export function can(role: Role, action: string): boolean {
@@ -52,8 +54,16 @@ export function can(role: Role, action: string): boolean {
     "profit.sms_verify": ["org_admin"],
     "ledger.export": ["org_admin", "planner"],
     "settings.org_edit": ["org_admin"],
-    "user.manage": ["org_admin"],
-    "role.config_scope": ["org_admin"],
+    "permission.user_create": ["org_admin"],
+    "permission.user_edit": ["org_admin"],
+    "permission.user_reset": ["org_admin"],
+    "permission.user_toggle": ["org_admin"],
+    "permission.role_create": ["org_admin"],
+    "permission.role_edit": ["org_admin"],
+    "permission.role_config": ["org_admin"],
+    "permission.menu_create": ["org_admin"],
+    "permission.menu_edit": ["org_admin"],
+    "permission.menu_delete": ["org_admin"],
     "audit.view": ["org_admin", "super_admin"],
     "student.export": ["org_admin", "super_admin"],
   };

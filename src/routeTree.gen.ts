@@ -17,9 +17,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppAuditLogRouteImport } from './routes/_app/audit-log'
 import { Route as AppStudentIndexRouteImport } from './routes/_app/student/index'
 import { Route as AppSalesIndexRouteImport } from './routes/_app/sales/index'
-import { Route as AppRoleIndexRouteImport } from './routes/_app/role/index'
 import { Route as AppLedgerIndexRouteImport } from './routes/_app/ledger/index'
-import { Route as AppUserAccountsRouteImport } from './routes/_app/user/accounts'
 import { Route as AppStudentIdRouteImport } from './routes/_app/student/$id'
 import { Route as AppSettingsOrgRouteImport } from './routes/_app/settings/org'
 import { Route as AppSettingsNotificationEventsRouteImport } from './routes/_app/settings/notification-events'
@@ -28,6 +26,9 @@ import { Route as AppServiceSettingsRouteImport } from './routes/_app/service/se
 import { Route as AppServiceRecordsRouteImport } from './routes/_app/service/records'
 import { Route as AppProfitRulesRouteImport } from './routes/_app/profit/rules'
 import { Route as AppProfitDimensionsRouteImport } from './routes/_app/profit/dimensions'
+import { Route as AppPermissionUsersRouteImport } from './routes/_app/permission/users'
+import { Route as AppPermissionRolesRouteImport } from './routes/_app/permission/roles'
+import { Route as AppPermissionMenusRouteImport } from './routes/_app/permission/menus'
 import { Route as AppNotificationTemplatesRouteImport } from './routes/_app/notification/templates'
 
 const LoginRoute = LoginRouteImport.update({
@@ -69,19 +70,9 @@ const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
   path: '/sales/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppRoleIndexRoute = AppRoleIndexRouteImport.update({
-  id: '/role/',
-  path: '/role/',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppLedgerIndexRoute = AppLedgerIndexRouteImport.update({
   id: '/ledger/',
   path: '/ledger/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppUserAccountsRoute = AppUserAccountsRouteImport.update({
-  id: '/user/accounts',
-  path: '/user/accounts',
   getParentRoute: () => AppRoute,
 } as any)
 const AppStudentIdRoute = AppStudentIdRouteImport.update({
@@ -125,6 +116,21 @@ const AppProfitDimensionsRoute = AppProfitDimensionsRouteImport.update({
   path: '/profit/dimensions',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPermissionUsersRoute = AppPermissionUsersRouteImport.update({
+  id: '/permission/users',
+  path: '/permission/users',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPermissionRolesRoute = AppPermissionRolesRouteImport.update({
+  id: '/permission/roles',
+  path: '/permission/roles',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPermissionMenusRoute = AppPermissionMenusRouteImport.update({
+  id: '/permission/menus',
+  path: '/permission/menus',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppNotificationTemplatesRoute =
   AppNotificationTemplatesRouteImport.update({
     id: '/notification/templates',
@@ -139,6 +145,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/messages': typeof AppMessagesRoute
   '/notification/templates': typeof AppNotificationTemplatesRoute
+  '/permission/menus': typeof AppPermissionMenusRoute
+  '/permission/roles': typeof AppPermissionRolesRoute
+  '/permission/users': typeof AppPermissionUsersRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
   '/profit/rules': typeof AppProfitRulesRoute
   '/service/records': typeof AppServiceRecordsRoute
@@ -147,9 +156,7 @@ export interface FileRoutesByFullPath {
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/student/$id': typeof AppStudentIdRoute
-  '/user/accounts': typeof AppUserAccountsRoute
   '/ledger/': typeof AppLedgerIndexRoute
-  '/role/': typeof AppRoleIndexRoute
   '/sales/': typeof AppSalesIndexRoute
   '/student/': typeof AppStudentIndexRoute
 }
@@ -160,6 +167,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/messages': typeof AppMessagesRoute
   '/notification/templates': typeof AppNotificationTemplatesRoute
+  '/permission/menus': typeof AppPermissionMenusRoute
+  '/permission/roles': typeof AppPermissionRolesRoute
+  '/permission/users': typeof AppPermissionUsersRoute
   '/profit/dimensions': typeof AppProfitDimensionsRoute
   '/profit/rules': typeof AppProfitRulesRoute
   '/service/records': typeof AppServiceRecordsRoute
@@ -168,9 +178,7 @@ export interface FileRoutesByTo {
   '/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/settings/org': typeof AppSettingsOrgRoute
   '/student/$id': typeof AppStudentIdRoute
-  '/user/accounts': typeof AppUserAccountsRoute
   '/ledger': typeof AppLedgerIndexRoute
-  '/role': typeof AppRoleIndexRoute
   '/sales': typeof AppSalesIndexRoute
   '/student': typeof AppStudentIndexRoute
 }
@@ -183,6 +191,9 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/messages': typeof AppMessagesRoute
   '/_app/notification/templates': typeof AppNotificationTemplatesRoute
+  '/_app/permission/menus': typeof AppPermissionMenusRoute
+  '/_app/permission/roles': typeof AppPermissionRolesRoute
+  '/_app/permission/users': typeof AppPermissionUsersRoute
   '/_app/profit/dimensions': typeof AppProfitDimensionsRoute
   '/_app/profit/rules': typeof AppProfitRulesRoute
   '/_app/service/records': typeof AppServiceRecordsRoute
@@ -191,9 +202,7 @@ export interface FileRoutesById {
   '/_app/settings/notification-events': typeof AppSettingsNotificationEventsRoute
   '/_app/settings/org': typeof AppSettingsOrgRoute
   '/_app/student/$id': typeof AppStudentIdRoute
-  '/_app/user/accounts': typeof AppUserAccountsRoute
   '/_app/ledger/': typeof AppLedgerIndexRoute
-  '/_app/role/': typeof AppRoleIndexRoute
   '/_app/sales/': typeof AppSalesIndexRoute
   '/_app/student/': typeof AppStudentIndexRoute
 }
@@ -206,6 +215,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/messages'
     | '/notification/templates'
+    | '/permission/menus'
+    | '/permission/roles'
+    | '/permission/users'
     | '/profit/dimensions'
     | '/profit/rules'
     | '/service/records'
@@ -214,9 +226,7 @@ export interface FileRouteTypes {
     | '/settings/notification-events'
     | '/settings/org'
     | '/student/$id'
-    | '/user/accounts'
     | '/ledger/'
-    | '/role/'
     | '/sales/'
     | '/student/'
   fileRoutesByTo: FileRoutesByTo
@@ -227,6 +237,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/messages'
     | '/notification/templates'
+    | '/permission/menus'
+    | '/permission/roles'
+    | '/permission/users'
     | '/profit/dimensions'
     | '/profit/rules'
     | '/service/records'
@@ -235,9 +248,7 @@ export interface FileRouteTypes {
     | '/settings/notification-events'
     | '/settings/org'
     | '/student/$id'
-    | '/user/accounts'
     | '/ledger'
-    | '/role'
     | '/sales'
     | '/student'
   id:
@@ -249,6 +260,9 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/messages'
     | '/_app/notification/templates'
+    | '/_app/permission/menus'
+    | '/_app/permission/roles'
+    | '/_app/permission/users'
     | '/_app/profit/dimensions'
     | '/_app/profit/rules'
     | '/_app/service/records'
@@ -257,9 +271,7 @@ export interface FileRouteTypes {
     | '/_app/settings/notification-events'
     | '/_app/settings/org'
     | '/_app/student/$id'
-    | '/_app/user/accounts'
     | '/_app/ledger/'
-    | '/_app/role/'
     | '/_app/sales/'
     | '/_app/student/'
   fileRoutesById: FileRoutesById
@@ -328,25 +340,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSalesIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/role/': {
-      id: '/_app/role/'
-      path: '/role'
-      fullPath: '/role/'
-      preLoaderRoute: typeof AppRoleIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/ledger/': {
       id: '/_app/ledger/'
       path: '/ledger'
       fullPath: '/ledger/'
       preLoaderRoute: typeof AppLedgerIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/user/accounts': {
-      id: '/_app/user/accounts'
-      path: '/user/accounts'
-      fullPath: '/user/accounts'
-      preLoaderRoute: typeof AppUserAccountsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/student/$id': {
@@ -405,6 +403,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfitDimensionsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/permission/users': {
+      id: '/_app/permission/users'
+      path: '/permission/users'
+      fullPath: '/permission/users'
+      preLoaderRoute: typeof AppPermissionUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/permission/roles': {
+      id: '/_app/permission/roles'
+      path: '/permission/roles'
+      fullPath: '/permission/roles'
+      preLoaderRoute: typeof AppPermissionRolesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/permission/menus': {
+      id: '/_app/permission/menus'
+      path: '/permission/menus'
+      fullPath: '/permission/menus'
+      preLoaderRoute: typeof AppPermissionMenusRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/notification/templates': {
       id: '/_app/notification/templates'
       path: '/notification/templates'
@@ -420,6 +439,9 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppMessagesRoute: typeof AppMessagesRoute
   AppNotificationTemplatesRoute: typeof AppNotificationTemplatesRoute
+  AppPermissionMenusRoute: typeof AppPermissionMenusRoute
+  AppPermissionRolesRoute: typeof AppPermissionRolesRoute
+  AppPermissionUsersRoute: typeof AppPermissionUsersRoute
   AppProfitDimensionsRoute: typeof AppProfitDimensionsRoute
   AppProfitRulesRoute: typeof AppProfitRulesRoute
   AppServiceRecordsRoute: typeof AppServiceRecordsRoute
@@ -428,9 +450,7 @@ interface AppRouteChildren {
   AppSettingsNotificationEventsRoute: typeof AppSettingsNotificationEventsRoute
   AppSettingsOrgRoute: typeof AppSettingsOrgRoute
   AppStudentIdRoute: typeof AppStudentIdRoute
-  AppUserAccountsRoute: typeof AppUserAccountsRoute
   AppLedgerIndexRoute: typeof AppLedgerIndexRoute
-  AppRoleIndexRoute: typeof AppRoleIndexRoute
   AppSalesIndexRoute: typeof AppSalesIndexRoute
   AppStudentIndexRoute: typeof AppStudentIndexRoute
 }
@@ -440,6 +460,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppMessagesRoute: AppMessagesRoute,
   AppNotificationTemplatesRoute: AppNotificationTemplatesRoute,
+  AppPermissionMenusRoute: AppPermissionMenusRoute,
+  AppPermissionRolesRoute: AppPermissionRolesRoute,
+  AppPermissionUsersRoute: AppPermissionUsersRoute,
   AppProfitDimensionsRoute: AppProfitDimensionsRoute,
   AppProfitRulesRoute: AppProfitRulesRoute,
   AppServiceRecordsRoute: AppServiceRecordsRoute,
@@ -448,9 +471,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsNotificationEventsRoute: AppSettingsNotificationEventsRoute,
   AppSettingsOrgRoute: AppSettingsOrgRoute,
   AppStudentIdRoute: AppStudentIdRoute,
-  AppUserAccountsRoute: AppUserAccountsRoute,
   AppLedgerIndexRoute: AppLedgerIndexRoute,
-  AppRoleIndexRoute: AppRoleIndexRoute,
   AppSalesIndexRoute: AppSalesIndexRoute,
   AppStudentIndexRoute: AppStudentIndexRoute,
 }

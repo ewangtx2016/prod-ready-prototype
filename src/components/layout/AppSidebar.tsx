@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, FileText, ShoppingCart, BookOpen,
-  Settings, ShieldCheck, Users, History, ChevronDown, Building2, GraduationCap,
+  Settings, ShieldCheck, Users, History, ChevronDown, Building2, GraduationCap, Lock,
 } from "lucide-react";
 import { DEFAULT_ORG_LOGO, useApp } from "@/lib/store";
 import { usePermStore, flattenTree } from "@/lib/permissions";
@@ -22,9 +22,10 @@ const GROUPS: Group[] = [
     { to: "/ledger", label: "台账管理", icon: BookOpen, key: "ledger" },
   ] },
   { key: "org", label: "机构管理", icon: Building2, children: [{ to: "/settings/org", label: "机构管理", icon: Building2, key: "org" }] },
-  { key: "role", label: "角色管理", icon: ShieldCheck, children: [{ to: "/role", label: "角色管理", icon: ShieldCheck, key: "role" }] },
-  { key: "user", label: "账号管理", icon: Users, children: [
-    { to: "/user/accounts", label: "后台账号", icon: Users, key: "user" },
+  { key: "permission", label: "权限管理", icon: Lock, children: [
+    { to: "/permission/users", label: "用户管理", icon: Users, key: "permission.users" },
+    { to: "/permission/roles", label: "角色管理", icon: ShieldCheck, key: "permission.roles" },
+    { to: "/permission/menus", label: "菜单管理", icon: FileText, key: "permission.menus" },
   ] },
   { key: "audit", label: "日志管理", icon: History, children: [{ to: "/audit-log", label: "日志管理", icon: History, key: "audit" }] },
 ];

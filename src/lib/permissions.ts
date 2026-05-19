@@ -201,23 +201,28 @@ export const DEFAULT_TREE: PermNode[] = [
     ],
   },
   {
-    id: "m_role", type: "menu", name: "角色管理", code: "role:view", api: "GET /api/roles", path: "/role", builtin: true,
+    id: "m_permission", type: "menu", name: "权限管理", code: "permission:view", api: "GET /api/permission", builtin: true,
     children: [
-      { id: "b_role_config_scope", type: "button", name: "配置数据范围", code: "role:config_scope", api: "PUT /api/roles/scope", builtin: true },
-      { id: "b_role_create", type: "button", name: "新增角色", code: "role:create", api: "POST /api/roles", builtin: true },
-      { id: "b_role_edit", type: "button", name: "编辑角色", code: "role:edit", api: "PUT /api/roles", builtin: true },
-      { id: "b_role_delete", type: "button", name: "删除角色", code: "role:delete", api: "DELETE /api/roles", builtin: true },
-    ],
-  },
-  {
-    id: "m_user", type: "menu", name: "账号管理", code: "user:view", api: "GET /api/users", builtin: true,
-    children: [
-      { id: "m_user_accounts", type: "menu", name: "后台账号", code: "user.accounts:view", api: "GET /api/users/accounts", path: "/user/accounts", builtin: true,
+      { id: "m_permission_users", type: "menu", name: "用户管理", code: "permission.users:view", api: "GET /api/permission/users", path: "/permission/users", builtin: true,
         children: [
-          { id: "b_user_create", type: "button", name: "新增账号", code: "user:create", api: "POST /api/users", builtin: true },
-          { id: "b_user_edit", type: "button", name: "编辑账号", code: "user:edit", api: "PUT /api/users", builtin: true },
-          { id: "b_user_reset", type: "button", name: "重置密码", code: "user:reset_password", api: "POST /api/users/reset-password", builtin: true },
-          { id: "b_user_toggle", type: "button", name: "启停账号", code: "user:toggle", api: "PUT /api/users/status", builtin: true },
+          { id: "b_permission_user_create", type: "button", name: "新增用户", code: "permission.user:create", api: "POST /api/permission/users", builtin: true },
+          { id: "b_permission_user_edit", type: "button", name: "编辑用户", code: "permission.user:edit", api: "PUT /api/permission/users", builtin: true },
+          { id: "b_permission_user_reset", type: "button", name: "重置密码", code: "permission.user:reset_password", api: "POST /api/permission/users/reset-password", builtin: true },
+          { id: "b_permission_user_toggle", type: "button", name: "启停用户", code: "permission.user:toggle", api: "PUT /api/permission/users/status", builtin: true },
+        ],
+      },
+      { id: "m_permission_roles", type: "menu", name: "角色管理", code: "permission.roles:view", api: "GET /api/permission/roles", path: "/permission/roles", builtin: true,
+        children: [
+          { id: "b_permission_role_create", type: "button", name: "新增角色", code: "permission.role:create", api: "POST /api/permission/roles", builtin: true },
+          { id: "b_permission_role_edit", type: "button", name: "编辑角色", code: "permission.role:edit", api: "PUT /api/permission/roles", builtin: true },
+          { id: "b_permission_role_config", type: "button", name: "配置权限", code: "permission.role:config", api: "PUT /api/permission/roles/perms", builtin: true },
+        ],
+      },
+      { id: "m_permission_menus", type: "menu", name: "菜单管理", code: "permission.menus:view", api: "GET /api/permission/menus", path: "/permission/menus", builtin: true,
+        children: [
+          { id: "b_permission_menu_create", type: "button", name: "新增菜单", code: "permission.menu:create", api: "POST /api/permission/menus", builtin: true },
+          { id: "b_permission_menu_edit", type: "button", name: "编辑菜单", code: "permission.menu:edit", api: "PUT /api/permission/menus", builtin: true },
+          { id: "b_permission_menu_delete", type: "button", name: "删除菜单", code: "permission.menu:delete", api: "DELETE /api/permission/menus", builtin: true },
         ],
       },
     ],
@@ -268,8 +273,8 @@ function defaultDataPerms(role: Role): DataPermRule[] {
 /** 按 PRD §14 矩阵给每个角色分配权限 */
 function presetIds(role: Role): string[] {
   const allowedMenus: Record<Role, string[]> = {
-    super_admin: ["dashboard", "student", "service", "notification", "sales", "profit", "ledger", "org", "settings", "role", "user", "audit"],
-    org_admin:   ["dashboard", "student", "service", "notification", "sales", "profit", "ledger", "org", "settings", "role", "user", "audit"],
+    super_admin: ["dashboard", "student", "service", "notification", "sales", "profit", "ledger", "org", "settings", "permission", "audit"],
+    org_admin:   ["dashboard", "student", "service", "notification", "sales", "profit", "ledger", "org", "settings", "permission", "audit"],
     planner:     ["dashboard", "service", "notification", "sales", "ledger", "org"],
     tutor:       ["service", "notification", "org"],
   };
@@ -278,8 +283,9 @@ function presetIds(role: Role): string[] {
     org_admin: ["dashboard:export", "dashboard:customize", "service:audit", "service:export", "service:mode_switch",
                 "sales:export", "profit:audit", "profit:sms_verify", "ledger:export",
                 "org:edit",
-                "user:create", "user:edit", "user:reset_password", "user:toggle",
-                "role:config_scope", "role:create", "role:edit", "role:delete",
+                "permission.user:create", "permission.user:edit", "permission.user:reset_password", "permission.user:toggle",
+                "permission.role:create", "permission.role:edit", "permission.role:config",
+                "permission.menu:create", "permission.menu:edit", "permission.menu:delete",
                 "student:export"],
     planner: ["service:create", "service:edit_request", "ledger:export"],
     tutor: ["service:create", "service:edit_request"],

@@ -6,7 +6,9 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(npx tsc *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(ls *)",
+      "Bash(cd \"D:\\\\\\\\lvxiqiang\\\\\\\\xiangmu\\\\\\\\机构用户管理平台\\\\\\\\lovable原型\\\\\\\\prod-ready-prototype\")"
     ]
   }
 }
