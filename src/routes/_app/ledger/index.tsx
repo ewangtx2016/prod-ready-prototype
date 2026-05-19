@@ -56,7 +56,6 @@ function Page() {
   const [endDate, setEndDate] = useState("");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
-  const isPlanner = role === "planner";
   const currentUserName = ROLE_META[role].name;
 
   function toggleSort(field: string) {
@@ -74,7 +73,6 @@ function Page() {
   const orderById = useMemo(() => new Map(orders.map((o) => [o.id, o])), [orders]);
   const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
   const getLedgerProductType = useCallback((item: LedgerItem) => productTypeLabel(orderById.get(item.orderId)?.courseType ?? ""), [orderById]);
-  const getLedgerTutor = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.tutorName ?? "", [orderById]);
   const productTypeOptions = ["课程", "学习机"];
 
   useEffect(() => {
@@ -98,9 +96,7 @@ function Page() {
       l.billId.toLowerCase().includes(kw) ||
       l.userName.toLowerCase().includes(kw) ||
       l.course.toLowerCase().includes(kw) ||
-      getLedgerProductType(l).toLowerCase().includes(kw) ||
-      l.plannerName.toLowerCase().includes(kw) ||
-      getLedgerTutor(l).toLowerCase().includes(kw)
+      getLedgerProductType(l).toLowerCase().includes(kw)
     )) return false;
     const dateVal = l.settledAt ?? "";
     if (startDate && dateVal && dateVal.slice(0, 10) < startDate) return false;
@@ -213,7 +209,7 @@ function Page() {
         <Table>
           <TableHeader><TableRow>
             <TableHead>账单ID</TableHead><TableHead>用户</TableHead><TableHead>产品名称</TableHead><TableHead>产品类型</TableHead>
-            <TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>学管师</TableHead><TableHead>订单金额</TableHead>
+            <TableHead>机构名称</TableHead><TableHead>订单金额</TableHead>
             <TableHead onClick={() => toggleSort("orgAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">机构分成{sortField === "orgAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "orgAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "orgAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
             <TableHead onClick={() => toggleSort("settledAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">结算时间{sortField === "settledAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "settledAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "settledAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
           </TableRow></TableHeader>
@@ -227,15 +223,13 @@ function Page() {
                   <TableCell>{l.course}</TableCell>
                   <TableCell><Badge variant="outline">{getLedgerProductType(l) || "-"}</Badge></TableCell>
                   <TableCell>{getLedgerOrg(l) || "-"}</TableCell>
-                  <TableCell>{l.plannerName}</TableCell>
-                  <TableCell>{getLedgerTutor(l) || "-"}</TableCell>
                   <TableCell className="font-medium">¥{l.amount.toLocaleString()}</TableCell>
                   <TableCell className={isRefund ? "text-destructive" : "text-info"}>{isRefund ? "-" : ""}¥{l.orgAmount.toLocaleString()}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{l.settledAt || "-"}</TableCell>
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+            {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
           </TableBody>
         </Table>
         <Pagination />

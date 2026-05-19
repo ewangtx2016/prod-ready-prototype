@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useState, useEffect, type ReactElement } from "react";
-import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Activity, Info, Wallet, GraduationCap, UserCheck, Repeat, Link2, Check, ChevronsUpDown } from "lucide-react";
+import { Download, Settings2, TrendingUp, Users, ShieldAlert, BookOpen, Info, Wallet, Repeat, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/mock";
 import { cn } from "@/lib/utils";
@@ -33,22 +33,13 @@ export const Route = createFileRoute("/_app/dashboard")({
  *  每个模块至少含 1 项核心指标(core=true，默认勾选不可取消) */
 type ModuleKey = "user" | "service" | "conversion" | "profit" | "risk";
 const MODULES: { key: ModuleKey; name: string; desc: string; icon: typeof Users }[] = [
-  { key: "user",       name: "用户总览",   desc: "总用户 / 活跃 / 规划师服务 / 转化", icon: Users },
+  { key: "user",       name: "用户总览",   desc: "总用户 / 活跃 / 转化", icon: Users },
   { key: "conversion", name: "转化数据",   desc: "学科课订单数、订单金额、转化率", icon: TrendingUp },
   { key: "profit",     name: "分成数据",   desc: "已结算 / 待结算 / 预估收入", icon: Wallet },
-  { key: "service",    name: "服务数据",   desc: "规划师服务次数、学管督学完成率", icon: Activity },
   { key: "risk",       name: "风险预警",   desc: "敏感操作预警 (超量导出 / 批量查看 / 越权访问)", icon: ShieldAlert },
 ];
 /** PRD §5.3 默认置顶展示的 4 项核心指标（跨模块派生指标，不属于 5 大模块明细） */
 const CORE_METRICS: { key: string; label: string; value: string; trend?: string; icon: typeof Users; formula: string }[] = [
-  {
-    key: "core_served_ratio",
-    label: "规划师服务用户占比",
-    value: "56.2%",
-    trend: "701 / 1,248",
-    icon: UserCheck,
-    formula: "本机构已被规划师服务过的用户数 / 机构总用户数 × 100%。机构总用户数来自规划师平台与学管师平台同步的用户数据汇总。",
-  },
   {
     key: "core_old_user_in_subject",
     label: "转化用户中机构老用户占比",
@@ -56,14 +47,6 @@ const CORE_METRICS: { key: string; label: string; value: string; trend?: string;
     trend: "194 / 286",
     icon: Repeat,
     formula: "已转化的用户中，属于机构老用户（注册≥90天且历史有付费记录）的人数 / 转化用户总数 × 100%。",
-  },
-  {
-    key: "core_freq_renew_corr",
-    label: "续报率·服务频次关联度",
-    value: "+15pp",
-    trend: "高频 38% − 低频 23%",
-    icon: Link2,
-    formula: "关联度 = 高频服务用户续报率 − 低频服务用户续报率。高频=近30天服务≥3次，低频=近30天服务<3次。结果以百分点（pp）展示。3次/月为系统默认值，由运营后台维护。",
   },
   {
     key: "core_alert_count",
@@ -79,7 +62,6 @@ const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: strin
   // M1 用户总览
   { key: "total_user",     module: "user", label: "总用户数",       value: "1,248", icon: Users, formula: "归属当前机构、状态为正常或停用的全部用户数（不含已删除）。" },
   { key: "active_user",    module: "user", label: "活跃用户数",     value: "892",   trend: "+8.4%", icon: Users, formula: "近 30 天内有过登录、上课或服务记录的去重用户数。活跃=登录∪上课∪服务记录。" },
-  { key: "served_user",    module: "user", label: "规划师服务用户数", value: "701",  trend: "覆盖 78.5%", icon: Activity, formula: "周期内被规划师提供过 1V1 服务记录的去重用户数。" },
   { key: "converted_user", module: "user", label: "转化用户数",     value: "286",   trend: "转化率 22.9%", icon: TrendingUp, formula: "周期内由意向 / 体验状态成功转为已付费学员的去重用户数。" },
   // M2 转化数据
   { key: "order_count",    module: "conversion", label: "订单数", value: "156", icon: TrendingUp, formula: "周期内全部产品类型（课程/学习机/会员服务等）且订单状态非「已取消」的订单数量。" },
@@ -90,16 +72,12 @@ const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: strin
   { key: "settled",        module: "profit", label: "已结算金额", value: "¥186,300", trend: "+12.6%", icon: Wallet, formula: "周期内已完成结算流程并入账的金额合计。结算口径：T+N 到账且对账无异常。" },
   { key: "pending",        module: "profit", label: "待结算金额", value: "¥98,200",  icon: Wallet, formula: "已确认收入但尚未完成结算流程的金额合计（已上课/已确权但未到结算日）。" },
   { key: "estimated",      module: "profit", label: "预估收入",   value: "¥43,800",  icon: Wallet, formula: "按当前规则对未确权订单(如未上课/试听)估算的潜在分成，仅用于预测，不计入财务。" },
-  // M4 服务数据
-  { key: "service_count",  module: "service", label: "规划师服务次数",   value: "2,184", trend: "+9.3%", icon: Activity, formula: "周期内规划师产生的有效 1V1 服务记录条数（含面谈、电话、回访）。" },
-  { key: "tutor_complete", module: "service", label: "学管督学完成率", value: "91.4%", trend: "+2.1pp", icon: GraduationCap, formula: "周期内学管师按计划完成的督学任务数 / 应完成任务总数 × 100%。" },
   // M5 风险预警
   { key: "alert_count",    module: "risk", label: "敏感操作预警次数", value: "12",  trend: "本月", icon: ShieldAlert, formula: "周期内触发风控规则的次数合计：超量导出、批量查看、越权访问、IP 异常、验证码失败超阈值等。" },
 ];
 
 /* ========== 规划师专属指标（数据已按 planner_id = 当前用户 过滤） ========== */
 const PLANNER_CORE_METRICS: typeof CORE_METRICS = [
-  { key: "served_user",     label: "我服务的用户数",   value: "128",     trend: "近30天 +12", icon: UserCheck, formula: "周期内本人有有效 1V1 服务记录的去重用户数（仅本人名下）。" },
   { key: "converted_user",  label: "我的转化用户数",   value: "42",      trend: "转化率 32.8%", icon: TrendingUp, formula: "周期内由本人服务并成功转化为已付费学员的去重用户数（仅本人名下）。" },
   { key: "estimated",       label: "我的预估收入",     value: "¥8,420",  trend: "未确权", icon: Wallet, formula: "本人名下未确权订单按当前分成规则估算的潜在收入，仅供预测，不计入财务。" },
   { key: "pending",         label: "我的待结算金额",   value: "¥21,560", trend: "已确权", icon: Wallet, formula: "本人名下已确权但尚未完成结算流程的金额合计。" },
@@ -117,20 +95,13 @@ const PLANNER_METRICS: typeof ALL_METRICS = [
   { key: "settled",        module: "profit", label: "已结算金额", value: "¥34,820", trend: "+9.1%", icon: Wallet, formula: "本人名下已完成结算流程并入账的金额合计。" },
   { key: "pending",        module: "profit", label: "待结算金额", value: "¥21,560", icon: Wallet, formula: "本人名下已确权但尚未完成结算流程的金额合计。" },
   { key: "estimated",      module: "profit", label: "预估收入",   value: "¥8,420",  icon: Wallet, formula: "本人名下未确权订单按当前规则估算的潜在分成。" },
-  // M4 我的服务
-  { key: "service_count",  module: "service", label: "我的服务次数", value: "342", trend: "+8.6%", icon: Activity, formula: "周期内本人产生的有效 1V1 服务记录条数（含面谈、电话、回访）。" },
 ];
 
 /* ========== 学管师专属指标（仅个人服务相关） ========== */
 const TUTOR_CORE_METRICS: typeof CORE_METRICS = [
-  { key: "service_count",   label: "我的服务次数",     value: "486",   trend: "近30天", icon: Activity, formula: "周期内本人产生的有效服务/督学记录条数。" },
-  { key: "tutor_complete",  label: "我的督学完成率",   value: "93.6%", trend: "+1.8pp", icon: GraduationCap, formula: "本人按计划完成的督学任务数 / 本人应完成任务总数 × 100%。" },
-  { key: "served_user",     label: "我服务的用户数",   value: "94",    trend: "覆盖中", icon: UserCheck, formula: "周期内被本人提供过服务的去重用户数。" },
   { key: "active_user",     label: "我的活跃用户数",   value: "82",    icon: Users, formula: "近 30 天内有过本人服务记录的去重用户数。" },
 ];
 const TUTOR_METRICS: typeof ALL_METRICS = [
-  { key: "service_count",  module: "service", label: "我的服务次数",     value: "486",   trend: "+8.6%", icon: Activity, formula: "周期内本人产生的有效服务/督学记录条数。" },
-  { key: "tutor_complete", module: "service", label: "我的督学完成率",   value: "93.6%", trend: "+1.8pp", icon: GraduationCap, formula: "本人按计划完成的督学任务 / 本人应完成任务 × 100%。" },
 ];
 
 /* ---------------- 图表数据 (mock) — 必须定义在使用组件之前 ---------------- */
@@ -152,18 +123,14 @@ function Dashboard() {
   const { role, orgName } = useApp();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>(ALL_METRICS.map((m) => m.key));
-  const [planners, setPlanners] = useState<string[]>([]);
-  const [plannerFilter, setPlannerFilter] = useState("all");
   const [orgs, setOrgs] = useState<string[]>([]);
   const [orgFilter, setOrgFilter] = useState("all");
 
   useEffect(() => {
-    const orderList = db.orders();
-    const names = Array.from(new Set(orderList.map((o) => o.plannerName))).filter(Boolean);
-    setPlanners(names);
     if (role === "org_admin") {
       setOrgs([orgName]);
     } else {
+      const orderList = db.orders();
       const orgNames = Array.from(new Set(orderList.map((o) => o.orgName))).filter(Boolean);
       setOrgs(orgNames);
     }
@@ -205,13 +172,12 @@ function Dashboard() {
         }
       />
 
-      {isOrg && <DevNote prd="§5" title="数据看板 · 五大模块">
-        <div>· <b>M1 用户总览</b>：总用户数 / 活跃用户数 / 规划师服务用户数 / 转化用户数</div>
+      {isOrg && <DevNote prd="§5" title="数据看板 · 四大模块">
+        <div>· <b>M1 用户总览</b>：总用户数 / 活跃用户数 / 转化用户数</div>
         <div>· <b>M2 转化数据</b>：学科课订单数 / 订单金额 / 转化率</div>
         <div>· <b>M3 分成数据</b>：已结算金额 / 待结算金额 / 预估收入</div>
-        <div>· <b>M4 服务数据</b>：规划师服务次数 / 学管督学完成率</div>
-        <div>· <b>M5 风险预警</b>：敏感操作预警次数（超量导出、批量查看、越权访问、IP 异常等）</div>
-        <div>· <b>顶部 4 项核心指标</b>（PRD §5.3 默认置顶、不可取消）：规划师服务用户占比 / 学科课转化用户中机构老用户占比 / 续报率·服务频次关联度 / 敏感操作预警次数</div>
+        <div>· <b>M4 风险预警</b>：敏感操作预警次数（超量导出、批量查看、越权访问、IP 异常等）</div>
+        <div>· <b>顶部 2 项核心指标</b>（PRD §5.3 默认置顶、不可取消）：转化用户中机构老用户占比 / 敏感操作预警次数</div>
         <div>· 数据范围：机构管理员=全量；规划师=本人；学管师=本人服务；鼎校超管=按授权</div>
         <div>· 刷新延迟 ≤5s；指标池由运营后台维护，机构可勾选/取消显示（核心指标默认勾选不可取消）</div>
         <div>· 鼠标悬停指标名称右侧 <Info className="inline h-3 w-3 text-info" /> 图标，可查看 <b>计算口径</b>（开发注释开启时显示）</div>
@@ -219,7 +185,7 @@ function Dashboard() {
       </DevNote>}
       {!isOrg && <DevNote prd="§5" title={`${ROLE_META[role].name}视角 · 个人经营看板`}>
         <div>· 数据范围：所有指标已按 <b>当前用户</b> 过滤，仅展示本人名下数据，无任何机构级或他人数据。</div>
-        <div>· 顶部 4 张核心 KPI：{isPlanner ? "我服务的用户数 / 我的转化 / 我的预估收入 / 我的待结算" : "我的服务次数 / 我的督学完成率 / 我服务的用户数 / 我的活跃用户数"}。</div>
+        <div>· 顶部核心 KPI：{isPlanner ? "我的转化 / 我的预估收入 / 我的待结算" : "我的活跃用户数"}。</div>
         <div>· 已隐藏：自定义指标池（固定布局更聚焦）、风险预警模块（仅机构管理员可见）{isTutor ? "、转化与分成模块（非学管师 KPI）" : ""}。</div>
         <div>· 已保留：「导出本人数据」按钮，便于个人存档对账（导出范围仅本人，全程脱敏）。</div>
         <div>· 鼠标悬停指标名称右侧 <Info className="inline h-3 w-3 text-info" /> 图标，可查看 <b>个人维度计算口径</b>。</div>
@@ -263,16 +229,6 @@ function Dashboard() {
                 options={["all", ...orgs]}
                 labels={{ all: "全部机构" }}
                 placeholder="搜索机构"
-                width="w-40"
-              />
-            )}
-            {isOrg && (
-              <SearchSelect
-                value={plannerFilter}
-                onChange={setPlannerFilter}
-                options={["all", ...planners]}
-                labels={{ all: "全部规划师" }}
-                placeholder="搜索规划师"
                 width="w-40"
               />
             )}
@@ -346,7 +302,7 @@ function Dashboard() {
           </DialogHeader>
           <div className="text-xs text-muted-foreground mb-2">
             指标池由运营后台维护，机构可勾选/取消展示。<br />
-            <b className="text-foreground">PRD §5.3 默认置顶 4 项核心指标</b>（规划师服务用户占比 / 学科课转化老用户占比 / 续报率-服务频次关联度 / 敏感操作预警次数）始终展示，不在此池中。
+            <b className="text-foreground">PRD §5.3 默认置顶 2 项核心指标</b>（转化用户中机构老用户占比 / 敏感操作预警次数）始终展示，不在此池中。
           </div>
           <div className="max-h-96 space-y-4 overflow-auto">
             {MODULES.map((mod, idx) => (

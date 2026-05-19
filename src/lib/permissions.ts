@@ -53,7 +53,7 @@ export type DataEntity =
   | "role";
 
 export const DATA_ENTITIES: DataEntity[] = [
-  "service", "sales", "ledger", "audit", "org", "user", "role",
+  "sales", "ledger", "audit", "org", "user", "role",
 ];
 
 export const DATA_ENTITY_LABEL: Record<DataEntity, string> = {
@@ -121,32 +121,6 @@ export const DEFAULT_TREE: PermNode[] = [
     children: [
       { id: "b_dashboard_export", type: "button", name: "导出", code: "dashboard:export", api: "POST /api/dashboard/export", builtin: true },
       { id: "b_dashboard_customize", type: "button", name: "自定义看板", code: "dashboard:customize", api: "PUT /api/dashboard/layout", builtin: true },
-    ],
-  },
-  {
-    id: "m_student", type: "menu", name: "学员管理", code: "student:view",
-    api: "GET /api/students", path: "/student", builtin: true,
-    children: [
-      { id: "b_student_export", type: "button", name: "导出学员", code: "student:export", api: "POST /api/students/export", builtin: true },
-    ],
-  },
-  {
-    id: "m_service", type: "menu", name: "服务管理", code: "service:view",
-    api: "GET /api/service/records", builtin: true,
-    children: [
-      { id: "m_service_records", type: "menu", name: "服务管理", code: "service.records:view", api: "GET /api/service/records", path: "/service/records", builtin: true,
-        children: [
-          { id: "b_service_create", type: "button", name: "新增服务", code: "service:create", api: "POST /api/service/records", builtin: true },
-          { id: "b_service_edit_request", type: "button", name: "申请编辑", code: "service:edit_request", api: "POST /api/service/records/edit-request", builtin: true },
-          { id: "b_service_audit", type: "button", name: "审核服务", code: "service:audit", api: "POST /api/service/records/audit", builtin: true },
-          { id: "b_service_export", type: "button", name: "导出", code: "service:export", api: "POST /api/service/records/export", builtin: true },
-        ],
-      },
-      { id: "m_service_settings", type: "menu", name: "审核模式", code: "service.settings:view", api: "GET /api/service/settings", path: "/service/settings", builtin: true,
-        children: [
-          { id: "b_service_mode_switch", type: "button", name: "切换审核模式", code: "service:mode_switch", api: "PUT /api/service/settings/mode", builtin: true },
-        ],
-      },
     ],
   },
   {
@@ -258,12 +232,12 @@ function defaultDataPerms(role: Role): DataPermRule[] {
     case "planner":
       return DATA_ENTITIES.map((e) => {
         const disabled = ["audit", "role", "user"].includes(e);
-        return mk(e, !disabled, "self_org", ["service", "sales", "ledger"].includes(e) ? "self" : "all");
+        return mk(e, !disabled, "self_org", ["sales", "ledger"].includes(e) ? "self" : "all");
       });
     case "tutor":
       return DATA_ENTITIES.map((e) => {
         const disabled = ["sales", "ledger", "audit", "role", "user"].includes(e);
-        return mk(e, !disabled, "self_org", e === "service" ? "self" : "all");
+        return mk(e, !disabled, "self_org", "all");
       });
     default:
       return DATA_ENTITIES.map((e) => mk(e, true, "self_org", "self"));
@@ -273,29 +247,26 @@ function defaultDataPerms(role: Role): DataPermRule[] {
 /** 按 PRD §14 矩阵给每个角色分配权限 */
 function presetIds(role: Role): string[] {
   const allowedMenus: Record<Role, string[]> = {
-    super_admin: ["dashboard", "student", "service", "notification", "sales", "profit", "ledger", "org", "settings", "permission", "audit"],
-    org_admin:   ["dashboard", "student", "service", "notification", "sales", "profit", "ledger", "org", "settings", "permission", "audit"],
-    planner:     ["dashboard", "service", "notification", "sales", "ledger", "org"],
-    tutor:       ["service", "notification", "org"],
+    super_admin: ["dashboard", "notification", "sales", "profit", "ledger", "org", "settings", "permission", "audit"],
+    org_admin:   ["dashboard", "notification", "sales", "profit", "ledger", "org", "settings", "permission", "audit"],
+    planner:     ["dashboard", "notification", "sales", "ledger", "org"],
+    tutor:       ["notification", "org"],
   };
   const allowedBtns: Record<Role, string[]> = {
-    super_admin: ["profit:create", "profit:edit", "profit:enable", "profit:disable", "service.records 查看", "student:export"],
-    org_admin: ["dashboard:export", "dashboard:customize", "service:audit", "service:export", "service:mode_switch",
+    super_admin: ["profit:create", "profit:edit", "profit:enable", "profit:disable"],
+    org_admin: ["dashboard:export", "dashboard:customize",
                 "sales:export", "profit:audit", "profit:sms_verify", "ledger:export",
                 "org:edit",
                 "permission.user:create", "permission.user:edit", "permission.user:reset_password", "permission.user:toggle",
                 "permission.role:create", "permission.role:edit", "permission.role:config",
-                "permission.menu:create", "permission.menu:edit", "permission.menu:delete",
-                "student:export"],
-    planner: ["service:create", "service:edit_request", "ledger:export"],
-    tutor: ["service:create", "service:edit_request"],
+                "permission.menu:create", "permission.menu:edit", "permission.menu:delete"],
+    planner: ["ledger:export"],
+    tutor: [],
   };
   const menuPrefixes = allowedMenus[role];
   return ALL_IDS.filter((id) => {
     const node = findById(DEFAULT_TREE, id);
     if (!node) return false;
-    // 学管师不需要「审核模式」菜单
-    if (role === "tutor" && (id === "m_service_settings" || node.code === "service:mode_switch")) return false;
     if (node.type === "menu") {
       // 菜单 code 形如 dashboard:view / service.records:view ;取首段
       const top = node.code.split(":")[0].split(".")[0];

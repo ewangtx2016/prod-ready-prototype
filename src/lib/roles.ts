@@ -12,8 +12,6 @@ export const ROLE_LIST: Role[] = ["org_admin", "super_admin", "planner", "tutor"
 /** 菜单可见性矩阵（PRD §14） */
 export const MENU_PERMS: Record<string, Role[]> = {
   dashboard: ["org_admin", "super_admin", "planner"],
-  student: ["org_admin", "super_admin"],
-  service: ["org_admin", "super_admin", "planner", "tutor"],
   notification: ["org_admin", "super_admin", "planner", "tutor"],
   sales: ["org_admin", "super_admin", "planner"],
   profit: ["org_admin", "super_admin"],
