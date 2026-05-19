@@ -40,10 +40,10 @@ export type Order = {
   userName: string;
   userPhone: string;
   course: string;
-  courseType: "课程" | "学习机" | "会员服务" | "学科课" | "素养课" | "体验课";
+  courseType: "课程" | "学习机" | "学科课" | "素养课" | "体验课";
   amount: number;
   source: "机构老用户" | "规划师新拓";
-  channel: "鼎团团" | "甄选";
+  channel: "鼎团团" | "销售平台";
   payMethod: string;
   status: "待支付" | "已支付" | "退费中" | "已退费";
   refundStatus: "无" | "退费中" | "已退费";
@@ -72,6 +72,7 @@ export type ProfitRule = {
 
 export type LedgerItem = {
   id: string;
+  billId: string;
   orderId: string;
   userName: string;
   course: string;
@@ -82,6 +83,7 @@ export type LedgerItem = {
   status: "settled" | "pending" | "estimated" | "refund_settled" | "refund_pending";
   plannerName: string;
   settledAt?: string;
+  orgName: string;
 };
 
 export type AuditLog = {
@@ -305,10 +307,10 @@ export function seedIfNeeded(force = false) {
 
   const orders: Order[] = [
     { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "课程", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-20 11:00" },
-    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "AI 学习机 Pro", courseType: "学习机", amount: 3600, source: "规划师新拓", channel: "甄选", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "王规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-22 15:00" },
+    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "AI 学习机 Pro", courseType: "学习机", amount: 3600, source: "规划师新拓", channel: "销售平台", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "王规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-22 15:00" },
     { id: "O" + rid(), userName: "李思琪", userPhone: "13511112222", course: "物理体验课", courseType: "课程", amount: 199, source: "规划师新拓", channel: "鼎团团", payMethod: "微信", status: "待支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-28 10:00" },
     { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "课程", amount: 12800, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "周规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-15 09:00" },
-    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "会员服务年卡", courseType: "会员服务", amount: 4800, source: "机构老用户", channel: "甄选", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-10 14:00" },
+    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "会员服务年卡", courseType: "课程", amount: 4800, source: "机构老用户", channel: "销售平台", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-10 14:00" },
   ];
 
   // 演示用「交付类」服务记录，绑定到具体订单
@@ -367,10 +369,10 @@ export function seedIfNeeded(force = false) {
   ];
 
   const ledger: LedgerItem[] = [
-    { id: "L" + rid(), orderId: orders[0].id, userName: "张明轩", course: "高三数学冲刺班", amount: 6800, orgAmount: 4080, plannerAmount: 2040, platformAmount: 680, status: "settled", plannerName: "李规划", settledAt: "2026-04-21 00:30" },
-    { id: "L" + rid(), orderId: orders[1].id, userName: "王小宇", course: "AI 学习机 Pro", amount: 3600, orgAmount: 1620, plannerAmount: 1620, platformAmount: 360, status: "pending", plannerName: "李规划" },
-    { id: "L" + rid(), orderId: orders[2].id, userName: "李思琪", course: "物理体验课", amount: 199, orgAmount: 80, plannerAmount: 99, platformAmount: 20, status: "estimated", plannerName: "李规划" },
-    { id: "L" + rid(), orderId: orders[3].id, userName: "赵晓彤", course: "艺考素养课", amount: 12800, orgAmount: 5760, plannerAmount: 5760, platformAmount: 1280, status: "refund_pending", plannerName: "李规划" },
+    { id: "L" + rid(), billId: "B" + rid(), orderId: orders[0].id, userName: "张明轩", course: "高三数学冲刺班", amount: 6800, orgAmount: 4080, plannerAmount: 2040, platformAmount: 680, status: "settled", plannerName: "李规划", settledAt: "2026-04-21 00:30", orgName: orders[0].orgName },
+    { id: "L" + rid(), billId: "B" + rid(), orderId: orders[1].id, userName: "王小宇", course: "AI 学习机 Pro", amount: 3600, orgAmount: 1620, plannerAmount: 1620, platformAmount: 360, status: "pending", plannerName: "李规划", orgName: orders[1].orgName },
+    { id: "L" + rid(), billId: "B" + rid(), orderId: orders[2].id, userName: "李思琪", course: "物理体验课", amount: 199, orgAmount: 80, plannerAmount: 99, platformAmount: 20, status: "estimated", plannerName: "李规划", orgName: orders[2].orgName },
+    { id: "L" + rid(), billId: "B" + rid(), orderId: orders[3].id, userName: "赵晓彤", course: "艺考素养课", amount: 12800, orgAmount: 5760, plannerAmount: 5760, platformAmount: 1280, status: "refund_pending", plannerName: "李规划", orgName: orders[3].orgName },
   ];
 
   const logs: AuditLog[] = [

@@ -28,6 +28,7 @@ type User = {
   username: string;
   phone: string;
   role: string;
+  platform: string;
   orgs: string[];
   enabled: boolean;
   createdAt: string;
@@ -36,16 +37,16 @@ type User = {
 const KEY = "demo.permission.users";
 
 const sample: User[] = [
-  { id: "PU1", username: "chenqi", phone: "13800138003", role: "org_admin", orgs: ["机构用户平台"], enabled: true, createdAt: "2026-05-18 19:20:31" },
-  { id: "PU2", username: "user@name", phone: "13800138001", role: "org_admin", orgs: ["机构用户平台", "鼎校教育朝阳校区"], enabled: true, createdAt: "2026-05-18 19:20:00" },
-  { id: "PU3", username: "user@name2", phone: "13900139000", role: "org_admin", orgs: ["机构用户平台"], enabled: true, createdAt: "2026-05-18 19:03:23" },
-  { id: "PU4", username: "test_user", phone: "13700001111", role: "org_admin", orgs: ["鼎校教育海淀校区"], enabled: true, createdAt: "2026-05-18 17:54:03" },
-  { id: "PU5", username: "张三", phone: "13912345678", role: "planner", orgs: ["机构用户平台"], enabled: true, createdAt: "2026-05-18 17:53:52" },
-  { id: "PU6", username: "测试自动化002", phone: "15780253536", role: "planner", orgs: ["鼎校教育朝阳校区"], enabled: true, createdAt: "2026-05-18 11:32:39" },
-  { id: "PU7", username: "测试自动化003", phone: "18297847077", role: "tutor", orgs: ["机构用户平台", "鼎校教育海淀校区"], enabled: true, createdAt: "2026-05-18 11:26:12" },
-  { id: "PU8", username: "test_ceshi", phone: "15555714336", role: "tutor", orgs: ["机构用户平台"], enabled: true, createdAt: "2026-05-16 05:45:43" },
-  { id: "PU9", username: "测试用户0516", phone: "15964165465", role: "planner", orgs: ["鼎校教育朝阳校区"], enabled: true, createdAt: "2026-05-16 00:33:35" },
-  { id: "PU10", username: "testPT514", phone: "15556962022", role: "org_admin", orgs: ["机构用户平台", "鼎校教育朝阳校区", "鼎校教育海淀校区"], enabled: true, createdAt: "2026-05-14 14:15:49" },
+  { id: "PU1", username: "chenqi", phone: "13800138003", role: "org_admin", platform: "机构全生命周期平台", orgs: ["机构用户平台"], enabled: true, createdAt: "2026-05-18 19:20:31" },
+  { id: "PU2", username: "user@name", phone: "13800138001", role: "org_admin", platform: "机构全生命周期平台", orgs: ["机构用户平台", "鼎校教育朝阳校区"], enabled: true, createdAt: "2026-05-18 19:20:00" },
+  { id: "PU3", username: "user@name2", phone: "13900139000", role: "org_admin", platform: "机构全生命周期平台", orgs: ["机构用户平台"], enabled: true, createdAt: "2026-05-18 19:03:23" },
+  { id: "PU4", username: "test_user", phone: "13700001111", role: "org_admin", platform: "鼎团团", orgs: [], enabled: true, createdAt: "2026-05-18 17:54:03" },
+  { id: "PU5", username: "张三", phone: "13912345678", role: "planner", platform: "机构全生命周期平台", orgs: ["机构用户平台"], enabled: true, createdAt: "2026-05-18 17:53:52" },
+  { id: "PU6", username: "测试自动化002", phone: "15780253536", role: "planner", platform: "机构全生命周期平台", orgs: ["鼎校教育朝阳校区"], enabled: true, createdAt: "2026-05-18 11:32:39" },
+  { id: "PU7", username: "测试自动化003", phone: "18297847077", role: "tutor", platform: "机构全生命周期平台", orgs: ["机构用户平台", "鼎校教育海淀校区"], enabled: true, createdAt: "2026-05-18 11:26:12" },
+  { id: "PU8", username: "test_ceshi", phone: "15555714336", role: "tutor", platform: "鼎团团", orgs: [], enabled: true, createdAt: "2026-05-16 05:45:43" },
+  { id: "PU9", username: "测试用户0516", phone: "15964165465", role: "planner", platform: "机构全生命周期平台", orgs: ["鼎校教育朝阳校区"], enabled: true, createdAt: "2026-05-16 00:33:35" },
+  { id: "PU10", username: "testPT514", phone: "15556962022", role: "org_admin", platform: "机构全生命周期平台", orgs: ["机构用户平台", "鼎校教育朝阳校区", "鼎校教育海淀校区"], enabled: true, createdAt: "2026-05-14 14:15:49" },
 ];
 
 function Page() {
@@ -58,6 +59,7 @@ function Page() {
   const [keyword, setKeyword] = useState("");
   const [phoneFilter, setPhoneFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
 
   useEffect(() => {
     const raw = localStorage.getItem(KEY);
@@ -133,6 +135,7 @@ function Page() {
     return list.filter((u) => {
       if (statusFilter === "enabled" && !u.enabled) return false;
       if (statusFilter === "disabled" && u.enabled) return false;
+      if (platformFilter !== "all" && u.platform !== platformFilter) return false;
       if (ph && !u.phone.includes(ph)) return false;
       if (kw) {
         const hay = `${u.username} ${u.phone}`.toLowerCase();
@@ -140,13 +143,14 @@ function Page() {
       }
       return true;
     });
-  }, [list, keyword, phoneFilter, statusFilter]);
+  }, [list, keyword, phoneFilter, statusFilter, platformFilter]);
 
-  const hasFilter = !!keyword || !!phoneFilter || statusFilter !== "all";
+  const hasFilter = !!keyword || !!phoneFilter || statusFilter !== "all" || platformFilter !== "all";
   const reset = () => {
     setKeyword("");
     setPhoneFilter("");
     setStatusFilter("all");
+    setPlatformFilter("all");
   };
 
   const { paged, Pagination, page, pageSize } = usePagination(filtered, 10);
@@ -166,6 +170,7 @@ function Page() {
                 username: "",
                 phone: "",
                 role: "planner",
+                platform: "机构全生命周期平台",
                 orgs: [],
                 enabled: true,
                 createdAt: new Date().toLocaleString("zh-CN", {
@@ -217,6 +222,19 @@ function Page() {
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-1 md:col-span-1">
+          <Label className="text-xs text-muted-foreground">平台类型</Label>
+          <Select value={platformFilter} onValueChange={setPlatformFilter}>
+            <SelectTrigger className="h-8">
+              <SelectValue placeholder="请选择" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部</SelectItem>
+              <SelectItem value="机构全生命周期平台">机构全生命周期平台</SelectItem>
+              <SelectItem value="鼎团团">鼎团团</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex items-end gap-2 md:col-span-2">
           <Button size="sm" className="h-8" onClick={() => {}}>
             <Search className="h-3.5 w-3.5" /> 查询
@@ -241,6 +259,7 @@ function Page() {
               <TableHead className="w-12">序号</TableHead>
               <TableHead>用户名称</TableHead>
               <TableHead>联系电话</TableHead>
+              <TableHead>平台类型</TableHead>
               <TableHead>角色</TableHead>
               <TableHead>状态</TableHead>
               <TableHead>创建时间</TableHead>
@@ -257,6 +276,7 @@ function Page() {
                   </TableCell>
                   <TableCell>{u.username}</TableCell>
                   <TableCell className="font-mono text-xs">{u.phone}</TableCell>
+                  <TableCell className="text-xs">{u.platform}</TableCell>
                   <TableCell>
                     <Badge
                       className={`text-white ${roleDef?.color ?? "bg-slate-500"}`}
@@ -300,7 +320,7 @@ function Page() {
             {filtered.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="py-12 text-center text-muted-foreground"
                 >
                   暂无数据
@@ -358,6 +378,29 @@ function Page() {
               </div>
               <div className="space-y-1">
                 <Label>
+                  <span className="text-red-500">*</span> 平台类型
+                </Label>
+                <Select
+                  value={editing.platform}
+                  onValueChange={(v) =>
+                    setEditing({
+                      ...editing,
+                      platform: v,
+                      orgs: v === "鼎团团" ? [] : editing.orgs,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="机构全生命周期平台">机构全生命周期平台</SelectItem>
+                    <SelectItem value="鼎团团">鼎团团</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>
                   <span className="text-red-500">*</span> 角色
                 </Label>
                 <Select
@@ -378,8 +421,9 @@ function Page() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>绑定机构</Label>
+              {editing.platform === "机构全生命周期平台" && (
+                <div className="space-y-2">
+                  <Label>绑定机构</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -469,6 +513,7 @@ function Page() {
                   </PopoverContent>
                 </Popover>
               </div>
+              )}
             </div>
           )}
           <DialogFooter>

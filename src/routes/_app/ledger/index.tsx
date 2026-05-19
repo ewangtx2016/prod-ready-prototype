@@ -75,7 +75,7 @@ function Page() {
   const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
   const getLedgerProductType = useCallback((item: LedgerItem) => productTypeLabel(orderById.get(item.orderId)?.courseType ?? ""), [orderById]);
   const getLedgerTutor = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.tutorName ?? "", [orderById]);
-  const productTypeOptions = ["课程", "学习机", "会员服务"];
+  const productTypeOptions = ["课程", "学习机"];
 
   useEffect(() => {
     let arr = db.ledger();
@@ -95,8 +95,7 @@ function Page() {
     if (productType !== "all" && getLedgerProductType(l) !== productType) return false;
     if (org !== "all" && getLedgerOrg(l) !== org) return false;
     if (kw && !(
-      l.id.toLowerCase().includes(kw) ||
-      l.orderId.toLowerCase().includes(kw) ||
+      l.billId.toLowerCase().includes(kw) ||
       l.userName.toLowerCase().includes(kw) ||
       l.course.toLowerCase().includes(kw) ||
       getLedgerProductType(l).toLowerCase().includes(kw) ||
@@ -116,26 +115,22 @@ function Page() {
   const summaryRows = (() => {
     const totalAmt = sum(filtered, (x) => x.amount);
     const orgAmt = sum(filtered, (x) => x.orgAmount);
-    const plannerAmt = sum(filtered, (x) => x.plannerAmount);
 
     if (activeTab === "refund") {
       return [
         { label: "退回订单总额", value: money(totalAmt), className: "text-destructive" },
         { label: "影响机构分成", value: money(orgAmt), className: "text-destructive" },
-        { label: "退回规划师收益", value: money(plannerAmt), className: "text-destructive" },
       ];
     }
     if (activeTab === "estimated") {
       return [
         { label: "预估订单总额", value: money(totalAmt), className: "" },
         { label: "预估机构分成", value: money(orgAmt), className: "text-info" },
-        { label: "预估规划师收益", value: money(plannerAmt), className: "text-info" },
       ];
     }
     return [
       { label: "订单总额", value: money(totalAmt), className: "" },
       { label: "机构分成", value: money(orgAmt), className: "text-info" },
-      { label: "规划师收益", value: money(plannerAmt), className: "text-info" },
     ];
   })();
 
@@ -148,7 +143,7 @@ function Page() {
 
   return (
     <div>
-      <PageHeader title="台账管理" subtitle="结算 / 退回 / 异常台账统一查询" actions={
+      <PageHeader title="台账管理" subtitle="结算 / 退回 统一查询" actions={
         <PermissionTip action="导出台账" prd="§10 / §16.5" allow={["org_admin", "planner"]} desc="导出走脱敏规则">
           <Button size="sm" onClick={onExport}><Download className="h-4 w-4" /> 导出</Button>
         </PermissionTip>
@@ -159,7 +154,7 @@ function Page() {
         <div>· 导出：按当前筛选项导出 .xlsx；非机构管理员仅看到脱敏数据</div>
       </DevNote>
 
-      <div className="mb-4 grid gap-3 grid-cols-3">
+      <div className="mb-4 grid gap-3 grid-cols-2">
         {summaryRows.map((item) => (
           <Card key={item.label} className="p-4">
             <div className="text-xs text-muted-foreground">{item.label}</div>
@@ -217,7 +212,7 @@ function Page() {
       <Card>
         <Table>
           <TableHeader><TableRow>
-            <TableHead>结算单号</TableHead><TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>产品名称</TableHead><TableHead>产品类型</TableHead>
+            <TableHead>账单ID</TableHead><TableHead>用户</TableHead><TableHead>产品名称</TableHead><TableHead>产品类型</TableHead>
             <TableHead>机构名称</TableHead><TableHead>规划师名称</TableHead><TableHead>学管师</TableHead><TableHead>订单金额</TableHead>
             <TableHead onClick={() => toggleSort("orgAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">机构分成{sortField === "orgAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "orgAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "orgAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
             <TableHead onClick={() => toggleSort("settledAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">结算时间{sortField === "settledAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "settledAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "settledAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
@@ -227,8 +222,7 @@ function Page() {
               const isRefund = l.status === "refund_pending" || l.status === "refund_settled";
               return (
                 <TableRow key={l.id}>
-                  <TableCell className="font-mono text-xs">{l.id}</TableCell>
-                  <TableCell className="font-mono text-xs">{l.orderId}</TableCell>
+                  <TableCell className="font-mono text-xs">{l.billId}</TableCell>
                   <TableCell>{maskName(l.userName, role)}</TableCell>
                   <TableCell>{l.course}</TableCell>
                   <TableCell><Badge variant="outline">{getLedgerProductType(l) || "-"}</Badge></TableCell>
@@ -241,7 +235,7 @@ function Page() {
                 </TableRow>
               );
             })}
-            {filtered.length === 0 && <TableRow><TableCell colSpan={11} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+            {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
           </TableBody>
         </Table>
         <Pagination />

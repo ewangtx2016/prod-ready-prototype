@@ -18,8 +18,9 @@ export const Route = createFileRoute("/_app/audit-log")({ component: () => <Role
 
 function auditType(log: AuditLog) {
   if (log.action.includes("登录") || log.module === "登录") return "登录";
+  if (log.action.includes("退出")) return "退出";
   if (log.action.includes("导出")) return "导出";
-  return log.action;
+  return "查询";
 }
 
 function Inner() {
@@ -71,7 +72,9 @@ function Inner() {
           <SelectContent>
             <SelectItem value="all">全部类型</SelectItem>
             <SelectItem value="登录">登录</SelectItem>
+            <SelectItem value="退出">退出</SelectItem>
             <SelectItem value="导出">导出</SelectItem>
+            <SelectItem value="查询">查询</SelectItem>
           </SelectContent>
         </Select>
         </div>

@@ -44,15 +44,15 @@ function getSample(): MenuNode[] {
   return [
     {
       id: "M1", type: "directory", parentId: null, name: "商品管理", component: "#", componentName: "顶级目录",
-      icon: "LayoutGrid", routeName: "Product", path: "/product", sort: 1, hidden: false, platform: "机构平台",
+      icon: "LayoutGrid", routeName: "Product", path: "/product", sort: 1, hidden: false, platform: "机构全生命周期平台",
       children: [
-        { id: "M1-1", type: "menu", parentId: "M1", name: "商品列表", permCode: "product:list", apiCode: "GET /api/products", sort: 1, platform: "机构平台" },
-        { id: "M1-2", type: "button", parentId: "M1", name: "新增商品", permCode: "product:create", apiCode: "POST /api/products", sort: 2, platform: "机构平台" },
+        { id: "M1-1", type: "menu", parentId: "M1", name: "商品列表", permCode: "product:list", apiCode: "GET /api/products", sort: 1, platform: "机构全生命周期平台" },
+        { id: "M1-2", type: "button", parentId: "M1", name: "新增商品", permCode: "product:create", apiCode: "POST /api/products", sort: 2, platform: "机构全生命周期平台" },
       ],
     },
     {
       id: "M2", type: "directory", parentId: null, name: "权限管理", component: "#", componentName: "顶级目录",
-      icon: "Lock", routeName: "Authorization", path: "/authorization", sort: 2, hidden: false, platform: "机构平台",
+      icon: "Lock", routeName: "Authorization", path: "/authorization", sort: 2, hidden: false, platform: "机构全生命周期平台",
     },
     {
       id: "M3", type: "directory", parentId: null, name: "商家管理", component: "#", componentName: "顶级目录",
@@ -60,11 +60,11 @@ function getSample(): MenuNode[] {
     },
     {
       id: "M4", type: "directory", parentId: null, name: "审核管理", component: "#", componentName: "顶级目录",
-      icon: "ClipboardCheck", routeName: "Review", path: "/review", sort: 4, hidden: false, platform: "机构平台",
+      icon: "ClipboardCheck", routeName: "Review", path: "/review", sort: 4, hidden: false, platform: "机构全生命周期平台",
     },
     {
       id: "M5", type: "directory", parentId: null, name: "分类管理", component: "#", componentName: "顶级目录",
-      icon: "Tags", routeName: "Category", path: "/category", sort: 5, hidden: false, platform: "机构平台",
+      icon: "Tags", routeName: "Category", path: "/category", sort: 5, hidden: false, platform: "机构全生命周期平台",
     },
     {
       id: "M6", type: "directory", parentId: null, name: "订单中心", component: "#", componentName: "顶级目录",
@@ -76,7 +76,7 @@ function getSample(): MenuNode[] {
     },
     {
       id: "M8", type: "directory", parentId: null, name: "账号管理", component: "#", componentName: "顶级目录",
-      icon: "Users", routeName: "Account", path: "/account", sort: 8, hidden: false, platform: "机构平台",
+      icon: "Users", routeName: "Account", path: "/account", sort: 8, hidden: false, platform: "机构全生命周期平台",
     },
   ];
 }
@@ -143,6 +143,7 @@ function Page() {
   const [deleting, setDeleting] = useState<MenuNode | null>(null);
   const [editParentId, setEditParentId] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
+  const [platformFilter, setPlatformFilter] = useState<string>("鼎团团平台");
 
   useEffect(() => {
     const raw = localStorage.getItem(KEY);
@@ -211,27 +212,32 @@ function Page() {
 
   const canEdit = role === "org_admin";
 
-  // 扁平化并过滤搜索
+  // 扁平化并过滤搜索 + 平台
   const flatList = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
     const all = flatten(tree);
-    if (!kw) return all;
+    // 先按平台过滤
+    let filtered = all;
+    if (platformFilter) {
+      filtered = all.filter((n) => (n.platform ?? "机构全生命周期平台") === platformFilter);
+    }
+    if (!kw) return filtered;
     // 搜索时返回所有匹配节点，同时保留父节点用于展示层级
     const matched = new Set<string>();
-    all.forEach((n) => {
+    filtered.forEach((n) => {
       if (n.name.toLowerCase().includes(kw)) {
         matched.add(n.id);
         // 向上追溯所有父节点
         let pid = n.parentId;
         while (pid) {
           matched.add(pid);
-          const p = all.find((x) => x.id === pid);
+          const p = filtered.find((x) => x.id === pid);
           pid = p?.parentId ?? null;
         }
       }
     });
-    return all.filter((n) => matched.has(n.id));
-  }, [tree, keyword]);
+    return filtered.filter((n) => matched.has(n.id));
+  }, [tree, keyword, platformFilter]);
 
   // 过滤后只展示有展开的父节点下的子节点
   const visibleRows = useMemo(() => {
@@ -284,7 +290,7 @@ function Page() {
       component: type === "directory" ? "#" : undefined,
       sort: 1,
       hidden: false,
-      platform: "机构平台",
+      platform: "机构全生命周期平台",
     });
   };
 
@@ -310,17 +316,27 @@ function Page() {
             className="h-8"
           />
         </div>
+        <div className="space-y-1 md:col-span-1">
+          <Label className="text-xs text-muted-foreground">平台</Label>
+          <Select value={platformFilter} onValueChange={setPlatformFilter}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="鼎团团平台">鼎团团平台</SelectItem>
+              <SelectItem value="机构全生命周期平台">机构全生命周期平台</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex items-end gap-2 md:col-span-2">
           <Button size="sm" className="h-8" onClick={() => {}}>
             <Search className="h-3.5 w-3.5" /> 查询
           </Button>
-          {!!keyword && (
-            <Button variant="ghost" size="sm" className="h-8" onClick={() => setKeyword("")}>
+          {(!!keyword || platformFilter !== "鼎团团平台") && (
+            <Button variant="ghost" size="sm" className="h-8" onClick={() => { setKeyword(""); setPlatformFilter("鼎团团平台"); }}>
               <RotateCcw className="h-3.5 w-3.5" /> 重置
             </Button>
           )}
         </div>
-        <div className="flex items-end justify-end md:col-span-2">
+        <div className="flex items-end justify-end md:col-span-1">
           <span className="text-xs text-muted-foreground">
             共 {visibleRows.length} 条
           </span>
@@ -333,6 +349,7 @@ function Page() {
             <TableRow>
               <TableHead className="w-12">序号</TableHead>
               <TableHead>菜单名称</TableHead>
+              <TableHead>平台</TableHead>
               <TableHead>图标</TableHead>
               <TableHead>组件</TableHead>
               <TableHead>路径</TableHead>
@@ -367,6 +384,9 @@ function Page() {
                       )}
                       <span>{node.name}</span>
                     </div>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <Badge variant="outline">{node.platform ?? "机构全生命周期平台"}</Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-xs">
                     {node.icon ?? "-"}
@@ -413,7 +433,7 @@ function Page() {
             })}
             {paged.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
                   暂无数据
                 </TableCell>
               </TableRow>
@@ -462,14 +482,14 @@ function Page() {
               <div className="space-y-1">
                 <Label>选择平台</Label>
                 <Select
-                  value={editing.platform ?? "机构平台"}
+                  value={editing.platform ?? "机构全生命周期平台"}
                   onValueChange={(v) => setEditing({ ...editing, platform: v })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="请选择" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="机构平台">机构平台</SelectItem>
+                    <SelectItem value="机构全生命周期平台">机构全生命周期平台</SelectItem>
                     <SelectItem value="鼎团团平台">鼎团团平台</SelectItem>
                   </SelectContent>
                 </Select>

@@ -63,7 +63,7 @@ function Inner() {
   const scopedOrders = filterByDataPerm(orders, "sales", role, currentUserName, orgName);
   const plannerOptions = Array.from(new Set(scopedOrders.map((o) => o.plannerName)));
   const orgOptions = role === "org_admin" ? [orgName] : Array.from(new Set(scopedOrders.map((o) => o.orgName)));
-  const productTypeOptions = ["课程", "学习机", "会员服务"];
+  const productTypeOptions = ["课程", "学习机"];
 
   const kw = keyword.trim().toLowerCase();
   const filtered = scopedOrders.filter((o) => {
@@ -100,13 +100,13 @@ function Inner() {
 
   return (
     <div>
-      <PageHeader title="销售明细" subtitle="订单数据由 鼎团团 / 甄选 平台 Webhook 推送同步" actions={
+      <PageHeader title="销售明细" subtitle="订单数据由 鼎团团 / 销售平台 平台 Webhook 推送同步" actions={
         <PermissionTip action="导出销售明细" prd="§8.2 / §14" allow={["org_admin"]}>
           <Button size="sm" disabled={role !== "org_admin"} onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "销售明细", action: "导出", detail: `${filtered.length} 条 (脱敏)` }); toast.success("已导出 sales.xlsx (mock)"); }}><Download className="h-4 w-4" /> 导出</Button>
         </PermissionTip>
       } />
       <DevNote prd="§8" title="销售明细">
-        <div>· 数据来源：鼎团团 / 甄选 (Webhook 推送，准实时 ≤1 分钟，失败重试 3 次)</div>
+        <div>· 数据来源：鼎团团 / 销售平台 (Webhook 推送，准实时 ≤1 分钟，失败重试 3 次)</div>
         <div>· 用户来源标记：首次下单=规划师新拓；有历史订单=机构老用户</div>
         <div>· 退费仅在源系统发起，本系统只读；不支持部分退费</div>
         <div>· <b>待确认</b>：字段映射 Q9-Q14（接口设计阻塞中）</div>

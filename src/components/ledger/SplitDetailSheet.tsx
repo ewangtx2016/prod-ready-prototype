@@ -75,7 +75,7 @@ export function SplitDetailSheet({
             <FileText className="h-4 w-4" /> 分成明细
           </SheetTitle>
           <SheetDescription className="font-mono text-xs">
-            订单 {item?.orderId} · 结算单 {item?.id}
+            订单 {item?.orderId} · 账单ID {item?.billId}
           </SheetDescription>
         </SheetHeader>
 
@@ -200,7 +200,6 @@ function StatusRow({ target, status, settledAt }: { target: string; status: Ledg
     estimated: { label: "预估中", cls: "text-info" },
     refund_pending: { label: "退回中", cls: "text-warning" },
     refund_settled: { label: "已退回", cls: "text-destructive" },
-    abnormal: { label: "异常", cls: "text-destructive" },
   };
   const m = map[status];
   return (
