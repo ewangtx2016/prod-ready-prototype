@@ -60,7 +60,7 @@ function Inner() {
 
   const scopedOrders = filterByDataPerm(orders, "sales", role, currentUserName, orgName);
   const orgOptions = role === "org_admin" ? [orgName] : Array.from(new Set(scopedOrders.map((o) => o.orgName)));
-  const productTypeOptions = ["课程", "学习机"];
+  const productTypeOptions = ["课程"];
 
   const kw = keyword.trim().toLowerCase();
   const filtered = scopedOrders.filter((o) => {
@@ -120,9 +120,9 @@ function Inner() {
           <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 用户 / 手机号" className="h-8" />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">产品类型</Label>
+          <Label className="text-xs text-muted-foreground">商品类型</Label>
           <Select value={productType} onValueChange={setProductType}>
-            <SelectTrigger className="h-8"><SelectValue placeholder="产品类型" /></SelectTrigger>
+            <SelectTrigger className="h-8"><SelectValue placeholder="商品类型" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部类型</SelectItem>
               {productTypeOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
@@ -168,7 +168,7 @@ function Inner() {
         <Table>
             <TableHeader><TableRow>
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
-              <TableHead>产品名称</TableHead><TableHead>产品类型</TableHead><TableHead onClick={() => toggleSort("amount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">金额{sortField === "amount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "amount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "amount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
+              <TableHead>商品名称</TableHead><TableHead>商品类型</TableHead><TableHead onClick={() => toggleSort("amount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">金额{sortField === "amount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "amount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "amount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
               <TableHead>机构</TableHead>
               <TableHead>状态</TableHead><TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">下单时间{sortField === "createdAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "createdAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "createdAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>

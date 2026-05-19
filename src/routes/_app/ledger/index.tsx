@@ -73,7 +73,7 @@ function Page() {
   const orderById = useMemo(() => new Map(orders.map((o) => [o.id, o])), [orders]);
   const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
   const getLedgerProductType = useCallback((item: LedgerItem) => productTypeLabel(orderById.get(item.orderId)?.courseType ?? ""), [orderById]);
-  const productTypeOptions = ["课程", "学习机"];
+  const productTypeOptions = ["课程"];
 
   useEffect(() => {
     let arr = db.ledger();
@@ -173,9 +173,9 @@ function Page() {
           <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 结算单号 / 用户" className="h-8" />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">产品类型</Label>
+          <Label className="text-xs text-muted-foreground">商品类型</Label>
           <Select value={productType} onValueChange={setProductType}>
-            <SelectTrigger className="h-8"><SelectValue placeholder="产品类型" /></SelectTrigger>
+            <SelectTrigger className="h-8"><SelectValue placeholder="商品类型" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部类型</SelectItem>
               {productTypeOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
@@ -208,7 +208,7 @@ function Page() {
       <Card>
         <Table>
           <TableHeader><TableRow>
-            <TableHead>账单ID</TableHead><TableHead>用户</TableHead><TableHead>产品名称</TableHead><TableHead>产品类型</TableHead>
+            <TableHead>账单ID</TableHead><TableHead>用户</TableHead><TableHead>商品名称</TableHead><TableHead>商品类型</TableHead>
             <TableHead>机构名称</TableHead><TableHead>订单金额</TableHead>
             <TableHead onClick={() => toggleSort("orgAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">机构分成{sortField === "orgAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "orgAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "orgAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
             <TableHead onClick={() => toggleSort("settledAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">结算时间{sortField === "settledAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "settledAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "settledAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>

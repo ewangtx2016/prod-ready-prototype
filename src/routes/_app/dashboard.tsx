@@ -206,8 +206,6 @@ function Dashboard() {
           <SelectContent>
             <SelectItem value="all">全部类型</SelectItem>
             <SelectItem value="course">课程</SelectItem>
-            <SelectItem value="device">学习机</SelectItem>
-            <SelectItem value="service">服务权益</SelectItem>
           </SelectContent>
         </Select>
         {(isOrg || isPlanner) && (
