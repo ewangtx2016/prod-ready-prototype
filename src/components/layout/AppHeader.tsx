@@ -1,21 +1,14 @@
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
-import { Bell, LogOut, KeyRound } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate, useRouterState, Link } from "@tanstack/react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { toast } from "sonner";
 
 const PATH_LABEL: Record<string, string> = {
   dashboard: "数据看板", service: "服务管理", records: "服务管理", audit: "服务审核", settings: "系统设置",
@@ -43,17 +36,6 @@ export function AppHeader() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const nav = useNavigate();
   const segments = path.split("/").filter(Boolean);
-  const [pwdOpen, setPwdOpen] = useState(false);
-  const [pwdData, setPwdData] = useState({ old: "", n1: "", n2: "" });
-
-  const doPwd = () => {
-    if (!pwdData.old || !pwdData.n1) { toast.error("请填写完整"); return; }
-    if (pwdData.n1 !== pwdData.n2) { toast.error("两次新密码不一致"); return; }
-    if (pwdData.n1.length < 8) { toast.error("密码至少 8 位"); return; }
-    toast.success("密码已重置");
-    setPwdOpen(false);
-    setPwdData({ old: "", n1: "", n2: "" });
-  };
 
   return (
     <>
@@ -78,7 +60,6 @@ export function AppHeader() {
           })}
         </nav>
         <div className="ml-auto flex items-center gap-3">
-          <Button size="icon" variant="ghost" onClick={() => nav({ to: "/messages" })} title="我的消息"><Bell className="h-4 w-4" /></Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 pl-2 cursor-pointer hover:bg-accent rounded-sm px-2 py-1 transition-colors">
@@ -89,10 +70,6 @@ export function AppHeader() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => setPwdOpen(true)}>
-                <KeyRound className="h-4 w-4" /> 修改密码
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => nav({ to: "/login" })}>
                 <LogOut className="h-4 w-4" /> 退出登录
               </DropdownMenuItem>
@@ -100,25 +77,6 @@ export function AppHeader() {
           </DropdownMenu>
         </div>
       </header>
-
-      {/* 修改密码弹窗 */}
-      <Dialog open={pwdOpen} onOpenChange={setPwdOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>修改密码</DialogTitle>
-            <DialogDescription>新密码至少 8 位，需包含字母与数字</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div><Label>当前密码</Label><Input type="password" value={pwdData.old} onChange={(e) => setPwdData({ ...pwdData, old: e.target.value })} /></div>
-            <div><Label>新密码</Label><Input type="password" value={pwdData.n1} onChange={(e) => setPwdData({ ...pwdData, n1: e.target.value })} /></div>
-            <div><Label>确认新密码</Label><Input type="password" value={pwdData.n2} onChange={(e) => setPwdData({ ...pwdData, n2: e.target.value })} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPwdOpen(false)}>取消</Button>
-            <Button onClick={doPwd}>确认</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
