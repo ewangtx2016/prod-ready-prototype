@@ -96,7 +96,17 @@ function Inner() {
     <div>
       <PageHeader title="销售明细" subtitle="订单数据由 鼎团团 / 销售平台 平台 Webhook 推送同步" actions={
         <PermissionTip action="导出销售明细" prd="§8.2 / §14" allow={["org_admin"]}>
-          <Button size="sm" disabled={role !== "org_admin"} onClick={() => { db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "销售明细", action: "导出", detail: `${filtered.length} 条 (脱敏)` }); toast.success("已导出 sales.xlsx (mock)"); }}><Download className="h-4 w-4" /> 导出</Button>
+          <Button size="sm" disabled={role !== "org_admin"} onClick={() => {
+            db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "销售明细", action: "导出", detail: `${filtered.length} 条 (脱敏)` });
+            const link = document.createElement("a");
+            link.href = "/销售明细-导出模板.xlsx";
+            link.download = `销售明细_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success(`已导出 销售明细_${new Date().toISOString().slice(0,10)}.xlsx`);
+          }}
+          ><Download className="h-4 w-4" /> 导出</Button>
         </PermissionTip>
       } />
       <DevNote prd="§8" title="销售明细">

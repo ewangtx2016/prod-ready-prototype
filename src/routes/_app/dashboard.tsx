@@ -178,7 +178,17 @@ function Dashboard() {
               </PermissionTip>
             )}
             <PermissionTip action="导出看板" prd="§5.2 / §14" allow={["org_admin", "planner", "tutor"]} desc={isOrg ? "导出全机构看板（脱敏）" : "仅导出本人范围数据"}>
-              <Button size="sm" onClick={() => { const scope = isOrg ? "全量看板数据 (脱敏)" : "本人范围看板数据"; db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "数据看板", action: "导出", detail: `导出${scope}` }); toast.success(`已导出 dashboard${isOrg ? "" : "_mine"}.xlsx (mock)`); }}>
+              <Button size="sm" onClick={() => {
+                const scope = isOrg ? "全量看板数据 (脱敏)" : "本人范围看板数据";
+                db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "数据看板", action: "导出", detail: `导出${scope}` });
+                const link = document.createElement("a");
+                link.href = "/数据看板-导出模板.xlsx";
+                link.download = `数据看板_${new Date().toISOString().slice(0,10)}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast.success(`已导出 数据看板_${new Date().toISOString().slice(0,10)}.xlsx`);
+              }}>
                 <Download className="h-4 w-4" /> {isOrg ? "导出" : "导出本人数据"}
               </Button>
             </PermissionTip>

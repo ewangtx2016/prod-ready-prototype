@@ -125,7 +125,13 @@ function Page() {
       action: "导出",
       detail: `导出账单汇总 ${filtered.length} 条`,
     });
-    toast.success(`已导出 bills.xlsx (${filtered.length} 条)`);
+    const link = document.createElement("a");
+    link.href = "/资金账单-导出模板.xlsx";
+    link.download = `资金账单_${new Date().toISOString().slice(0,10)}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`已导出 资金账单_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
   return (

@@ -87,7 +87,13 @@ function Page() {
       action: "导出明细",
       detail: `导出账单明细 ${filtered.length} 条`,
     });
-    toast.success(`已导出 bill-details.xlsx (${filtered.length} 条)`);
+    const link = document.createElement("a");
+    link.href = "/资金账单-明细-导出模板.xlsx";
+    link.download = `资金账单-明细_${new Date().toISOString().slice(0,10)}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`已导出 资金账单-明细_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
   const onReset = () => {
