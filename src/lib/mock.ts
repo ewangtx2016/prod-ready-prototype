@@ -42,6 +42,9 @@ export type Order = {
   course: string;
   courseType: "课程" | "学习机" | "学科课" | "素养课" | "体验课";
   amount: number;
+  orderAmount: number;
+  paidAmount: number;
+  discountAmount: number;
   source: "机构老用户" | "规划师新拓";
   channel: "鼎团团" | "销售平台";
   payMethod: string;
@@ -276,7 +279,7 @@ const KEYS = {
   log: "demo.logs",
   orgs: "demo.orgs",
   student: "demo.students",
-  seeded: "demo.seeded.v15",
+  seeded: "demo.seeded.v16",
   // 注：模型变更需提升版本以触发重置
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
@@ -341,11 +344,11 @@ export function seedIfNeeded(force = false) {
   ];
 
   const orders: Order[] = [
-    { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "课程", amount: 6800, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-20 11:00" },
-    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "AI 学习机 Pro", courseType: "学习机", amount: 3600, source: "规划师新拓", channel: "销售平台", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "王规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-22 15:00" },
-    { id: "O" + rid(), userName: "李思琪", userPhone: "13511112222", course: "物理体验课", courseType: "课程", amount: 199, source: "规划师新拓", channel: "鼎团团", payMethod: "微信", status: "待支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-28 10:00" },
-    { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "课程", amount: 12800, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "周规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-15 09:00" },
-    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "会员服务年卡", courseType: "课程", amount: 4800, source: "机构老用户", channel: "销售平台", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-10 14:00" },
+    { id: "O" + rid(), userName: "张明轩", userPhone: "13812345678", course: "高三数学冲刺班", courseType: "课程", amount: 6800, orderAmount: 7200, paidAmount: 6800, discountAmount: 400, source: "机构老用户", channel: "鼎团团", payMethod: "微信", status: "已支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-20 11:00" },
+    { id: "O" + rid(), userName: "王小宇", userPhone: "13987654321", course: "AI 学习机 Pro", courseType: "学习机", amount: 3600, orderAmount: 3999, paidAmount: 3600, discountAmount: 399, source: "规划师新拓", channel: "销售平台", payMethod: "支付宝", status: "已支付", refundStatus: "无", plannerName: "王规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-22 15:00" },
+    { id: "O" + rid(), userName: "李思琪", userPhone: "13511112222", course: "物理体验课", courseType: "课程", amount: 199, orderAmount: 299, paidAmount: 0, discountAmount: 100, source: "规划师新拓", channel: "鼎团团", payMethod: "微信", status: "待支付", refundStatus: "无", plannerName: "李规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-28 10:00" },
+    { id: "O" + rid(), userName: "赵晓彤", userPhone: "13633334444", course: "艺考素养课", courseType: "课程", amount: 12800, orderAmount: 13800, paidAmount: 12800, discountAmount: 1000, source: "规划师新拓", channel: "鼎团团", payMethod: "信用卡", status: "退费中", refundStatus: "退费中", plannerName: "周规划", tutorName: "陈学管", orgName: "机构用户平台", createdAt: "2026-04-15 09:00" },
+    { id: "O" + rid(), userName: "孙文博", userPhone: "13755556666", course: "会员服务年卡", courseType: "课程", amount: 4800, orderAmount: 5200, paidAmount: 4800, discountAmount: 400, source: "机构老用户", channel: "销售平台", payMethod: "微信", status: "已退费", refundStatus: "已退费", plannerName: "李规划", tutorName: "王学管", orgName: "机构用户平台", createdAt: "2026-04-10 14:00" },
   ];
 
   // 演示用「交付类」服务记录，绑定到具体订单
@@ -618,7 +621,16 @@ export function seedIfNeeded(force = false) {
 export const db = {
   services: () => read<ServiceRecord[]>(KEYS.service, []),
   setServices: (v: ServiceRecord[]) => write(KEYS.service, v),
-  orders: () => read<Order[]>(KEYS.order, []),
+  orders: () => {
+    const list = read<Order[]>(KEYS.order, []);
+    // 迁移：补齐新增字段（兼容 localStorage 旧数据）
+    list.forEach((o) => {
+      if (o.orderAmount == null) o.orderAmount = o.amount;
+      if (o.paidAmount == null) o.paidAmount = o.status === "待支付" ? 0 : o.amount;
+      if (o.discountAmount == null) o.discountAmount = o.orderAmount - o.paidAmount;
+    });
+    return list;
+  },
   setOrders: (v: Order[]) => write(KEYS.order, v),
   rules: () => read<ProfitRule[]>(KEYS.rule, []),
   setRules: (v: ProfitRule[]) => write(KEYS.rule, v),

@@ -1,6 +1,6 @@
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
-import { LogOut, Download } from "lucide-react";
+import { LogOut, Download, ExternalLink } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate, useRouterState, Link } from "@tanstack/react-router";
 import {
@@ -155,6 +155,16 @@ export function AppHeader() {
       </nav>
       <div className="ml-auto flex items-center gap-3">
         <ExportTaskPopover />
+        <a
+          href="http://192.168.100.110/platform/#/home/home-child"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          title="打开鼎团团管理平台"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          鼎团团管理平台
+        </a>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 pl-2 cursor-pointer hover:bg-accent rounded-sm px-2 py-1 transition-colors">

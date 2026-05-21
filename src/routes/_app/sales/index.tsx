@@ -168,7 +168,10 @@ function Inner() {
         <Table>
             <TableHeader><TableRow>
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
-              <TableHead>商品名称</TableHead><TableHead>商品类型</TableHead><TableHead onClick={() => toggleSort("amount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">金额{sortField === "amount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "amount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "amount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
+              <TableHead>商品名称</TableHead><TableHead>商品类型</TableHead>
+              <TableHead onClick={() => toggleSort("orderAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">订单金额{sortField === "orderAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "orderAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "orderAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
+              <TableHead>实付金额</TableHead>
+              <TableHead>优惠金额</TableHead>
               <TableHead>机构</TableHead>
               <TableHead>状态</TableHead><TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">下单时间{sortField === "createdAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "createdAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "createdAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>
@@ -180,14 +183,16 @@ function Inner() {
                   <TableCell className="font-mono text-xs">{maskPhone(o.userPhone, role)}</TableCell>
                   <TableCell>{o.course}</TableCell>
                   <TableCell><Badge variant="outline">{productTypeLabel(o.courseType)}</Badge></TableCell>
-                  <TableCell className="font-medium">¥{o.amount.toLocaleString()}</TableCell>
+                  <TableCell className="font-medium">¥{o.orderAmount.toLocaleString()}</TableCell>
+                  <TableCell className="font-medium text-success">¥{o.paidAmount.toLocaleString()}</TableCell>
+                  <TableCell className="text-destructive">-¥{o.discountAmount.toLocaleString()}</TableCell>
                   <TableCell className="text-xs">{o.orgName}</TableCell>
                   <TableCell><Badge variant={o.status === "已退费" ? "destructive" : o.status === "退费中" ? "secondary" : "default"}>{o.status}</Badge></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{o.createdAt}</TableCell>
                   <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={10} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={12} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
             </TableBody>
         </Table>
         <Pagination />
