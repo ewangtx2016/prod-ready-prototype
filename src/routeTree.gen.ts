@@ -30,6 +30,7 @@ import { Route as AppPermissionUsersRouteImport } from './routes/_app/permission
 import { Route as AppPermissionRolesRouteImport } from './routes/_app/permission/roles'
 import { Route as AppPermissionMenusRouteImport } from './routes/_app/permission/menus'
 import { Route as AppNotificationTemplatesRouteImport } from './routes/_app/notification/templates'
+import { Route as AppLedgerDetailRouteImport } from './routes/_app/ledger/detail'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -137,6 +138,11 @@ const AppNotificationTemplatesRoute =
     path: '/notification/templates',
     getParentRoute: () => AppRoute,
   } as any)
+const AppLedgerDetailRoute = AppLedgerDetailRouteImport.update({
+  id: '/ledger/detail',
+  path: '/ledger/detail',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/audit-log': typeof AppAuditLogRoute
   '/dashboard': typeof AppDashboardRoute
   '/messages': typeof AppMessagesRoute
+  '/ledger/detail': typeof AppLedgerDetailRoute
   '/notification/templates': typeof AppNotificationTemplatesRoute
   '/permission/menus': typeof AppPermissionMenusRoute
   '/permission/roles': typeof AppPermissionRolesRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/audit-log': typeof AppAuditLogRoute
   '/dashboard': typeof AppDashboardRoute
   '/messages': typeof AppMessagesRoute
+  '/ledger/detail': typeof AppLedgerDetailRoute
   '/notification/templates': typeof AppNotificationTemplatesRoute
   '/permission/menus': typeof AppPermissionMenusRoute
   '/permission/roles': typeof AppPermissionRolesRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/_app/audit-log': typeof AppAuditLogRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/messages': typeof AppMessagesRoute
+  '/_app/ledger/detail': typeof AppLedgerDetailRoute
   '/_app/notification/templates': typeof AppNotificationTemplatesRoute
   '/_app/permission/menus': typeof AppPermissionMenusRoute
   '/_app/permission/roles': typeof AppPermissionRolesRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/audit-log'
     | '/dashboard'
     | '/messages'
+    | '/ledger/detail'
     | '/notification/templates'
     | '/permission/menus'
     | '/permission/roles'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/audit-log'
     | '/dashboard'
     | '/messages'
+    | '/ledger/detail'
     | '/notification/templates'
     | '/permission/menus'
     | '/permission/roles'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/_app/audit-log'
     | '/_app/dashboard'
     | '/_app/messages'
+    | '/_app/ledger/detail'
     | '/_app/notification/templates'
     | '/_app/permission/menus'
     | '/_app/permission/roles'
@@ -431,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotificationTemplatesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ledger/detail': {
+      id: '/_app/ledger/detail'
+      path: '/ledger/detail'
+      fullPath: '/ledger/detail'
+      preLoaderRoute: typeof AppLedgerDetailRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -438,6 +457,7 @@ interface AppRouteChildren {
   AppAuditLogRoute: typeof AppAuditLogRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppMessagesRoute: typeof AppMessagesRoute
+  AppLedgerDetailRoute: typeof AppLedgerDetailRoute
   AppNotificationTemplatesRoute: typeof AppNotificationTemplatesRoute
   AppPermissionMenusRoute: typeof AppPermissionMenusRoute
   AppPermissionRolesRoute: typeof AppPermissionRolesRoute
@@ -459,6 +479,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuditLogRoute: AppAuditLogRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppMessagesRoute: AppMessagesRoute,
+  AppLedgerDetailRoute: AppLedgerDetailRoute,
   AppNotificationTemplatesRoute: AppNotificationTemplatesRoute,
   AppPermissionMenusRoute: AppPermissionMenusRoute,
   AppPermissionRolesRoute: AppPermissionRolesRoute,

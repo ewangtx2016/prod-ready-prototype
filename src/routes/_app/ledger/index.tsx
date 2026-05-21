@@ -1,239 +1,316 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { db, type LedgerItem } from "@/lib/mock";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { db, type BillSummary } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
-import { filterByDataPerm } from "@/lib/permissions";
-import { maskName } from "@/lib/mask";
 import { PageHeader } from "@/components/dev/PageHeader";
-import { DevNote } from "@/components/dev/DevNote";
-import { PermissionTip } from "@/components/dev/PermissionTip";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Download, RotateCcw, Eye } from "lucide-react";
 import { usePagination } from "@/components/dev/TablePagination";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ledger/")({ component: Page });
 
-const STATUS_META: Record<LedgerItem["status"], { label: string; tone: "default" | "secondary" | "outline" | "destructive"; cls?: string }> = {
-  settled:        { label: "已结算",   tone: "default" },
-  pending:        { label: "待结算",   tone: "outline", cls: "text-warning" },
-  estimated:      { label: "预估收入", tone: "secondary" },
-  refund_pending: { label: "退回中",   tone: "secondary" },
-  refund_settled: { label: "已退回",   tone: "destructive" },
+const BIZ_TYPES = ["全部", "分润", "提现", "平台技术服务费", "手续费"];
+
+const BILL_TYPE_LABEL: Record<BillSummary["billType"], string> = {
+  day: "日账单",
+  week: "周账单",
+  month: "月账单",
 };
 
-function productTypeLabel(type: string) {
-  return ["学科课", "素养课", "体验课"].includes(type) ? "课程" : type;
+const BILL_TYPE_TAB: { key: BillSummary["billType"]; label: string }[] = [
+  { key: "day", label: "日账单" },
+  { key: "week", label: "周账单" },
+  { key: "month", label: "月账单" },
+];
+
+function money(v: number, showPlus = true) {
+  const abs = Math.abs(v);
+  const sign = v >= 0 ? (showPlus ? "+" : "") : "-";
+  return `${sign}¥${abs.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function money(v: number) {
-  return `¥${v.toLocaleString()}`;
-}
-
-function defaultOrgValue(_role: string, _orgName: string) {
-  return "all";
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <div className="h-5 w-1 rounded-full bg-primary" />
+      <h2 className="text-sm font-medium">{children}</h2>
+    </div>
+  );
 }
 
 function Page() {
-  const { role, orgName } = useApp();
-  const [list, setList] = useState<LedgerItem[]>([]);
-  const allOrders = useMemo(() => db.orders(), []);
+  const { role } = useApp();
+  const currentUserName = ROLE_META[role].name;
+  const allBills = useMemo(() => db.bills(), []);
 
-  // Tab 分类：all | estimated | refund
-  const [activeTab, setActiveTab] = useState<"all" | "estimated" | "refund">("all");
-  const [keyword, setKeyword] = useState("");
-  const [productType, setProductType] = useState<string>("all");
-  const [org, setOrg] = useState<string>(() => defaultOrgValue(role, orgName));
+  const [billType, setBillType] = useState<BillSummary["billType"]>("week");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [sortField, setSortField] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
-  const currentUserName = ROLE_META[role].name;
+  const [bizType, setBizType] = useState("全部");
+  const [accountName, setAccountName] = useState("");
 
-  function toggleSort(field: string) {
-    if (sortField !== field) {
-      setSortField(field);
-      setSortDir("asc");
-    } else if (sortDir === "asc") {
-      setSortDir("desc");
-    } else {
-      setSortField(null);
-      setSortDir(null);
-    }
-  }
-  const orders = allOrders;
-  const orderById = useMemo(() => new Map(orders.map((o) => [o.id, o])), [orders]);
-  const getLedgerOrg = useCallback((item: LedgerItem) => orderById.get(item.orderId)?.orgName ?? "", [orderById]);
-  const getLedgerProductType = useCallback((item: LedgerItem) => productTypeLabel(orderById.get(item.orderId)?.courseType ?? ""), [orderById]);
-  const productTypeOptions = ["课程"];
-
+  // 初始化及切换账单类型时自动填充日期范围
   useEffect(() => {
-    let arr = db.ledger();
-    arr = filterByDataPerm(arr, "ledger", role, currentUserName, orgName);
-    setList(arr);
-  }, [role, currentUserName, orgName]);
+    const typeBills = allBills.filter((b) => b.billType === billType);
+    if (typeBills.length > 0) {
+      const latest = [...typeBills].sort((a, b) => b.cycleStart.localeCompare(a.cycleStart))[0];
+      setStartDate(latest.cycleStart);
+      setEndDate(latest.cycleEnd);
+    }
+  }, [allBills, billType]);
 
-  const orgs = useMemo(() => {
-    if (role === "org_admin") return [orgName];
-    return Array.from(new Set(list.map(getLedgerOrg).filter(Boolean)));
-  }, [list, getLedgerOrg, role, orgName]);
+  const filtered = useMemo(() => {
+    let arr = [...allBills];
 
-  const kw = keyword.trim().toLowerCase();
-  const filtered = list.filter((l) => {
-    if (activeTab === "estimated" && l.status !== "estimated") return false;
-    if (activeTab === "refund" && l.status !== "refund_pending" && l.status !== "refund_settled") return false;
-    if (productType !== "all" && getLedgerProductType(l) !== productType) return false;
-    if (org !== "all" && getLedgerOrg(l) !== org) return false;
-    if (kw && !(
-      l.billId.toLowerCase().includes(kw) ||
-      l.userName.toLowerCase().includes(kw) ||
-      l.course.toLowerCase().includes(kw) ||
-      getLedgerProductType(l).toLowerCase().includes(kw)
-    )) return false;
-    const dateVal = l.settledAt ?? "";
-    if (startDate && dateVal && dateVal.slice(0, 10) < startDate) return false;
-    if (endDate && dateVal && dateVal.slice(0, 10) > endDate) return false;
-    if ((startDate || endDate) && !l.settledAt) return false;
-    return true;
-  });
+    arr = arr.filter((b) => b.billType === billType);
+
+    if (startDate) {
+      arr = arr.filter((b) => b.cycleEnd >= startDate);
+    }
+    if (endDate) {
+      arr = arr.filter((b) => b.cycleStart <= endDate);
+    }
+
+    if (bizType !== "全部") {
+      arr = arr.filter((b) => b.bizType === bizType);
+    }
+
+    const kw = accountName.trim();
+    if (kw) {
+      arr = arr.filter((b) => b.accountName.includes(kw));
+    }
+
+    arr.sort((a, b) => {
+      if (a.cycleStart !== b.cycleStart) {
+        return b.cycleStart.localeCompare(a.cycleStart);
+      }
+      return a.bizType.localeCompare(b.bizType);
+    });
+
+    return arr;
+  }, [allBills, billType, startDate, endDate, bizType, accountName]);
 
   const { paged, Pagination } = usePagination(filtered, 10);
 
-  const sum = (rows: LedgerItem[], pick: (x: LedgerItem) => number) => rows.reduce((s, x) => s + pick(x), 0);
-  const summaryRows = (() => {
-    const totalAmt = sum(filtered, (x) => x.amount);
-    const orgAmt = sum(filtered, (x) => x.orgAmount);
+  const totalAmount = useMemo(() => filtered.reduce((s, b) => s + b.amount, 0), [filtered]);
+  const totalCount = useMemo(() => filtered.reduce((s, b) => s + b.count, 0), [filtered]);
+  const inflow = useMemo(() => filtered.filter((b) => b.amount > 0).reduce((s, b) => s + b.amount, 0), [filtered]);
+  const outflow = useMemo(() => filtered.filter((b) => b.amount < 0).reduce((s, b) => s + b.amount, 0), [filtered]);
+  const netInflow = inflow + outflow;
 
-    if (activeTab === "refund") {
-      return [
-        { label: "退回订单总额", value: money(totalAmt), className: "text-destructive" },
-        { label: "影响机构分成", value: money(orgAmt), className: "text-destructive" },
-      ];
+  const onReset = () => {
+    setBillType("week");
+    setBizType("全部");
+    setAccountName("");
+    const weekBills = allBills.filter((b) => b.billType === "week");
+    if (weekBills.length > 0) {
+      const latest = [...weekBills].sort((a, b) => b.cycleStart.localeCompare(a.cycleStart))[0];
+      setStartDate(latest.cycleStart);
+      setEndDate(latest.cycleEnd);
     }
-    if (activeTab === "estimated") {
-      return [
-        { label: "预估订单总额", value: money(totalAmt), className: "" },
-        { label: "预估机构分成", value: money(orgAmt), className: "text-info" },
-      ];
-    }
-    return [
-      { label: "订单总额", value: money(totalAmt), className: "" },
-      { label: "机构分成", value: money(orgAmt), className: "text-info" },
-    ];
-  })();
-
-  const reset = () => { setKeyword(""); setActiveTab("all"); setProductType("all"); setOrg(defaultOrgValue(role, orgName)); setStartDate(""); setEndDate(""); };
+  };
 
   const onExport = () => {
-    db.log({ operator: ROLE_META[role].name, role: ROLE_META[role].name, module: "台账管理", action: "导出", detail: `${filtered.length} 条 (脱敏)` });
-    toast.success(`已导出 ledger.xlsx (${filtered.length} 条，脱敏)`);
+    db.log({
+      operator: currentUserName,
+      role: currentUserName,
+      module: "资金账单",
+      action: "导出",
+      detail: `导出账单汇总 ${filtered.length} 条`,
+    });
+    toast.success(`已导出 bills.xlsx (${filtered.length} 条)`);
   };
 
   return (
     <div>
-      <PageHeader title="台账管理" subtitle="结算 / 退回 统一查询" actions={
-        <PermissionTip action="导出台账" prd="§10 / §16.5" allow={["org_admin", "planner"]} desc="导出走脱敏规则">
-          <Button size="sm" onClick={onExport}><Download className="h-4 w-4" /> 导出</Button>
-        </PermissionTip>
-      } />
-      <DevNote prd="§10" title="台账管理">
-        <div>· Tab 分类：全部台账 / 预估收入 / 退单</div>
-        <div>· 数据来源：分账成功事件回调（准实时 ≤10s）</div>
-        <div>· 导出：按当前筛选项导出 .xlsx；非机构管理员仅看到脱敏数据</div>
-      </DevNote>
+      <PageHeader
+        title="资金账单"
+        subtitle="按账单类型与业务类型查看账单汇总，并支持下钻查看明细记录。"
+        actions={
+          <Button size="sm" className="h-8" onClick={onExport}>
+            <Download className="mr-1 h-3.5 w-3.5" /> 导出
+          </Button>
+        }
+      />
 
-      <div className="mb-4 grid gap-3 grid-cols-2">
-        {summaryRows.map((item) => (
-          <Card key={item.label} className="p-4">
-            <div className="text-xs text-muted-foreground">{item.label}</div>
-            <div className={`mt-1 text-2xl font-semibold ${item.className}`}>{item.value}</div>
-          </Card>
-        ))}
+      {/* 统计卡片 */}
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">总金额</div>
+          <div className={`mt-1 text-2xl font-semibold ${totalAmount >= 0 ? "" : "text-destructive"}`}>
+            {money(totalAmount)}
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">收入为正，支出为负</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">总笔数</div>
+          <div className="mt-1 text-2xl font-semibold">{totalCount.toLocaleString()} 笔</div>
+          <div className="mt-1 text-xs text-muted-foreground">当前筛选条件下汇总</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">净流入</div>
+          <div className={`mt-1 text-2xl font-semibold ${netInflow >= 0 ? "" : "text-destructive"}`}>
+            {money(netInflow, false)}
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">总收入 - 总支出</div>
+        </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mb-3">
-        <TabsList>
-          <TabsTrigger value="all">全部台账</TabsTrigger>
-          <TabsTrigger value="estimated">预估收入</TabsTrigger>
-          <TabsTrigger value="refund">退单</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* 筛选区域 */}
+      <div className="mb-5">
+        <SectionTitle>账单汇总查询</SectionTitle>
+        <div className="rounded-lg border bg-card p-4">
+          <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
+            {/* 账单类型 */}
+            <div className="md:col-span-2">
+              <Label className="mb-1.5 block text-xs text-muted-foreground">账单类型</Label>
+              <div className="flex rounded-md border overflow-hidden">
+                {BILL_TYPE_TAB.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => setBillType(t.key)}
+                    className={`flex-1 px-2 py-1.5 text-sm transition-colors ${
+                      billType === t.key
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-background text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-      <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-6">
-        <div className="space-y-1 md:col-span-2">
-          <Label className="text-xs text-muted-foreground">关键词</Label>
-          <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="搜索订单号 / 结算单号 / 用户" className="h-8" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">商品类型</Label>
-          <Select value={productType} onValueChange={setProductType}>
-            <SelectTrigger className="h-8"><SelectValue placeholder="商品类型" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部类型</SelectItem>
-              {productTypeOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">机构</Label>
-          <Select value={org} onValueChange={setOrg}>
-            <SelectTrigger className="h-8"><SelectValue placeholder="机构" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部机构</SelectItem>
-              {orgs.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">开始日期</Label>
-          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-8" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">结束日期</Label>
-          <div className="flex gap-2">
-            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-8" />
-            <Button variant="ghost" size="sm" className="h-8" onClick={reset}>重置</Button>
+            {/* 时间选择区间 */}
+            <div className="md:col-span-3">
+              <Label className="mb-1.5 block text-xs text-muted-foreground">时间选择区间</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="h-8"
+                />
+                <span className="shrink-0 text-sm text-muted-foreground">至</span>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-8"
+                />
+              </div>
+            </div>
+
+            {/* 业务类型 */}
+            <div className="md:col-span-2">
+              <Label className="mb-1.5 block text-xs text-muted-foreground">业务类型</Label>
+              <Select value={bizType} onValueChange={setBizType}>
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BIZ_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 账户名称 */}
+            <div className="md:col-span-3">
+              <Label className="mb-1.5 block text-xs text-muted-foreground">账户名称</Label>
+              <Input
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                placeholder="请输入账户名称"
+                className="h-8"
+              />
+            </div>
+
+            {/* 按钮 */}
+            <div className="md:col-span-2 flex gap-2">
+              <Button variant="outline" size="sm" className="h-8" onClick={onReset}>
+                <RotateCcw className="mr-1 h-3.5 w-3.5" /> 重置
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>账单ID</TableHead><TableHead>用户</TableHead><TableHead>商品名称</TableHead><TableHead>商品类型</TableHead>
-            <TableHead>机构名称</TableHead><TableHead>订单金额</TableHead>
-            <TableHead onClick={() => toggleSort("orgAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">机构分成{sortField === "orgAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "orgAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "orgAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
-            <TableHead onClick={() => toggleSort("settledAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">结算时间{sortField === "settledAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "settledAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "settledAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {paged.map((l) => {
-              const isRefund = l.status === "refund_pending" || l.status === "refund_settled";
-              return (
-                <TableRow key={l.id}>
-                  <TableCell className="font-mono text-xs">{l.billId}</TableCell>
-                  <TableCell>{maskName(l.userName, role)}</TableCell>
-                  <TableCell>{l.course}</TableCell>
-                  <TableCell><Badge variant="outline">{getLedgerProductType(l) || "-"}</Badge></TableCell>
-                  <TableCell>{getLedgerOrg(l) || "-"}</TableCell>
-                  <TableCell className="font-medium">¥{l.amount.toLocaleString()}</TableCell>
-                  <TableCell className={isRefund ? "text-destructive" : "text-info"}>{isRefund ? "-" : ""}¥{l.orgAmount.toLocaleString()}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{l.settledAt || "-"}</TableCell>
+      {/* 表格 */}
+      <div>
+        <SectionTitle>账单汇总列表</SectionTitle>
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-primary/5 hover:bg-primary/5">
+                <TableHead className="text-xs font-medium">账单ID</TableHead>
+                <TableHead className="text-xs font-medium">账单类型</TableHead>
+                <TableHead className="text-xs font-medium">周期开始日期</TableHead>
+                <TableHead className="text-xs font-medium">周期结束日期</TableHead>
+                <TableHead className="text-xs font-medium">业务类型</TableHead>
+                <TableHead className="text-xs font-medium">总金额</TableHead>
+                <TableHead className="text-xs font-medium">笔数</TableHead>
+                <TableHead className="text-xs font-medium">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paged.map((b) => (
+                <TableRow key={b.id}>
+                  <TableCell className="font-mono text-xs">{b.id}</TableCell>
+                  <TableCell className="text-sm">{BILL_TYPE_LABEL[b.billType]}</TableCell>
+                  <TableCell className="text-sm">{b.cycleStart}</TableCell>
+                  <TableCell className="text-sm">{b.cycleEnd}</TableCell>
+                  <TableCell className="text-sm">{b.bizType}</TableCell>
+                  <TableCell className={`text-right text-sm font-medium ${b.amount >= 0 ? "" : "text-destructive"}`}>
+                    {money(b.amount)}
+                  </TableCell>
+                  <TableCell className="text-sm">{b.count} 笔</TableCell>
+                  <TableCell>
+                    <Link
+                      to="/ledger/detail"
+                      search={{
+                        billId: b.id,
+                        cycleStart: b.cycleStart,
+                        cycleEnd: b.cycleEnd,
+                        bizType: b.bizType,
+                        amount: b.amount,
+                        count: b.count,
+                        billType: b.billType,
+                      }}
+                    >
+                      <Button variant="outline" size="sm" className="h-7 text-xs">
+                        <Eye className="mr-1 h-3 w-3" /> 查看明细
+                      </Button>
+                    </Link>
+                  </TableCell>
                 </TableRow>
-              );
-            })}
-            {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="py-12 text-center text-muted-foreground">暂无数据</TableCell></TableRow>}
-          </TableBody>
-        </Table>
-        <Pagination />
-      </Card>
+              ))}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="py-12 text-center text-muted-foreground">
+                    暂无数据
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          <Pagination />
+        </Card>
+      </div>
+
+      <p className="mt-3 text-xs text-muted-foreground">
+        默认按周期开始日期倒序 + 业务类型排序。
+      </p>
     </div>
   );
 }

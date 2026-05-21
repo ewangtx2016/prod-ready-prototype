@@ -18,8 +18,8 @@ const GROUPS: Group[] = [
     { to: "/service/records", label: "服务管理", icon: FileText, key: "service" },
   ] },
   { key: "sales", label: "销售管理", icon: ShoppingCart, children: [{ to: "/sales", label: "销售明细", icon: ShoppingCart, key: "sales" }] },
-  { key: "ledger", label: "台账管理", icon: BookOpen, children: [
-    { to: "/ledger", label: "台账管理", icon: BookOpen, key: "ledger" },
+  { key: "ledger", label: "资金账单", icon: BookOpen, children: [
+    { to: "/ledger", label: "资金账单", icon: BookOpen, key: "ledger" },
   ] },
   { key: "org", label: "机构管理", icon: Building2, children: [{ to: "/settings/org", label: "机构管理", icon: Building2, key: "org" }] },
   { key: "permission", label: "权限管理", icon: Lock, children: [

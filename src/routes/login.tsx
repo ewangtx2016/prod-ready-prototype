@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { LogIn, Sparkles } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -39,18 +39,6 @@ function Login() {
           <p className="text-muted-foreground">
             在不丧失用户资产控制权的前提下，引入规划师与学管师完成用户服务、转化、分成结算与审计追溯。
           </p>
-          <div className="rounded-lg border border-info/30 bg-info/5 p-4 text-sm">
-            <div className="mb-1 flex items-center gap-1 font-medium text-info">
-              <Sparkles className="h-4 w-4" />
-              原型演示说明
-            </div>
-            <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-              <li>本系统为 PRD v0.0.1 的高保真可交互原型</li>
-              <li>请通过右侧选择角色一键登录，登录后顶栏可随时切换身份</li>
-              <li>所有按钮带「权限注释」鼠标悬停查看</li>
-              <li>短信验证码输入任意 6 位数字即通过</li>
-            </ul>
-          </div>
         </div>
 
         <Card className="p-8">
@@ -70,7 +58,7 @@ function Login() {
           </div>
           <div className="space-y-2">
             <div className="text-xs font-medium text-muted-foreground">选择身份登录：</div>
-            {ROLE_LIST.map((r) => (
+            {(["org_admin", "super_admin"] as Role[]).map((r) => (
               <Button
                 key={r}
                 variant="outline"

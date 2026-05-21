@@ -86,6 +86,38 @@ export type LedgerItem = {
   orgName: string;
 };
 
+export type BillSummary = {
+  id: string;
+  billType: "day" | "week" | "month";
+  cycleStart: string;
+  cycleEnd: string;
+  bizType: string;
+  amount: number;
+  count: number;
+  accountName: string;
+};
+
+export type BillDetail = {
+  id: string;
+  time: string;
+  bizType: string;
+  orderNo: string;
+  amount: number;
+  balance: number;
+  status: string;
+  remark: string;
+  billId: string;
+};
+
+export type AsyncExportTask = {
+  id: string;
+  taskName: string;
+  progress: number;
+  status: "pending" | "success" | "failed";
+  fileName?: string;
+  createdAt: string;
+};
+
 export type AuditLog = {
   id: string;
   time: string;
@@ -238,10 +270,13 @@ const KEYS = {
   order: "demo.orders",
   rule: "demo.rules",
   ledger: "demo.ledger",
+  bills: "demo.bills",
+  billDetails: "demo.billDetails",
+  exportTasks: "demo.exportTasks",
   log: "demo.logs",
   orgs: "demo.orgs",
   student: "demo.students",
-  seeded: "demo.seeded.v12",
+  seeded: "demo.seeded.v15",
   // 注：模型变更需提升版本以触发重置
   auditMode: "demo.auditMode",
   alertRule: "demo.alertRules",
@@ -386,10 +421,78 @@ export function seedIfNeeded(force = false) {
     { id: rid(), time: "2026-04-28 16:20", operator: "机构管理员", role: "机构管理员", ip: "192.168.1.5", module: "服务记录", action: "导出", detail: "导出服务记录 42 条（脱敏）", before: null, after: { rows: 42, masked: true }, orgName: "机构用户平台" },
   ];
 
+  const bills: BillSummary[] = [
+    { id: "BILL202412001", billType: "month", cycleStart: "2024-12-01", cycleEnd: "2024-12-31", bizType: "分润", amount: 10000, count: 50, accountName: "某某教育科技有限公司" },
+    { id: "BILL202412002", billType: "month", cycleStart: "2024-12-01", cycleEnd: "2024-12-31", bizType: "提现", amount: -5000, count: 10, accountName: "某某教育科技有限公司" },
+    { id: "BILL202452003", billType: "week", cycleStart: "2024-12-23", cycleEnd: "2024-12-29", bizType: "平台技术服务费", amount: -1280.23, count: 18, accountName: "某某教育科技有限公司" },
+    { id: "BILL202451004", billType: "week", cycleStart: "2024-12-16", cycleEnd: "2024-12-22", bizType: "手续费", amount: -234.56, count: 23, accountName: "某某教育科技有限公司" },
+    { id: "BILL2024125005", billType: "day", cycleStart: "2024-12-25", cycleEnd: "2024-12-25", bizType: "分润", amount: 1200, count: 8, accountName: "某某教育科技有限公司" },
+    { id: "BILL2024124006", billType: "day", cycleStart: "2024-12-24", cycleEnd: "2024-12-24", bizType: "提现", amount: -500, count: 2, accountName: "某某教育科技有限公司" },
+    { id: "BILL2024123007", billType: "day", cycleStart: "2024-12-23", cycleEnd: "2024-12-23", bizType: "分润", amount: 800, count: 5, accountName: "某某教育科技有限公司" },
+    { id: "BILL2024122008", billType: "week", cycleStart: "2024-12-09", cycleEnd: "2024-12-15", bizType: "平台技术服务费", amount: -980.50, count: 15, accountName: "某某教育科技有限公司" },
+    { id: "BILL2024111009", billType: "month", cycleStart: "2024-11-01", cycleEnd: "2024-11-30", bizType: "分润", amount: 15000, count: 65, accountName: "某某教育科技有限公司" },
+    { id: "BILL2024111010", billType: "month", cycleStart: "2024-11-01", cycleEnd: "2024-11-30", bizType: "提现", amount: -8000, count: 12, accountName: "某某教育科技有限公司" },
+    { id: "BILL2024115011", billType: "week", cycleStart: "2024-11-25", cycleEnd: "2024-12-01", bizType: "手续费", amount: -150, count: 8, accountName: "某某教育科技有限公司" },
+    { id: "BILL2024114012", billType: "day", cycleStart: "2024-11-28", cycleEnd: "2024-11-28", bizType: "分润", amount: 600, count: 3, accountName: "某某教育科技有限公司" },
+  ];
+
+  const billDetails: BillDetail[] = [
+    // BILL202412001 分润
+    { id: rid(), time: "2024-12-25 14:30:00", bizType: "分润", orderNo: "DD202412250001", amount: 299.00, balance: 12345.67, status: "已分润", remark: "课程订单分润", billId: "BILL202412001" },
+    { id: rid(), time: "2024-12-24 11:20:00", bizType: "分润", orderNo: "DD202412240002", amount: 199.00, balance: 12046.67, status: "已分润", remark: "课程订单分润", billId: "BILL202412001" },
+    { id: rid(), time: "2024-12-23 09:15:00", bizType: "分润", orderNo: "DD202412230003", amount: 399.00, balance: 11847.67, status: "已分润", remark: "学习机订单分润", billId: "BILL202412001" },
+    { id: rid(), time: "2024-12-22 16:10:00", bizType: "分润", orderNo: "DD202412220004", amount: 299.00, balance: 11448.67, status: "已分润", remark: "课程订单分润", billId: "BILL202412001" },
+    // BILL202412002 提现
+    { id: rid(), time: "2024-12-24 11:20:00", bizType: "提现", orderNo: "TX202412240012", amount: -500.00, balance: 11845.67, status: "提现成功", remark: "用户提现申请", billId: "BILL202412002" },
+    { id: rid(), time: "2024-12-23 09:15:00", bizType: "提现", orderNo: "TX202412230013", amount: -1000.00, balance: 12345.67, status: "提现成功", remark: "用户提现申请", billId: "BILL202412002" },
+    { id: rid(), time: "2024-12-22 16:10:00", bizType: "提现", orderNo: "TX202412220014", amount: -800.00, balance: 13345.67, status: "提现成功", remark: "用户提现申请", billId: "BILL202412002" },
+    // BILL202452003 平台技术服务费
+    { id: rid(), time: "2024-12-29 10:00:00", bizType: "平台技术服务费", orderNo: "PT202412290015", amount: -80.00, balance: 12425.67, status: "已完成", remark: "平台技术服务费结算", billId: "BILL202452003" },
+    { id: rid(), time: "2024-12-28 14:30:00", bizType: "平台技术服务费", orderNo: "PT202412280016", amount: -120.00, balance: 12505.67, status: "已完成", remark: "平台技术服务费结算", billId: "BILL202452003" },
+    { id: rid(), time: "2024-12-27 09:00:00", bizType: "平台技术服务费", orderNo: "PT202412270017", amount: -60.00, balance: 12625.67, status: "处理中", remark: "平台技术服务费结算", billId: "BILL202452003" },
+    // BILL202451004 手续费
+    { id: rid(), time: "2024-12-22 16:10:00", bizType: "手续费", orderNo: "FEE202412220018", amount: -12.90, balance: 12345.67, status: "已完成", remark: "支付通道手续费", billId: "BILL202451004" },
+    { id: rid(), time: "2024-12-21 11:00:00", bizType: "手续费", orderNo: "FEE202412210019", amount: -8.50, balance: 12358.57, status: "已完成", remark: "支付通道手续费", billId: "BILL202451004" },
+    { id: rid(), time: "2024-12-20 15:30:00", bizType: "手续费", orderNo: "FEE202412200020", amount: -15.00, balance: 12367.07, status: "已完成", remark: "支付通道手续费", billId: "BILL202451004" },
+    // BILL2024125005 日账单 分润
+    { id: rid(), time: "2024-12-25 14:30:00", bizType: "分润", orderNo: "DD202412250021", amount: 150.00, balance: 12345.67, status: "已分润", remark: "课程订单分润", billId: "BILL2024125005" },
+    { id: rid(), time: "2024-12-25 10:00:00", bizType: "分润", orderNo: "DD202412250022", amount: 200.00, balance: 12195.67, status: "已分润", remark: "课程订单分润", billId: "BILL2024125005" },
+    // BILL2024124006 日账单 提现
+    { id: rid(), time: "2024-12-24 11:20:00", bizType: "提现", orderNo: "TX202412240023", amount: -300.00, balance: 12345.67, status: "提现成功", remark: "用户提现申请", billId: "BILL2024124006" },
+    { id: rid(), time: "2024-12-24 09:00:00", bizType: "提现", orderNo: "TX202412240024", amount: -200.00, balance: 12645.67, status: "提现成功", remark: "用户提现申请", billId: "BILL2024124006" },
+    // BILL2024123007 日账单 分润
+    { id: rid(), time: "2024-12-23 14:00:00", bizType: "分润", orderNo: "DD202412230025", amount: 160.00, balance: 12000.00, status: "已分润", remark: "课程订单分润", billId: "BILL2024123007" },
+    { id: rid(), time: "2024-12-23 10:00:00", bizType: "分润", orderNo: "DD202412230026", amount: 180.00, balance: 11840.00, status: "已分润", remark: "学习机订单分润", billId: "BILL2024123007" },
+    // BILL2024122008 周账单 平台技术服务费
+    { id: rid(), time: "2024-12-15 16:00:00", bizType: "平台技术服务费", orderNo: "PT202412150027", amount: -100.00, balance: 11500.00, status: "已完成", remark: "平台技术服务费结算", billId: "BILL2024122008" },
+    { id: rid(), time: "2024-12-14 11:00:00", bizType: "平台技术服务费", orderNo: "PT202412140028", amount: -80.00, balance: 11600.00, status: "已完成", remark: "平台技术服务费结算", billId: "BILL2024122008" },
+    { id: rid(), time: "2024-12-13 09:30:00", bizType: "平台技术服务费", orderNo: "PT202412130029", amount: -90.00, balance: 11680.00, status: "处理中", remark: "平台技术服务费结算", billId: "BILL2024122008" },
+    // BILL2024111009 月账单 分润
+    { id: rid(), time: "2024-11-30 14:30:00", bizType: "分润", orderNo: "DD202411300030", amount: 250.00, balance: 11000.00, status: "已分润", remark: "课程订单分润", billId: "BILL2024111009" },
+    { id: rid(), time: "2024-11-29 10:00:00", bizType: "分润", orderNo: "DD202411290031", amount: 300.00, balance: 10750.00, status: "已分润", remark: "课程订单分润", billId: "BILL2024111009" },
+    { id: rid(), time: "2024-11-28 09:00:00", bizType: "分润", orderNo: "DD202411280032", amount: 180.00, balance: 10450.00, status: "已分润", remark: "学习机订单分润", billId: "BILL2024111009" },
+  ];
+
+  const exportTasks: AsyncExportTask[] = [
+    { id: rid(), taskName: "账单汇总导出", progress: 100, status: "success", fileName: "bills_20241225.xlsx", createdAt: "2024-12-25 10:30:00" },
+    { id: rid(), taskName: "销售明细导出", progress: 85, status: "pending", createdAt: "2024-12-25 09:15:00" },
+    { id: rid(), taskName: "服务记录导出", progress: 100, status: "success", fileName: "services_20241224.xlsx", createdAt: "2024-12-24 16:00:00" },
+    { id: rid(), taskName: "学员档案导出", progress: 30, status: "pending", createdAt: "2024-12-24 14:20:00" },
+    { id: rid(), taskName: "财务结算导出", progress: 100, status: "failed", createdAt: "2024-12-23 11:00:00" },
+    { id: rid(), taskName: "角色权限导出", progress: 100, status: "success", fileName: "roles_20241220.xlsx", createdAt: "2024-12-20 10:00:00" },
+    { id: rid(), taskName: "操作日志导出", progress: 60, status: "pending", createdAt: "2024-12-19 15:30:00" },
+    { id: rid(), taskName: "订单明细导出", progress: 100, status: "success", fileName: "orders_20241218.xlsx", createdAt: "2024-12-18 09:00:00" },
+    { id: rid(), taskName: "分润规则导出", progress: 100, status: "failed", createdAt: "2024-12-17 14:00:00" },
+    { id: rid(), taskName: "机构信息导出", progress: 100, status: "success", fileName: "orgs_20241215.xlsx", createdAt: "2024-12-15 11:30:00" },
+  ];
+
   write(KEYS.service, services);
   write(KEYS.order, orders);
   write(KEYS.rule, rules);
   write(KEYS.ledger, ledger);
+  write(KEYS.bills, bills);
+  write(KEYS.billDetails, billDetails);
+  write(KEYS.exportTasks, exportTasks);
   write(KEYS.log, logs);
 
   const orgs: Org[] = [
@@ -521,6 +624,12 @@ export const db = {
   setRules: (v: ProfitRule[]) => write(KEYS.rule, v),
   ledger: () => read<LedgerItem[]>(KEYS.ledger, []),
   setLedger: (v: LedgerItem[]) => write(KEYS.ledger, v),
+  bills: () => read<BillSummary[]>(KEYS.bills, []),
+  setBills: (v: BillSummary[]) => write(KEYS.bills, v),
+  billDetails: () => read<BillDetail[]>(KEYS.billDetails, []),
+  setBillDetails: (v: BillDetail[]) => write(KEYS.billDetails, v),
+  exportTasks: () => read<AsyncExportTask[]>(KEYS.exportTasks, []),
+  setExportTasks: (v: AsyncExportTask[]) => write(KEYS.exportTasks, v),
   logs: () => read<AuditLog[]>(KEYS.log, []),
   setLogs: (v: AuditLog[]) => write(KEYS.log, v),
   students: () => read<Student[]>(KEYS.student, []),

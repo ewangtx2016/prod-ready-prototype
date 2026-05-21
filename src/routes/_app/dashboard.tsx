@@ -118,6 +118,20 @@ const SPARK: Record<string, { x: string; v: number }[]> = {
   core_alert_count:         [4,6,5,8,7,9,11,10,12,9,11,12].map((v,i)=>({x:`${i+1}`,v})),
 };
 const TREND_12M = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+const TREND_30D = Array.from({ length: 30 }, (_, i) => `${i + 1}日`);
+
+// 将任意长度数据插值为 30 天趋势
+function to30(vals: number[]) {
+  return TREND_30D.map((x, i) => {
+    const t = i / 29;
+    const idx = t * (vals.length - 1);
+    const lo = Math.floor(idx);
+    const hi = Math.min(lo + 1, vals.length - 1);
+    const ratio = idx - lo;
+    const v = vals[lo] * (1 - ratio) + vals[hi] * ratio;
+    return { x, v: Math.round(v * 10) / 10 };
+  });
+}
 
 function Dashboard() {
   const { role, orgName } = useApp();
@@ -195,7 +209,6 @@ function Dashboard() {
         <Select defaultValue="month">
           <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="day">今日</SelectItem>
             <SelectItem value="week">本周</SelectItem>
             <SelectItem value="month">本月</SelectItem>
             <SelectItem value="quarter">本季度</SelectItem>
@@ -244,28 +257,35 @@ function Dashboard() {
               : m.key === "core_freq_renew_corr" ? "var(--color-info)"
               : m.key === "core_alert_count" ? "var(--color-destructive)"
               : "var(--color-primary)";
+            const isSimpleCard = m.key === "core_old_user_in_subject" || m.key === "core_alert_count";
             return (
               <Card key={m.key} className="relative overflow-hidden p-5">
-                <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/5" />
-                <div className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Icon className="h-4.5 w-4.5" />
-                </div>
+                {!isSimpleCard && (
+                  <>
+                    <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/5" />
+                    <div className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="h-4.5 w-4.5" />
+                    </div>
+                  </>
+                )}
                 <FormulaTip label={m.label} formula={m.formula} />
                 <div className="mt-2 text-3xl font-semibold tracking-tight">{m.value}</div>
                 {m.trend && <div className="mt-1 text-xs text-success">{m.trend}</div>}
-                <div className="mt-3 h-10">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={SPARK[m.key] || SPARK._default}>
-                      <defs>
-                        <linearGradient id={`sp-${m.key}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={sparkColor} stopOpacity={0.4} />
-                          <stop offset="100%" stopColor={sparkColor} stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <Area type="monotone" dataKey="v" stroke={sparkColor} strokeWidth={2} fill={`url(#sp-${m.key})`} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+                {!isSimpleCard && (
+                  <div className="mt-3 h-10">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={to30((SPARK[m.key] || SPARK._default).map((d) => d.v))}>
+                        <defs>
+                          <linearGradient id={`sp-${m.key}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={sparkColor} stopOpacity={0.4} />
+                            <stop offset="100%" stopColor={sparkColor} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <Area type="monotone" dataKey="v" stroke={sparkColor} strokeWidth={2} fill={`url(#sp-${m.key})`} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </Card>
             );
           })}
@@ -437,26 +457,44 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
   const axis = { fontSize: 10, stroke: "var(--color-muted-foreground)" };
   const grid = <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />;
   const tip = <RTooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "var(--color-accent)", opacity: 0.3 }} />;
+  const xAxis30 = <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} interval={4} />;
 
   // ---- 按指标性质选图表 ----
   switch (m.key) {
     // M1 用户总览
-    case "total_user":
-    case "active_user": {
-      const data = TREND_12M.map((x, i) => ({ x, v: (SPARK[m.key] || SPARK._default)[i]?.v ?? 0 }));
+    case "total_user": {
+      const data = to30([980,1010,1040,1070,1090,1120,1140,1160,1180,1210,1230,1248]);
       return (
         <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id={`g-${m.key}`} x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="g-total" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.35} />
               <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
             </linearGradient>
           </defs>
           {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          {xAxis30}
           <YAxis tick={axis} tickLine={false} axisLine={false} />
           {tip}
-          <Area type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} fill={`url(#g-${m.key})`} />
+          <Area type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} fill="url(#g-total)" />
+        </AreaChart>
+      );
+    }
+    case "active_user": {
+      const data = to30([620,640,680,700,720,750,770,800,820,850,870,892]);
+      return (
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-active" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-info)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-info)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {grid}
+          {xAxis30}
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Area type="monotone" dataKey="v" stroke="var(--color-info)" strokeWidth={2} fill="url(#g-active)" />
         </AreaChart>
       );
     }
@@ -471,53 +509,57 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
       );
     }
     case "converted_user": {
-      const data = [
-        { name: "意向", v: 1248 },
-        { name: "服务", v: 701 },
-        { name: "转化", v: 286 },
-      ];
+      const data = to30([5,10,7,15,10,18,14,22,18,26,20,25]);
       return (
-        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-conv" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-chart-2)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-chart-2)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           {grid}
-          <XAxis dataKey="name" tick={axis} tickLine={false} axisLine={false} />
+          {xAxis30}
           <YAxis tick={axis} tickLine={false} axisLine={false} />
           {tip}
-          <Bar dataKey="v" radius={[6, 6, 0, 0]}>
-            <Cell fill="var(--color-chart-2)" />
-            <Cell fill="var(--color-info)" />
-            <Cell fill="var(--color-primary)" />
-          </Bar>
-        </BarChart>
+          <Area type="monotone" dataKey="v" stroke="var(--color-chart-2)" strokeWidth={2} fill="url(#g-conv)" />
+        </AreaChart>
       );
     }
     // M2 转化数据
     case "order_count": {
-      const data = TREND_12M.map((x, i) => ({ x, v: [80, 92, 105, 110, 118, 122, 130, 138, 142, 148, 152, 156][i] }));
-      return (
-        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-          {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
-          <YAxis tick={axis} tickLine={false} axisLine={false} />
-          {tip}
-          <Bar dataKey="v" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      );
-    }
-    case "order_amount": {
-      const data = TREND_12M.map((x, i) => ({ x, v: [180, 200, 220, 240, 260, 270, 280, 290, 300, 310, 320, 328.4][i] }));
+      const data = to30([3,6,4,7,5,8,6,7,5,6,7,8]);
       return (
         <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id="g-order" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="g-order-cnt" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-chart-1)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-chart-1)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {grid}
+          {xAxis30}
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Area type="monotone" dataKey="v" stroke="var(--color-chart-1)" strokeWidth={2} fill="url(#g-order-cnt)" />
+        </AreaChart>
+      );
+    }
+    case "order_amount": {
+      const data = to30([8,12,10,14,12,16,14,18,16,20,18,22]);
+      return (
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-order-amt" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="var(--color-warning)" stopOpacity={0.4} />
               <stop offset="95%" stopColor="var(--color-warning)" stopOpacity={0} />
             </linearGradient>
           </defs>
           {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          {xAxis30}
           <YAxis tick={axis} tickLine={false} axisLine={false} />
           {tip}
-          <Area type="monotone" dataKey="v" stroke="var(--color-warning)" strokeWidth={2} fill="url(#g-order)" />
+          <Area type="monotone" dataKey="v" stroke="var(--color-warning)" strokeWidth={2} fill="url(#g-order-amt)" />
         </AreaChart>
       );
     }
@@ -537,70 +579,95 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
       );
     }
     case "conv_rate": {
-      const data = TREND_12M.map((x, i) => ({ x, v: (SPARK.conv_rate)[i].v }));
+      const data = to30([16,17,18,18.5,19,20,20.5,21,21.5,22,22.5,22.9]);
       return (
-        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-conv-rate" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-success)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-success)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          {xAxis30}
           <YAxis tick={axis} tickLine={false} axisLine={false} domain={[10, 30]} />
           {tip}
-          <Line type="monotone" dataKey="v" stroke="var(--color-success)" strokeWidth={2} dot={{ r: 3 }} />
-        </LineChart>
+          <Area type="monotone" dataKey="v" stroke="var(--color-success)" strokeWidth={2} fill="url(#g-conv-rate)" />
+        </AreaChart>
       );
     }
     // M3 分成数据
-    case "settled":
-    case "pending": {
-      const palette: Record<string, string> = {
-        settled: "var(--color-success)",
-        pending: "var(--color-info)",
-      };
-      const data = TREND_12M.slice(-6).map((x, i) => ({
-        x,
-        v: m.key === "settled" ? [120, 135, 150, 162, 175, 186.3][i]
-          : [70, 78, 84, 90, 94, 98.2][i],
-      }));
+    case "settled": {
+      const data = to30([5000,5500,5200,6000,5800,6500,6200,6800,6400,7000,6600,7200]);
       return (
-        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-settled" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-success)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-success)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          {xAxis30}
           <YAxis tick={axis} tickLine={false} axisLine={false} />
           {tip}
-          <Bar dataKey="v" fill={palette[m.key]} radius={[4, 4, 0, 0]} />
-        </BarChart>
+          <Area type="monotone" dataKey="v" stroke="var(--color-success)" strokeWidth={2} fill="url(#g-settled)" />
+        </AreaChart>
+      );
+    }
+    case "pending": {
+      const data = to30([3000,3500,3200,3800,3600,4000,3800,4200,4000,4400,4200,4500]);
+      return (
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-pending" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-info)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-info)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {grid}
+          {xAxis30}
+          <YAxis tick={axis} tickLine={false} axisLine={false} />
+          {tip}
+          <Area type="monotone" dataKey="v" stroke="var(--color-info)" strokeWidth={2} fill="url(#g-pending)" />
+        </AreaChart>
       );
     }
     case "estimated": {
-      const now = new Date();
-      const values = [18, 25, 32, 28, 35, 42];
-      const data = Array.from({ length: 6 }, (_, i) => {
-        const d = new Date(now.getFullYear(), now.getMonth() + i + 1, 1);
-        return {
-          x: `${d.getMonth() + 1}月`,
-          v: values[i],
-        };
-      });
+      const data = to30([1000,1200,1100,1400,1300,1500,1400,1600,1500,1700,1600,1800]);
       return (
-        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-est" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-warning)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-warning)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          {xAxis30}
           <YAxis tick={axis} tickLine={false} axisLine={false} />
           {tip}
-          <Bar dataKey="v" fill="var(--color-warning)" radius={[4, 4, 0, 0]} />
-        </BarChart>
+          <Area type="monotone" dataKey="v" stroke="var(--color-warning)" strokeWidth={2} fill="url(#g-est)" />
+        </AreaChart>
       );
     }
     // M4 服务数据
     case "service_count": {
-      const data = TREND_12M.map((x, i) => ({ x, v: [120,140,150,170,180,190,195,200,205,210,215,219][i] * 10 }));
+      const data = to30([1000,1100,1050,1150,1120,1180,1160,1220,1200,1250,1230,1300]);
       return (
-        <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="g-svc" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-info)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-info)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          {xAxis30}
           <YAxis tick={axis} tickLine={false} axisLine={false} />
           {tip}
-          <Bar dataKey="v" fill="var(--color-info)" radius={[4, 4, 0, 0]} />
-        </BarChart>
+          <Area type="monotone" dataKey="v" stroke="var(--color-info)" strokeWidth={2} fill="url(#g-svc)" />
+        </AreaChart>
       );
     }
     case "tutor_complete": {
@@ -617,8 +684,6 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
       const data = [
         { name: "超量导出", value: 4, fill: "var(--color-destructive)" },
         { name: "批量查看", value: 5, fill: "var(--color-warning)" },
-        { name: "越权访问", value: 2, fill: "var(--color-chart-4)" },
-        { name: "IP 异常",  value: 1, fill: "var(--color-info)" },
       ];
       return (
         <PieChart>
@@ -630,15 +695,22 @@ function renderChart(m: typeof ALL_METRICS[number]): ReactElement {
       );
     }
     default: {
-      const data = (SPARK[m.key] || SPARK._default).map((d) => ({ ...d }));
+      const spark = SPARK[m.key] || SPARK._default;
+      const data = to30(spark.map((d) => d.v));
       return (
-        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id={`g-def-${m.key}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           {grid}
-          <XAxis dataKey="x" tick={axis} tickLine={false} axisLine={false} />
+          {xAxis30}
           <YAxis tick={axis} tickLine={false} axisLine={false} />
           {tip}
-          <Line type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} dot={false} />
-        </LineChart>
+          <Area type="monotone" dataKey="v" stroke="var(--color-primary)" strokeWidth={2} fill={`url(#g-def-${m.key})`} />
+        </AreaChart>
       );
     }
   }
