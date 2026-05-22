@@ -9,19 +9,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, ArrowLeft, RotateCcw } from "lucide-react";
 import { usePagination } from "@/components/dev/TablePagination";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ledger/detail")({ component: Page });
 
-const BIZ_TYPES = ["全部", "保证金", "分润", "平台技术服务费", "系统费", "营销费"];
-
 function money(v: number, showPlus = true) {
   const abs = Math.abs(v);
   const sign = v >= 0 ? (showPlus ? "+" : "") : "-";
   return `${sign}¥${abs.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** 计算单行净额（分润 + 各类费用） */
+function netAmount(row: ReturnType<typeof db.billDetails>[number]) {
+  return row.profit + row.deposit + row.techFee + row.systemFee + row.marketingFee;
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -33,16 +35,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** 格式化周标签 */
-function formatWeekLabel(startDate: string): string {
-  const d = new Date(startDate + "T00:00:00");
-  const tmp = new Date(d);
-  tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
-  const yearStart = new Date(tmp.getFullYear(), 0, 1);
-  const weekNo = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  return `${tmp.getFullYear()}年第${weekNo}周`;
-}
-
 function Page() {
   const { role } = useApp();
   const currentUserName = ROLE_META[role].name;
@@ -50,11 +42,7 @@ function Page() {
 
   const cycleStart = (search.cycleStart as string) || "";
   const cycleEnd = (search.cycleEnd as string) || "";
-  const totalAmount = (search.amount as number) || 0;
-  const totalCount = (search.count as number) || 0;
-  const billType = (search.billType as string) || "";
 
-  const [bizType, setBizType] = useState("全部");
   const [keyword, setKeyword] = useState("");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
@@ -84,16 +72,12 @@ function Page() {
   const filtered = useMemo(() => {
     let arr = [...allDetails];
 
-    if (bizType !== "全部") {
-      arr = arr.filter((d) => d.bizType === bizType);
-    }
-
     const kw = keyword.trim();
     if (kw) {
       arr = arr.filter(
         (d) =>
           d.orderNo.toLowerCase().includes(kw.toLowerCase()) ||
-          d.remark.toLowerCase().includes(kw.toLowerCase())
+          d.productName.toLowerCase().includes(kw.toLowerCase())
       );
     }
 
@@ -103,8 +87,14 @@ function Page() {
         if (sortField === "time") {
           return a.time.localeCompare(b.time) * dir;
         }
-        if (sortField === "amount") {
-          return (a.amount - b.amount) * dir;
+        if (sortField === "orderAmount") {
+          return (a.orderAmount - b.orderAmount) * dir;
+        }
+        if (sortField === "paidAmount") {
+          return (a.paidAmount - b.paidAmount) * dir;
+        }
+        if (sortField === "netAmount") {
+          return (netAmount(a) - netAmount(b)) * dir;
         }
         return 0;
       });
@@ -112,9 +102,22 @@ function Page() {
       arr.sort((a, b) => b.time.localeCompare(a.time));
     }
     return arr;
-  }, [allDetails, bizType, keyword, sortField, sortDir]);
+  }, [allDetails, keyword, sortField, sortDir]);
 
   const { paged, Pagination } = usePagination(filtered, 10);
+
+  // 按结算状态统计分润（净值）
+  const statusNetMap = useMemo(() => {
+    return filtered.reduce(
+      (acc, d) => {
+        const net = netAmount(d);
+        if (d.status === "已结算") acc.settled += net;
+        else acc.unsettled += net;
+        return acc;
+      },
+      { settled: 0, unsettled: 0 }
+    );
+  }, [filtered]);
 
   const onExport = () => {
     db.log({
@@ -134,7 +137,6 @@ function Page() {
   };
 
   const onReset = () => {
-    setBizType("全部");
     setKeyword("");
     setSortField(null);
     setSortDir(null);
@@ -157,23 +159,11 @@ function Page() {
     return sortDir === "desc" ? "↓" : "↑";
   };
 
-  const periodLabel = (() => {
-    if (billType === "month") return `${cycleStart.slice(0, 7)}`;
-    if (billType === "week") return `${formatWeekLabel(cycleStart)}（${cycleStart} ~ ${cycleEnd}）`;
-    return cycleStart;
-  })();
-
-  const periodSubLabel = (() => {
-    if (billType === "month") return "按月维度";
-    if (billType === "week") return "按周维度";
-    return "按日维度";
-  })();
-
   return (
     <div>
       <PageHeader
         title="账单明细列表"
-        subtitle="查看指定周期与业务类型下的每一笔账单明细记录，并支持二级筛选和导出。"
+        subtitle="查看指定周期内每一笔订单的账单明细，按订单维度展示订单金额、实付金额、优惠金额及各项费用。"
         actions={
           <div className="flex gap-2">
             <Link to="/ledger">
@@ -189,28 +179,18 @@ function Page() {
       />
 
       {/* 统计卡片 */}
-      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">当前周期</div>
-          <div className="mt-1 text-lg font-semibold">{periodLabel}</div>
-          <div className="mt-1 text-xs text-muted-foreground">{periodSubLabel}</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-xs text-muted-foreground">业务类型</div>
-          <div className="mt-1 text-2xl font-semibold">{bizType}</div>
-          <div className="mt-1 text-xs text-muted-foreground">当前筛选类型</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-xs text-muted-foreground">总金额</div>
-          <div className={`mt-1 text-2xl font-semibold ${totalAmount >= 0 ? "" : "text-destructive"}`}>
-            {money(totalAmount)}
+          <div className="text-xs text-muted-foreground">已结算分润</div>
+          <div className={`mt-1 text-2xl font-semibold ${statusNetMap.settled >= 0 ? "" : "text-destructive"}`}>
+            {money(statusNetMap.settled)}
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">当前汇总金额</div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">总笔数</div>
-          <div className="mt-1 text-2xl font-semibold">{totalCount} 笔</div>
-          <div className="mt-1 text-xs text-muted-foreground">当前汇总笔数</div>
+          <div className="text-xs text-muted-foreground">未结算分润</div>
+          <div className={`mt-1 text-2xl font-semibold ${statusNetMap.unsettled >= 0 ? "" : "text-destructive"}`}>
+            {money(statusNetMap.unsettled)}
+          </div>
         </Card>
       </div>
 
@@ -219,31 +199,16 @@ function Page() {
         <SectionTitle>明细筛选</SectionTitle>
         <div className="rounded-lg border bg-card p-4">
           <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
-            <div className="md:col-span-2">
-              <Label className="mb-1.5 block text-xs text-muted-foreground">业务类型</Label>
-              <Select value={bizType} onValueChange={setBizType}>
-                <SelectTrigger className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BIZ_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <div className="md:col-span-4">
               <Label className="mb-1.5 block text-xs text-muted-foreground">关键词</Label>
               <Input
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                placeholder="搜索订单号 / 说明"
+                placeholder="搜索订单号 / 商品名称"
                 className="h-8"
               />
             </div>
-            <div className="md:col-span-6 flex gap-2">
+            <div className="md:col-span-8 flex gap-2">
               <Button variant="outline" size="sm" className="h-8" onClick={onReset}>
                 <RotateCcw className="mr-1 h-3.5 w-3.5" /> 重置
               </Button>
@@ -257,36 +222,66 @@ function Page() {
         <Table>
           <TableHeader>
             <TableRow className="bg-primary/5 hover:bg-primary/5">
-              <TableHead className="text-xs font-medium">流水号</TableHead>
               <TableHead className="text-xs font-medium">订单号</TableHead>
               <TableHead className="text-xs font-medium">商品名称</TableHead>
               <TableHead className="cursor-pointer select-none text-xs font-medium" onClick={() => toggleSort("time")}>
                 <span className="flex items-center gap-1">时间 <span className="text-[10px] opacity-60">{sortIcon("time")}</span></span>
               </TableHead>
-              <TableHead className="text-xs font-medium">业务类型</TableHead>
-              <TableHead className="cursor-pointer select-none text-xs font-medium text-right" onClick={() => toggleSort("amount")}>
-                <span className="flex items-center justify-end gap-1">金额 <span className="text-[10px] opacity-60">{sortIcon("amount")}</span></span>
+              <TableHead className="cursor-pointer select-none text-xs font-medium text-right" onClick={() => toggleSort("orderAmount")}>
+                <span className="flex items-center justify-end gap-1">订单金额 <span className="text-[10px] opacity-60">{sortIcon("orderAmount")}</span></span>
               </TableHead>
-              <TableHead className="text-xs font-medium">说明</TableHead>
+              <TableHead className="text-xs font-medium text-right">优惠金额</TableHead>
+              <TableHead className="cursor-pointer select-none text-xs font-medium text-right" onClick={() => toggleSort("paidAmount")}>
+                <span className="flex items-center justify-end gap-1">实付金额 <span className="text-[10px] opacity-60">{sortIcon("paidAmount")}</span></span>
+              </TableHead>
+              <TableHead className="text-xs font-medium text-right">保证金</TableHead>
+              <TableHead className="text-xs font-medium text-right">平台技术服务费</TableHead>
+              <TableHead className="text-xs font-medium text-right">系统费</TableHead>
+              <TableHead className="text-xs font-medium text-right">营销费</TableHead>
+              <TableHead className="cursor-pointer select-none text-xs font-medium text-right" onClick={() => toggleSort("netAmount")}>
+                <span className="flex items-center justify-end gap-1">分润 <span className="text-[10px] opacity-60">{sortIcon("netAmount")}</span></span>
+              </TableHead>
+              <TableHead className="text-xs font-medium">状态</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paged.map((d) => (
               <TableRow key={d.id}>
-                <TableCell className="font-mono text-xs">{d.id}</TableCell>
                 <TableCell className="font-mono text-xs">{d.orderNo}</TableCell>
                 <TableCell className="text-sm">{d.productName}</TableCell>
                 <TableCell className="text-sm">{d.time}</TableCell>
-                <TableCell className="text-sm">{d.bizType}</TableCell>
-                <TableCell className={`text-right text-sm font-medium ${d.amount >= 0 ? "" : "text-destructive"}`}>
-                  {money(d.amount)}
+                <TableCell className="text-right text-sm font-medium">{money(d.orderAmount, false)}</TableCell>
+                <TableCell className="text-right text-sm text-muted-foreground">{money(d.discountAmount, false)}</TableCell>
+                <TableCell className="text-right text-sm font-medium">{money(d.paidAmount, false)}</TableCell>
+                <TableCell className={`text-right text-sm ${d.deposit !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                  {d.deposit !== 0 ? money(d.deposit) : "—"}
                 </TableCell>
-                <TableCell className="text-sm">{d.remark}</TableCell>
+                <TableCell className={`text-right text-sm ${d.techFee !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                  {d.techFee !== 0 ? money(d.techFee) : "—"}
+                </TableCell>
+                <TableCell className={`text-right text-sm ${d.systemFee !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                  {d.systemFee !== 0 ? money(d.systemFee) : "—"}
+                </TableCell>
+                <TableCell className={`text-right text-sm ${d.marketingFee !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                  {d.marketingFee !== 0 ? money(d.marketingFee) : "—"}
+                </TableCell>
+                <TableCell className={`text-right text-sm font-medium ${netAmount(d) >= 0 ? "" : "text-destructive"}`}>
+                  {money(netAmount(d))}
+                </TableCell>
+                <TableCell className="text-sm">
+                  <span className={`inline-flex rounded px-1.5 py-0.5 text-xs ${
+                    d.status === "已结算"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-orange-100 text-orange-700"
+                  }`}>
+                    {d.status}
+                  </span>
+                </TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
+                <TableCell colSpan={13} className="py-12 text-center text-muted-foreground">
                   暂无数据
                 </TableCell>
               </TableRow>

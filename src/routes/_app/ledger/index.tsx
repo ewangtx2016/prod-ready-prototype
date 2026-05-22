@@ -34,6 +34,11 @@ function money(v: number, showPlus = true) {
   return `${sign}¥${abs.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/** 计算账单净值 */
+function netValue(b: BillSummary) {
+  return b.profit + b.deposit + b.techFee + b.systemFee + b.marketingFee;
+}
+
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-3 flex items-center gap-2">
@@ -141,7 +146,7 @@ function Page() {
       arr = arr.filter((b) => b.accountName.includes(kw));
     }
 
-    // 5. 按周期聚合：同一 cycleStart|cycleEnd 合并为一行
+    // 5. 按周期聚合：同一 cycleStart|cycleEnd 合并为一行，累加各类费用
     const grouped = new Map<string, BillSummary[]>();
     arr.forEach((b) => {
       const key = `${b.cycleStart}|${b.cycleEnd}`;
@@ -156,8 +161,14 @@ function Page() {
         billType,
         cycleStart,
         cycleEnd,
-        bizType: "全部",
-        amount: items.reduce((s, b) => s + b.amount, 0),
+        orderAmount: items.reduce((s, b) => s + b.orderAmount, 0),
+        paidAmount: items.reduce((s, b) => s + b.paidAmount, 0),
+        discountAmount: items.reduce((s, b) => s + b.discountAmount, 0),
+        deposit: items.reduce((s, b) => s + b.deposit, 0),
+        profit: items.reduce((s, b) => s + b.profit, 0),
+        techFee: items.reduce((s, b) => s + b.techFee, 0),
+        systemFee: items.reduce((s, b) => s + b.systemFee, 0),
+        marketingFee: items.reduce((s, b) => s + b.marketingFee, 0),
         count: items.reduce((s, b) => s + b.count, 0),
         accountName: items[0].accountName,
         orgName: items[0].orgName,
@@ -172,8 +183,22 @@ function Page() {
 
   const { paged, Pagination } = usePagination(filtered, 10);
 
-  const totalAmount = useMemo(() => filtered.reduce((s, b) => s + b.amount, 0), [filtered]);
-  const totalCount = useMemo(() => filtered.reduce((s, b) => s + b.count, 0), [filtered]);
+  // 从明细中按结算状态统计分润（净值）
+  const statusNetMap = useMemo(() => {
+    const details = db.billDetails().filter((d) => {
+      const date = d.time.slice(0, 10);
+      return date >= startDate && date <= endDate;
+    });
+    return details.reduce(
+      (acc, d) => {
+        const net = d.profit + d.deposit + d.techFee + d.systemFee + d.marketingFee;
+        if (d.status === "已结算") acc.settled += net;
+        else acc.unsettled += net;
+        return acc;
+      },
+      { settled: 0, unsettled: 0 }
+    );
+  }, [startDate, endDate]);
 
   const onReset = () => {
     setBillType("week");
@@ -219,14 +244,16 @@ function Page() {
       {/* 统计卡片 */}
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">总金额</div>
-          <div className={`mt-1 text-2xl font-semibold ${totalAmount >= 0 ? "" : "text-destructive"}`}>
-            {money(totalAmount)}
+          <div className="text-xs text-muted-foreground">已结算分润</div>
+          <div className={`mt-1 text-2xl font-semibold ${statusNetMap.settled >= 0 ? "" : "text-destructive"}`}>
+            {money(statusNetMap.settled)}
           </div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">总笔数</div>
-          <div className="mt-1 text-2xl font-semibold">{totalCount.toLocaleString()} 笔</div>
+          <div className="text-xs text-muted-foreground">未结算分润</div>
+          <div className={`mt-1 text-2xl font-semibold ${statusNetMap.unsettled >= 0 ? "" : "text-destructive"}`}>
+            {money(statusNetMap.unsettled)}
+          </div>
         </Card>
       </div>
 
@@ -357,7 +384,13 @@ function Page() {
                 <TableHead className="text-xs font-medium">账单类型</TableHead>
                 <TableHead className="text-xs font-medium">周期</TableHead>
                 <TableHead className="text-xs font-medium">机构名称</TableHead>
-                <TableHead className="text-xs font-medium">总金额</TableHead>
+                <TableHead className="text-xs font-medium text-right">实付金额</TableHead>
+                <TableHead className="text-xs font-medium text-right">优惠金额</TableHead>
+                <TableHead className="text-xs font-medium text-right">保证金</TableHead>
+                <TableHead className="text-xs font-medium text-right">平台技术服务费</TableHead>
+                <TableHead className="text-xs font-medium text-right">系统费</TableHead>
+                <TableHead className="text-xs font-medium text-right">营销费</TableHead>
+                <TableHead className="text-xs font-medium text-right">分润</TableHead>
                 <TableHead className="text-xs font-medium">笔数</TableHead>
                 <TableHead className="text-xs font-medium">操作</TableHead>
               </TableRow>
@@ -371,8 +404,22 @@ function Page() {
                     {formatPeriodLabel(b.billType, b.cycleStart, b.cycleEnd)}
                   </TableCell>
                   <TableCell className="text-sm">{b.orgName}</TableCell>
-                  <TableCell className={`text-right text-sm font-medium ${b.amount >= 0 ? "" : "text-destructive"}`}>
-                    {money(b.amount)}
+                  <TableCell className="text-right text-sm font-medium">{money(b.paidAmount, false)}</TableCell>
+                  <TableCell className="text-right text-sm text-muted-foreground">{money(b.discountAmount, false)}</TableCell>
+                  <TableCell className={`text-right text-sm ${b.deposit !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                    {b.deposit !== 0 ? money(b.deposit) : "—"}
+                  </TableCell>
+                  <TableCell className={`text-right text-sm ${b.techFee !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                    {b.techFee !== 0 ? money(b.techFee) : "—"}
+                  </TableCell>
+                  <TableCell className={`text-right text-sm ${b.systemFee !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                    {b.systemFee !== 0 ? money(b.systemFee) : "—"}
+                  </TableCell>
+                  <TableCell className={`text-right text-sm ${b.marketingFee !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                    {b.marketingFee !== 0 ? money(b.marketingFee) : "—"}
+                  </TableCell>
+                  <TableCell className={`text-right text-sm font-medium ${netValue(b) >= 0 ? "" : "text-destructive"}`}>
+                    {money(netValue(b))}
                   </TableCell>
                   <TableCell className="text-sm">{b.count} 笔</TableCell>
                   <TableCell>
@@ -381,8 +428,6 @@ function Page() {
                       search={{
                         cycleStart: b.cycleStart,
                         cycleEnd: b.cycleEnd,
-                        amount: b.amount,
-                        count: b.count,
                         billType: b.billType,
                       }}
                     >
@@ -395,7 +440,7 @@ function Page() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
+                  <TableCell colSpan={13} className="py-12 text-center text-muted-foreground">
                     暂无数据
                   </TableCell>
                 </TableRow>
