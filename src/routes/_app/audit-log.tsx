@@ -24,38 +24,37 @@ function auditType(log: AuditLog) {
 }
 
 function Inner() {
-  const { role, orgName } = useApp();
-  const isOrgAdmin = role === "org_admin";
+  const { role } = useApp();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [actionFilter, setActionFilter] = useState<string>("all");
-  const [orgFilter, setOrgFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [keyword, setKeyword] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   useEffect(() => { setLogs(db.logs()); const t = setInterval(() => setLogs(db.logs()), 1500); return () => clearInterval(t); }, []);
-  const orgs = useMemo(() => Array.from(new Set(logs.map((l) => l.orgName ?? "").filter(Boolean))), [logs]);
+  const roles = useMemo(() => Array.from(new Set(logs.map((l) => l.role).filter(Boolean))), [logs]);
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
     return logs.filter((l) => {
       if (actionFilter !== "all" && auditType(l) !== actionFilter) return false;
-      if (orgFilter !== "all" && (l.orgName ?? "") !== orgFilter) return false;
+      if (roleFilter !== "all" && l.role !== roleFilter) return false;
       if (dateFrom && l.time < dateFrom) return false;
       if (dateTo && l.time > dateTo + " 23:59") return false;
       if (kw) {
-        const hay = `${l.operator} ${l.ip} ${l.detail} ${auditType(l)} ${l.orgName ?? ""}`.toLowerCase();
+        const hay = `${l.operator} ${l.ip} ${l.detail} ${auditType(l)} ${l.role}`.toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-  }, [logs, actionFilter, orgFilter, keyword, dateFrom, dateTo]);
-  const hasFilter = actionFilter !== "all" || orgFilter !== "all" || !!keyword || !!dateFrom || !!dateTo;
-  const reset = () => { setActionFilter("all"); setOrgFilter("all"); setKeyword(""); setDateFrom(""); setDateTo(""); };
+  }, [logs, actionFilter, roleFilter, keyword, dateFrom, dateTo]);
+  const hasFilter = actionFilter !== "all" || roleFilter !== "all" || !!keyword || !!dateFrom || !!dateTo;
+  const reset = () => { setActionFilter("all"); setRoleFilter("all"); setKeyword(""); setDateFrom(""); setDateTo(""); };
   const { paged, Pagination } = usePagination(filtered, 20);
   return (
     <div>
       <PageHeader title="日志管理" subtitle="贯穿全模块的操作留痕（含登录日志），每 1.5s 自动刷新" />
       <DevNote prd="§4.3 §16.5" title="日志管理">
-        <div>· 每条日志包含：操作人 / 时间 / IP / 类型 / 详情 / 机构</div>
+        <div>· 每条日志包含：操作人 / 时间 / IP / 类型 / 详情 / 角色</div>
         <div>· 支持按类型筛选登录、导出等关键操作</div>
         <div>· 触发场景：服务记录新增/审核、分成规则变更、导出、备份删除/恢复、模式切换 等</div>
         <div>· 当前共 {logs.length} 条（最近 200 条）</div>
@@ -63,7 +62,7 @@ function Inner() {
       <div className="mb-3 grid grid-cols-2 gap-3 rounded-lg border bg-card p-3 md:grid-cols-7">
         <div className="space-y-1 md:col-span-2">
           <Label className="text-xs text-muted-foreground">关键词</Label>
-          <Input placeholder="搜索操作人 / IP / 详情 / 机构" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="h-8" />
+          <Input placeholder="搜索操作人 / IP / 详情 / 角色" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="h-8" />
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">类型</Label>
@@ -79,24 +78,14 @@ function Inner() {
         </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">机构</Label>
-        {isOrgAdmin ? (
-          <Select value={orgFilter} onValueChange={setOrgFilter}>
-            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+          <Label className="text-xs text-muted-foreground">角色</Label>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="h-8"><SelectValue placeholder="全部角色" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部机构</SelectItem>
-              <SelectItem value={orgName}>{orgName}</SelectItem>
+              <SelectItem value="all">全部角色</SelectItem>
+              {roles.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
             </SelectContent>
           </Select>
-        ) : (
-          <Select value={orgFilter} onValueChange={setOrgFilter}>
-            <SelectTrigger className="h-8"><SelectValue placeholder="全部机构" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部机构</SelectItem>
-              {orgs.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">开始日期</Label>
@@ -113,13 +102,13 @@ function Inner() {
       </div>
       <div className="rounded-lg border bg-card">
         <Table>
-          <TableHeader><TableRow><TableHead>时间</TableHead><TableHead>操作人</TableHead><TableHead>机构</TableHead><TableHead>IP</TableHead><TableHead>类型</TableHead><TableHead>详情</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>时间</TableHead><TableHead>操作人</TableHead><TableHead>角色</TableHead><TableHead>IP</TableHead><TableHead>类型</TableHead><TableHead>详情</TableHead></TableRow></TableHeader>
           <TableBody>
             {paged.map((l) => (
               <TableRow key={l.id}>
                 <TableCell className="text-xs font-mono">{l.time}</TableCell>
                 <TableCell>{l.operator}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{l.orgName || "-"}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{l.role || "-"}</TableCell>
                 <TableCell className="font-mono text-xs">{l.ip}</TableCell>
                 <TableCell><Badge>{auditType(l)}</Badge></TableCell>
                 <TableCell className="text-xs text-muted-foreground">{l.detail}</TableCell>
