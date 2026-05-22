@@ -9,14 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, RotateCcw, Eye } from "lucide-react";
 import { usePagination } from "@/components/dev/TablePagination";
+import { SearchSelect } from "@/components/dev/SearchSelect";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ledger/")({ component: Page });
-
-const BIZ_TYPES = ["全部", "分润", "提现", "平台技术服务费", "手续费"];
 
 const BILL_TYPE_LABEL: Record<BillSummary["billType"], string> = {
   day: "日账单",
@@ -45,15 +43,62 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** 获取日期所在周的周一 */
+function getWeekStart(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d.toISOString().slice(0, 10);
+}
+
+/** 获取日期所在周的周日 */
+function getWeekEnd(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? 0 : 7);
+  d.setDate(diff);
+  return d.toISOString().slice(0, 10);
+}
+
+/** 格式化周标签，如"2024年第52周" */
+function formatWeekLabel(startDate: string): string {
+  const d = new Date(startDate + "T00:00:00");
+  const tmp = new Date(d);
+  tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
+  const yearStart = new Date(tmp.getFullYear(), 0, 1);
+  const weekNo = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${tmp.getFullYear()}年第${weekNo}周`;
+}
+
+/** 根据账单类型格式化周期显示 */
+function formatPeriodLabel(billType: string, cycleStart: string, cycleEnd: string): string {
+  if (billType === "day") return cycleStart;
+  if (billType === "week") return `${formatWeekLabel(cycleStart)}（${cycleStart} ~ ${cycleEnd}）`;
+  if (billType === "month") return `${cycleStart.slice(0, 7)}`;
+  return `${cycleStart} ~ ${cycleEnd}`;
+}
+
+/** 月份最后一天 */
+function getMonthEnd(monthStr: string): string {
+  const [year, month] = monthStr.split("-").map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${monthStr}-${String(lastDay).padStart(2, "0")}`;
+}
+
+function defaultOrgValue(_role: string, _orgName: string) {
+  return "all";
+}
+
 function Page() {
-  const { role } = useApp();
+  const { role, orgName } = useApp();
   const currentUserName = ROLE_META[role].name;
   const allBills = useMemo(() => db.bills(), []);
 
   const [billType, setBillType] = useState<BillSummary["billType"]>("week");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [bizType, setBizType] = useState("全部");
+  const [fOrg, setFOrg] = useState(() => defaultOrgValue(role, orgName));
   const [accountName, setAccountName] = useState("");
 
   // 初始化及切换账单类型时自动填充日期范围
@@ -66,11 +111,23 @@ function Page() {
     }
   }, [allBills, billType]);
 
+  const orgOptions = useMemo(() => {
+    if (role === "org_admin") return [orgName];
+    return Array.from(new Set(allBills.map((b) => b.orgName).filter(Boolean)));
+  }, [allBills, role, orgName]);
+
   const filtered = useMemo(() => {
     let arr = [...allBills];
 
+    // 1. 按账单类型过滤
     arr = arr.filter((b) => b.billType === billType);
 
+    // 2. 按机构过滤
+    if (fOrg !== "all") {
+      arr = arr.filter((b) => b.orgName === fOrg);
+    }
+
+    // 3. 按时间区间过滤
     if (startDate) {
       arr = arr.filter((b) => b.cycleEnd >= startDate);
     }
@@ -78,36 +135,49 @@ function Page() {
       arr = arr.filter((b) => b.cycleStart <= endDate);
     }
 
-    if (bizType !== "全部") {
-      arr = arr.filter((b) => b.bizType === bizType);
-    }
-
+    // 4. 按账户名称过滤
     const kw = accountName.trim();
     if (kw) {
       arr = arr.filter((b) => b.accountName.includes(kw));
     }
 
-    arr.sort((a, b) => {
-      if (a.cycleStart !== b.cycleStart) {
-        return b.cycleStart.localeCompare(a.cycleStart);
-      }
-      return a.bizType.localeCompare(b.bizType);
+    // 5. 按周期聚合：同一 cycleStart|cycleEnd 合并为一行
+    const grouped = new Map<string, BillSummary[]>();
+    arr.forEach((b) => {
+      const key = `${b.cycleStart}|${b.cycleEnd}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(b);
     });
 
-    return arr;
-  }, [allBills, billType, startDate, endDate, bizType, accountName]);
+    const aggregated: BillSummary[] = Array.from(grouped.entries()).map(([key, items]) => {
+      const [cycleStart, cycleEnd] = key.split("|");
+      return {
+        id: items[0].id,
+        billType,
+        cycleStart,
+        cycleEnd,
+        bizType: "全部",
+        amount: items.reduce((s, b) => s + b.amount, 0),
+        count: items.reduce((s, b) => s + b.count, 0),
+        accountName: items[0].accountName,
+        orgName: items[0].orgName,
+      };
+    });
+
+    // 6. 排序：周期倒序
+    aggregated.sort((a, b) => b.cycleStart.localeCompare(a.cycleStart));
+
+    return aggregated;
+  }, [allBills, billType, fOrg, startDate, endDate, accountName]);
 
   const { paged, Pagination } = usePagination(filtered, 10);
 
   const totalAmount = useMemo(() => filtered.reduce((s, b) => s + b.amount, 0), [filtered]);
   const totalCount = useMemo(() => filtered.reduce((s, b) => s + b.count, 0), [filtered]);
-  const inflow = useMemo(() => filtered.filter((b) => b.amount > 0).reduce((s, b) => s + b.amount, 0), [filtered]);
-  const outflow = useMemo(() => filtered.filter((b) => b.amount < 0).reduce((s, b) => s + b.amount, 0), [filtered]);
-  const netInflow = inflow + outflow;
 
   const onReset = () => {
     setBillType("week");
-    setBizType("全部");
+    setFOrg(defaultOrgValue(role, orgName));
     setAccountName("");
     const weekBills = allBills.filter((b) => b.billType === "week");
     if (weekBills.length > 0) {
@@ -127,11 +197,11 @@ function Page() {
     });
     const link = document.createElement("a");
     link.href = "/资金账单-导出模板.xlsx";
-    link.download = `资金账单_${new Date().toISOString().slice(0,10)}.xlsx`;
+    link.download = `资金账单_${new Date().toISOString().slice(0, 10)}.xlsx`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success(`已导出 资金账单_${new Date().toISOString().slice(0,10)}.xlsx`);
+    toast.success(`已导出 资金账单_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   return (
@@ -147,25 +217,16 @@ function Page() {
       />
 
       {/* 统计卡片 */}
-      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">总金额</div>
           <div className={`mt-1 text-2xl font-semibold ${totalAmount >= 0 ? "" : "text-destructive"}`}>
             {money(totalAmount)}
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">收入为正，支出为负</div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">总笔数</div>
           <div className="mt-1 text-2xl font-semibold">{totalCount.toLocaleString()} 笔</div>
-          <div className="mt-1 text-xs text-muted-foreground">当前筛选条件下汇总</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-xs text-muted-foreground">净流入</div>
-          <div className={`mt-1 text-2xl font-semibold ${netInflow >= 0 ? "" : "text-destructive"}`}>
-            {money(netInflow, false)}
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">总收入 - 总支出</div>
         </Card>
       </div>
 
@@ -195,44 +256,77 @@ function Page() {
             </div>
 
             {/* 时间选择区间 */}
-            <div className="md:col-span-3">
-              <Label className="mb-1.5 block text-xs text-muted-foreground">时间选择区间</Label>
+            <div className="md:col-span-4">
+              <Label className="mb-1.5 block text-xs text-muted-foreground">
+                {billType === "day" ? "日期区间" : billType === "week" ? "周区间" : "月份区间"}
+              </Label>
               <div className="flex items-center gap-2">
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="h-8"
-                />
-                <span className="shrink-0 text-sm text-muted-foreground">至</span>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="h-8"
-                />
+                {billType === "month" ? (
+                  <>
+                    <Input
+                      type="month"
+                      value={startDate.slice(0, 7)}
+                      onChange={(e) => setStartDate(`${e.target.value}-01`)}
+                      className="h-8"
+                    />
+                    <span className="shrink-0 text-sm text-muted-foreground">至</span>
+                    <Input
+                      type="month"
+                      value={endDate.slice(0, 7)}
+                      onChange={(e) => setEndDate(getMonthEnd(e.target.value))}
+                      className="h-8"
+                    />
+                  </>
+                ) : billType === "week" ? (
+                  <>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(getWeekStart(e.target.value))}
+                      className="h-8"
+                    />
+                    <span className="shrink-0 text-sm text-muted-foreground">至</span>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(getWeekEnd(e.target.value))}
+                      className="h-8"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="h-8"
+                    />
+                    <span className="shrink-0 text-sm text-muted-foreground">至</span>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="h-8"
+                    />
+                  </>
+                )}
               </div>
             </div>
 
-            {/* 业务类型 */}
+            {/* 机构名称 */}
             <div className="md:col-span-2">
-              <Label className="mb-1.5 block text-xs text-muted-foreground">业务类型</Label>
-              <Select value={bizType} onValueChange={setBizType}>
-                <SelectTrigger className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BIZ_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="mb-1.5 block text-xs text-muted-foreground">机构名称</Label>
+              <SearchSelect
+                value={fOrg}
+                onChange={setFOrg}
+                options={["all", ...orgOptions]}
+                labels={{ all: "全部机构" }}
+                placeholder="搜索机构名称"
+              />
             </div>
 
             {/* 账户名称 */}
-            <div className="md:col-span-3">
+            <div className="md:col-span-2">
               <Label className="mb-1.5 block text-xs text-muted-foreground">账户名称</Label>
               <Input
                 value={accountName}
@@ -261,9 +355,8 @@ function Page() {
               <TableRow className="bg-primary/5 hover:bg-primary/5">
                 <TableHead className="text-xs font-medium">账单ID</TableHead>
                 <TableHead className="text-xs font-medium">账单类型</TableHead>
-                <TableHead className="text-xs font-medium">周期开始日期</TableHead>
-                <TableHead className="text-xs font-medium">周期结束日期</TableHead>
-                <TableHead className="text-xs font-medium">业务类型</TableHead>
+                <TableHead className="text-xs font-medium">周期</TableHead>
+                <TableHead className="text-xs font-medium">机构名称</TableHead>
                 <TableHead className="text-xs font-medium">总金额</TableHead>
                 <TableHead className="text-xs font-medium">笔数</TableHead>
                 <TableHead className="text-xs font-medium">操作</TableHead>
@@ -274,9 +367,10 @@ function Page() {
                 <TableRow key={b.id}>
                   <TableCell className="font-mono text-xs">{b.id}</TableCell>
                   <TableCell className="text-sm">{BILL_TYPE_LABEL[b.billType]}</TableCell>
-                  <TableCell className="text-sm">{b.cycleStart}</TableCell>
-                  <TableCell className="text-sm">{b.cycleEnd}</TableCell>
-                  <TableCell className="text-sm">{b.bizType}</TableCell>
+                  <TableCell className="text-sm">
+                    {formatPeriodLabel(b.billType, b.cycleStart, b.cycleEnd)}
+                  </TableCell>
+                  <TableCell className="text-sm">{b.orgName}</TableCell>
                   <TableCell className={`text-right text-sm font-medium ${b.amount >= 0 ? "" : "text-destructive"}`}>
                     {money(b.amount)}
                   </TableCell>
@@ -285,10 +379,8 @@ function Page() {
                     <Link
                       to="/ledger/detail"
                       search={{
-                        billId: b.id,
                         cycleStart: b.cycleStart,
                         cycleEnd: b.cycleEnd,
-                        bizType: b.bizType,
                         amount: b.amount,
                         count: b.count,
                         billType: b.billType,
@@ -303,7 +395,7 @@ function Page() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
                     暂无数据
                   </TableCell>
                 </TableRow>
@@ -315,7 +407,7 @@ function Page() {
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground">
-        默认按周期开始日期倒序 + 业务类型排序。
+        默认按周期倒序排列；日账单按天汇总、周账单按周汇总、月账单按月汇总。
       </p>
     </div>
   );

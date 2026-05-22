@@ -63,22 +63,37 @@ function Inner() {
   const productTypeOptions = ["课程"];
 
   const kw = keyword.trim().toLowerCase();
-  const filtered = scopedOrders.filter((o) => {
-    if (tab !== "all" && o.status !== tab) return false;
-    if (productType !== "all" && productTypeLabel(o.courseType) !== productType) return false;
-    if (org !== "all" && o.orgName !== org) return false;
-    if (kw && !(
-      o.id.toLowerCase().includes(kw) ||
-      o.userName.toLowerCase().includes(kw) ||
-      o.userPhone.includes(kw) ||
-      o.course.toLowerCase().includes(kw) ||
-      productTypeLabel(o.courseType).toLowerCase().includes(kw) ||
-      o.orgName.toLowerCase().includes(kw)
-    )) return false;
-    if (startDate && o.createdAt.slice(0, 10) < startDate) return false;
-    if (endDate && o.createdAt.slice(0, 10) > endDate) return false;
-    return true;
-  });
+  const filtered = (() => {
+    let arr = scopedOrders.filter((o) => {
+      if (tab !== "all" && o.status !== tab) return false;
+      if (productType !== "all" && productTypeLabel(o.courseType) !== productType) return false;
+      if (org !== "all" && o.orgName !== org) return false;
+      if (kw && !(
+        o.id.toLowerCase().includes(kw) ||
+        o.userName.toLowerCase().includes(kw) ||
+        o.userPhone.includes(kw) ||
+        o.course.toLowerCase().includes(kw) ||
+        productTypeLabel(o.courseType).toLowerCase().includes(kw) ||
+        o.orgName.toLowerCase().includes(kw)
+      )) return false;
+      if (startDate && o.createdAt.slice(0, 10) < startDate) return false;
+      if (endDate && o.createdAt.slice(0, 10) > endDate) return false;
+      return true;
+    });
+
+    if (sortField && sortDir) {
+      const dir = sortDir === "asc" ? 1 : -1;
+      arr.sort((a, b) => {
+        if (sortField === "orderAmount") return (a.orderAmount - b.orderAmount) * dir;
+        if (sortField === "paidAmount") return (a.paidAmount - b.paidAmount) * dir;
+        if (sortField === "discountAmount") return (a.discountAmount - b.discountAmount) * dir;
+        if (sortField === "createdAt") return a.createdAt.localeCompare(b.createdAt) * dir;
+        return 0;
+      });
+    }
+
+    return arr;
+  })();
   const { paged, Pagination } = usePagination(filtered, 10);
   const sumAmount = (rows: Order[]) => rows.reduce((total, order) => total + order.amount, 0);
   const paidOrders = filtered.filter((order) => order.status === "已支付");
@@ -180,8 +195,8 @@ function Inner() {
               <TableHead>订单号</TableHead><TableHead>用户</TableHead><TableHead>手机号</TableHead>
               <TableHead>商品名称</TableHead><TableHead>商品类型</TableHead>
               <TableHead onClick={() => toggleSort("orderAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">订单金额{sortField === "orderAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "orderAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "orderAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
-              <TableHead>实付金额</TableHead>
-              <TableHead>优惠金额</TableHead>
+              <TableHead onClick={() => toggleSort("paidAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">实付金额{sortField === "paidAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "paidAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "paidAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
+              <TableHead onClick={() => toggleSort("discountAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">优惠金额{sortField === "discountAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "discountAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "discountAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
               <TableHead>机构</TableHead>
               <TableHead>状态</TableHead><TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">下单时间{sortField === "createdAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "createdAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "createdAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>

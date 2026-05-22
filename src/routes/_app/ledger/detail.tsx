@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { db, type BillDetail } from "@/lib/mock";
+import { db } from "@/lib/mock";
 import { useApp } from "@/lib/store";
 import { ROLE_META } from "@/lib/roles";
 import { PageHeader } from "@/components/dev/PageHeader";
@@ -9,11 +9,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, ArrowLeft, RotateCcw } from "lucide-react";
 import { usePagination } from "@/components/dev/TablePagination";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ledger/detail")({ component: Page });
+
+const BIZ_TYPES = ["全部", "保证金", "分润", "平台技术服务费", "系统费", "营销费"];
 
 function money(v: number, showPlus = true) {
   const abs = Math.abs(v);
@@ -30,29 +33,46 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** 格式化周标签 */
+function formatWeekLabel(startDate: string): string {
+  const d = new Date(startDate + "T00:00:00");
+  const tmp = new Date(d);
+  tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
+  const yearStart = new Date(tmp.getFullYear(), 0, 1);
+  const weekNo = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${tmp.getFullYear()}年第${weekNo}周`;
+}
+
 function Page() {
   const { role } = useApp();
   const currentUserName = ROLE_META[role].name;
   const search = useSearch({ from: "/_app/ledger/detail" }) as Record<string, any>;
 
-  const billId = (search.billId as string) || "";
   const cycleStart = (search.cycleStart as string) || "";
   const cycleEnd = (search.cycleEnd as string) || "";
-  const bizType = (search.bizType as string) || "";
   const totalAmount = (search.amount as number) || 0;
   const totalCount = (search.count as number) || 0;
   const billType = (search.billType as string) || "";
 
-  const allDetails = useMemo(() => db.billDetails().filter((d) => d.billId === billId), [billId]);
-
+  const [bizType, setBizType] = useState("全部");
   const [keyword, setKeyword] = useState("");
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
 
-  if (!billId) {
+  // 按时间范围查询明细
+  const allDetails = useMemo(() => {
+    return db.billDetails().filter((d) => {
+      const date = d.time.slice(0, 10);
+      return date >= cycleStart && date <= cycleEnd;
+    });
+  }, [cycleStart, cycleEnd]);
+
+  if (!cycleStart || !cycleEnd) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="text-lg font-medium">未选择账单</div>
         <p className="mt-2 text-sm text-muted-foreground">请从资金账单页面点击"查看明细"进入</p>
-        <Link to="/ledger" className="mt-4">
+        <Link to="/ledger">
           <Button variant="outline">
             <ArrowLeft className="mr-1 h-4 w-4" /> 返回资金账单
           </Button>
@@ -64,6 +84,10 @@ function Page() {
   const filtered = useMemo(() => {
     let arr = [...allDetails];
 
+    if (bizType !== "全部") {
+      arr = arr.filter((d) => d.bizType === bizType);
+    }
+
     const kw = keyword.trim();
     if (kw) {
       arr = arr.filter(
@@ -73,9 +97,22 @@ function Page() {
       );
     }
 
-    arr.sort((a, b) => b.time.localeCompare(a.time));
+    if (sortField && sortDir) {
+      const dir = sortDir === "asc" ? 1 : -1;
+      arr.sort((a, b) => {
+        if (sortField === "time") {
+          return a.time.localeCompare(b.time) * dir;
+        }
+        if (sortField === "amount") {
+          return (a.amount - b.amount) * dir;
+        }
+        return 0;
+      });
+    } else {
+      arr.sort((a, b) => b.time.localeCompare(a.time));
+    }
     return arr;
-  }, [allDetails, keyword]);
+  }, [allDetails, bizType, keyword, sortField, sortDir]);
 
   const { paged, Pagination } = usePagination(filtered, 10);
 
@@ -97,12 +134,32 @@ function Page() {
   };
 
   const onReset = () => {
+    setBizType("全部");
     setKeyword("");
+    setSortField(null);
+    setSortDir(null);
+  };
+
+  function toggleSort(field: string) {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir("desc");
+    } else if (sortDir === "desc") {
+      setSortDir("asc");
+    } else {
+      setSortField(null);
+      setSortDir(null);
+    }
+  }
+
+  const sortIcon = (field: string) => {
+    if (sortField !== field) return "⇅";
+    return sortDir === "desc" ? "↓" : "↑";
   };
 
   const periodLabel = (() => {
     if (billType === "month") return `${cycleStart.slice(0, 7)}`;
-    if (billType === "week") return `${cycleStart} ~ ${cycleEnd}`;
+    if (billType === "week") return `${formatWeekLabel(cycleStart)}（${cycleStart} ~ ${cycleEnd}）`;
     return cycleStart;
   })();
 
@@ -135,13 +192,13 @@ function Page() {
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">当前周期</div>
-          <div className="mt-1 text-2xl font-semibold">{periodLabel}</div>
+          <div className="mt-1 text-lg font-semibold">{periodLabel}</div>
           <div className="mt-1 text-xs text-muted-foreground">{periodSubLabel}</div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">业务类型</div>
-          <div className="mt-1 text-2xl font-semibold">{bizType || "-"}</div>
-          <div className="mt-1 text-xs text-muted-foreground">当前下钻类型</div>
+          <div className="mt-1 text-2xl font-semibold">{bizType}</div>
+          <div className="mt-1 text-xs text-muted-foreground">当前筛选类型</div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">总金额</div>
@@ -162,6 +219,21 @@ function Page() {
         <SectionTitle>明细筛选</SectionTitle>
         <div className="rounded-lg border bg-card p-4">
           <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
+            <div className="md:col-span-2">
+              <Label className="mb-1.5 block text-xs text-muted-foreground">业务类型</Label>
+              <Select value={bizType} onValueChange={setBizType}>
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BIZ_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="md:col-span-4">
               <Label className="mb-1.5 block text-xs text-muted-foreground">关键词</Label>
               <Input
@@ -171,7 +243,7 @@ function Page() {
                 className="h-8"
               />
             </div>
-            <div className="md:col-span-8 flex gap-2">
+            <div className="md:col-span-6 flex gap-2">
               <Button variant="outline" size="sm" className="h-8" onClick={onReset}>
                 <RotateCcw className="mr-1 h-3.5 w-3.5" /> 重置
               </Button>
@@ -185,26 +257,30 @@ function Page() {
         <Table>
           <TableHeader>
             <TableRow className="bg-primary/5 hover:bg-primary/5">
-              <TableHead className="text-xs font-medium">时间</TableHead>
-              <TableHead className="text-xs font-medium">业务类型</TableHead>
+              <TableHead className="text-xs font-medium">流水号</TableHead>
               <TableHead className="text-xs font-medium">订单号</TableHead>
-              <TableHead className="text-xs font-medium">金额</TableHead>
-              <TableHead className="text-xs font-medium">余额</TableHead>
-              <TableHead className="text-xs font-medium">状态</TableHead>
+              <TableHead className="text-xs font-medium">商品名称</TableHead>
+              <TableHead className="cursor-pointer select-none text-xs font-medium" onClick={() => toggleSort("time")}>
+                <span className="flex items-center gap-1">时间 <span className="text-[10px] opacity-60">{sortIcon("time")}</span></span>
+              </TableHead>
+              <TableHead className="text-xs font-medium">业务类型</TableHead>
+              <TableHead className="cursor-pointer select-none text-xs font-medium text-right" onClick={() => toggleSort("amount")}>
+                <span className="flex items-center justify-end gap-1">金额 <span className="text-[10px] opacity-60">{sortIcon("amount")}</span></span>
+              </TableHead>
               <TableHead className="text-xs font-medium">说明</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paged.map((d) => (
               <TableRow key={d.id}>
+                <TableCell className="font-mono text-xs">{d.id}</TableCell>
+                <TableCell className="font-mono text-xs">{d.orderNo}</TableCell>
+                <TableCell className="text-sm">{d.productName}</TableCell>
                 <TableCell className="text-sm">{d.time}</TableCell>
                 <TableCell className="text-sm">{d.bizType}</TableCell>
-                <TableCell className="font-mono text-xs">{d.orderNo}</TableCell>
                 <TableCell className={`text-right text-sm font-medium ${d.amount >= 0 ? "" : "text-destructive"}`}>
                   {money(d.amount)}
                 </TableCell>
-                <TableCell className="text-right text-sm">{money(d.balance, false)}</TableCell>
-                <TableCell className="text-sm">{d.status}</TableCell>
                 <TableCell className="text-sm">{d.remark}</TableCell>
               </TableRow>
             ))}

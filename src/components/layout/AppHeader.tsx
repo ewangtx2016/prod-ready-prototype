@@ -15,7 +15,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db, type AsyncExportTask } from "@/lib/mock";
@@ -89,12 +88,6 @@ function ExportTaskPopover() {
                     <Badge variant={meta.variant} className="text-[10px] h-5">
                       {meta.label}
                     </Badge>
-                  </div>
-                  <div className="mt-2 flex items-center gap-3">
-                    <Progress value={task.progress} className="h-1.5 flex-1" />
-                    <span className="text-xs text-muted-foreground w-10 text-right">
-                      {task.progress}%
-                    </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-[11px] text-muted-foreground">

@@ -98,6 +98,7 @@ export type BillSummary = {
   amount: number;
   count: number;
   accountName: string;
+  orgName: string;
 };
 
 export type BillDetail = {
@@ -105,6 +106,7 @@ export type BillDetail = {
   time: string;
   bizType: string;
   orderNo: string;
+  productName: string;
   amount: number;
   balance: number;
   status: string;
@@ -425,55 +427,45 @@ export function seedIfNeeded(force = false) {
   ];
 
   const bills: BillSummary[] = [
-    { id: "BILL202412001", billType: "month", cycleStart: "2024-12-01", cycleEnd: "2024-12-31", bizType: "分润", amount: 10000, count: 50, accountName: "某某教育科技有限公司" },
-    { id: "BILL202412002", billType: "month", cycleStart: "2024-12-01", cycleEnd: "2024-12-31", bizType: "提现", amount: -5000, count: 10, accountName: "某某教育科技有限公司" },
-    { id: "BILL202452003", billType: "week", cycleStart: "2024-12-23", cycleEnd: "2024-12-29", bizType: "平台技术服务费", amount: -1280.23, count: 18, accountName: "某某教育科技有限公司" },
-    { id: "BILL202451004", billType: "week", cycleStart: "2024-12-16", cycleEnd: "2024-12-22", bizType: "手续费", amount: -234.56, count: 23, accountName: "某某教育科技有限公司" },
-    { id: "BILL2024125005", billType: "day", cycleStart: "2024-12-25", cycleEnd: "2024-12-25", bizType: "分润", amount: 1200, count: 8, accountName: "某某教育科技有限公司" },
-    { id: "BILL2024124006", billType: "day", cycleStart: "2024-12-24", cycleEnd: "2024-12-24", bizType: "提现", amount: -500, count: 2, accountName: "某某教育科技有限公司" },
-    { id: "BILL2024123007", billType: "day", cycleStart: "2024-12-23", cycleEnd: "2024-12-23", bizType: "分润", amount: 800, count: 5, accountName: "某某教育科技有限公司" },
-    { id: "BILL2024122008", billType: "week", cycleStart: "2024-12-09", cycleEnd: "2024-12-15", bizType: "平台技术服务费", amount: -980.50, count: 15, accountName: "某某教育科技有限公司" },
-    { id: "BILL2024111009", billType: "month", cycleStart: "2024-11-01", cycleEnd: "2024-11-30", bizType: "分润", amount: 15000, count: 65, accountName: "某某教育科技有限公司" },
-    { id: "BILL2024111010", billType: "month", cycleStart: "2024-11-01", cycleEnd: "2024-11-30", bizType: "提现", amount: -8000, count: 12, accountName: "某某教育科技有限公司" },
-    { id: "BILL2024115011", billType: "week", cycleStart: "2024-11-25", cycleEnd: "2024-12-01", bizType: "手续费", amount: -150, count: 8, accountName: "某某教育科技有限公司" },
-    { id: "BILL2024114012", billType: "day", cycleStart: "2024-11-28", cycleEnd: "2024-11-28", bizType: "分润", amount: 600, count: 3, accountName: "某某教育科技有限公司" },
+    { id: "BILL202412001", billType: "month", cycleStart: "2024-12-01", cycleEnd: "2024-12-31", bizType: "分润", amount: 10000, count: 50, accountName: "某某教育科技有限公司", orgName: "机构用户平台" },
+    { id: "BILL202452003", billType: "week", cycleStart: "2024-12-23", cycleEnd: "2024-12-29", bizType: "平台技术服务费", amount: -1280.23, count: 18, accountName: "某某教育科技有限公司", orgName: "机构用户平台" },
+    { id: "BILL202451004", billType: "week", cycleStart: "2024-12-16", cycleEnd: "2024-12-22", bizType: "手续费", amount: -234.56, count: 23, accountName: "某某教育科技有限公司", orgName: "机构用户平台" },
+    { id: "BILL2024125005", billType: "day", cycleStart: "2024-12-25", cycleEnd: "2024-12-25", bizType: "分润", amount: 1200, count: 8, accountName: "某某教育科技有限公司", orgName: "机构用户平台" },
+    { id: "BILL2024123007", billType: "day", cycleStart: "2024-12-23", cycleEnd: "2024-12-23", bizType: "分润", amount: 800, count: 5, accountName: "某某教育科技有限公司", orgName: "鼎校教育朝阳校区" },
+    { id: "BILL2024122008", billType: "week", cycleStart: "2024-12-09", cycleEnd: "2024-12-15", bizType: "平台技术服务费", amount: -980.50, count: 15, accountName: "某某教育科技有限公司", orgName: "鼎校教育海淀校区" },
+    { id: "BILL2024111009", billType: "month", cycleStart: "2024-11-01", cycleEnd: "2024-11-30", bizType: "分润", amount: 15000, count: 65, accountName: "某某教育科技有限公司", orgName: "机构用户平台" },
+    { id: "BILL2024115011", billType: "week", cycleStart: "2024-11-25", cycleEnd: "2024-12-01", bizType: "手续费", amount: -150, count: 8, accountName: "某某教育科技有限公司", orgName: "鼎校教育海淀校区" },
+    { id: "BILL2024114012", billType: "day", cycleStart: "2024-11-28", cycleEnd: "2024-11-28", bizType: "分润", amount: 600, count: 3, accountName: "某某教育科技有限公司", orgName: "鼎校教育朝阳校区" },
   ];
 
   const billDetails: BillDetail[] = [
     // BILL202412001 分润
-    { id: rid(), time: "2024-12-25 14:30:00", bizType: "分润", orderNo: "DD202412250001", amount: 299.00, balance: 12345.67, status: "已分润", remark: "课程订单分润", billId: "BILL202412001" },
-    { id: rid(), time: "2024-12-24 11:20:00", bizType: "分润", orderNo: "DD202412240002", amount: 199.00, balance: 12046.67, status: "已分润", remark: "课程订单分润", billId: "BILL202412001" },
-    { id: rid(), time: "2024-12-23 09:15:00", bizType: "分润", orderNo: "DD202412230003", amount: 399.00, balance: 11847.67, status: "已分润", remark: "学习机订单分润", billId: "BILL202412001" },
-    { id: rid(), time: "2024-12-22 16:10:00", bizType: "分润", orderNo: "DD202412220004", amount: 299.00, balance: 11448.67, status: "已分润", remark: "课程订单分润", billId: "BILL202412001" },
-    // BILL202412002 提现
-    { id: rid(), time: "2024-12-24 11:20:00", bizType: "提现", orderNo: "TX202412240012", amount: -500.00, balance: 11845.67, status: "提现成功", remark: "用户提现申请", billId: "BILL202412002" },
-    { id: rid(), time: "2024-12-23 09:15:00", bizType: "提现", orderNo: "TX202412230013", amount: -1000.00, balance: 12345.67, status: "提现成功", remark: "用户提现申请", billId: "BILL202412002" },
-    { id: rid(), time: "2024-12-22 16:10:00", bizType: "提现", orderNo: "TX202412220014", amount: -800.00, balance: 13345.67, status: "提现成功", remark: "用户提现申请", billId: "BILL202412002" },
+    { id: rid(), time: "2024-12-25 14:30:00", bizType: "分润", orderNo: "DD202412250001", productName: "高三数学冲刺班", amount: 299.00, balance: 12345.67, status: "已分润", remark: "课程订单分润", billId: "BILL202412001" },
+    { id: rid(), time: "2024-12-24 11:20:00", bizType: "分润", orderNo: "DD202412240002", productName: "高三数学冲刺班", amount: 199.00, balance: 12046.67, status: "已分润", remark: "课程订单分润", billId: "BILL202412001" },
+    { id: rid(), time: "2024-12-23 09:15:00", bizType: "分润", orderNo: "DD202412230003", productName: "AI 学习机 Pro", amount: 399.00, balance: 11847.67, status: "已分润", remark: "学习机订单分润", billId: "BILL202412001" },
+    { id: rid(), time: "2024-12-22 16:10:00", bizType: "分润", orderNo: "DD202412220004", productName: "高三数学冲刺班", amount: 299.00, balance: 11448.67, status: "已分润", remark: "课程订单分润", billId: "BILL202412001" },
     // BILL202452003 平台技术服务费
-    { id: rid(), time: "2024-12-29 10:00:00", bizType: "平台技术服务费", orderNo: "PT202412290015", amount: -80.00, balance: 12425.67, status: "已完成", remark: "平台技术服务费结算", billId: "BILL202452003" },
-    { id: rid(), time: "2024-12-28 14:30:00", bizType: "平台技术服务费", orderNo: "PT202412280016", amount: -120.00, balance: 12505.67, status: "已完成", remark: "平台技术服务费结算", billId: "BILL202452003" },
-    { id: rid(), time: "2024-12-27 09:00:00", bizType: "平台技术服务费", orderNo: "PT202412270017", amount: -60.00, balance: 12625.67, status: "处理中", remark: "平台技术服务费结算", billId: "BILL202452003" },
+    { id: rid(), time: "2024-12-29 10:00:00", bizType: "平台技术服务费", orderNo: "PT202412290015", productName: "平台技术服务", amount: -80.00, balance: 12425.67, status: "已完成", remark: "平台技术服务费结算", billId: "BILL202452003" },
+    { id: rid(), time: "2024-12-28 14:30:00", bizType: "平台技术服务费", orderNo: "PT202412280016", productName: "平台技术服务", amount: -120.00, balance: 12505.67, status: "已完成", remark: "平台技术服务费结算", billId: "BILL202452003" },
+    { id: rid(), time: "2024-12-27 09:00:00", bizType: "平台技术服务费", orderNo: "PT202412270017", productName: "平台技术服务", amount: -60.00, balance: 12625.67, status: "处理中", remark: "平台技术服务费结算", billId: "BILL202452003" },
     // BILL202451004 手续费
-    { id: rid(), time: "2024-12-22 16:10:00", bizType: "手续费", orderNo: "FEE202412220018", amount: -12.90, balance: 12345.67, status: "已完成", remark: "支付通道手续费", billId: "BILL202451004" },
-    { id: rid(), time: "2024-12-21 11:00:00", bizType: "手续费", orderNo: "FEE202412210019", amount: -8.50, balance: 12358.57, status: "已完成", remark: "支付通道手续费", billId: "BILL202451004" },
-    { id: rid(), time: "2024-12-20 15:30:00", bizType: "手续费", orderNo: "FEE202412200020", amount: -15.00, balance: 12367.07, status: "已完成", remark: "支付通道手续费", billId: "BILL202451004" },
+    { id: rid(), time: "2024-12-22 16:10:00", bizType: "保证金", orderNo: "FEE202412220018", productName: "入驻保证金", amount: -500.00, balance: 12345.67, status: "已完成", remark: "入驻保证金扣除", billId: "BILL202451004" },
+    { id: rid(), time: "2024-12-21 11:00:00", bizType: "系统费", orderNo: "FEE202412210019", productName: "系统使用费", amount: -199.00, balance: 12358.57, status: "已完成", remark: "月度系统使用费", billId: "BILL202451004" },
+    { id: rid(), time: "2024-12-20 15:30:00", bizType: "营销费", orderNo: "FEE202412200020", productName: "营销推广服务", amount: -300.00, balance: 12367.07, status: "已完成", remark: "营销活动推广费", billId: "BILL202451004" },
     // BILL2024125005 日账单 分润
-    { id: rid(), time: "2024-12-25 14:30:00", bizType: "分润", orderNo: "DD202412250021", amount: 150.00, balance: 12345.67, status: "已分润", remark: "课程订单分润", billId: "BILL2024125005" },
-    { id: rid(), time: "2024-12-25 10:00:00", bizType: "分润", orderNo: "DD202412250022", amount: 200.00, balance: 12195.67, status: "已分润", remark: "课程订单分润", billId: "BILL2024125005" },
-    // BILL2024124006 日账单 提现
-    { id: rid(), time: "2024-12-24 11:20:00", bizType: "提现", orderNo: "TX202412240023", amount: -300.00, balance: 12345.67, status: "提现成功", remark: "用户提现申请", billId: "BILL2024124006" },
-    { id: rid(), time: "2024-12-24 09:00:00", bizType: "提现", orderNo: "TX202412240024", amount: -200.00, balance: 12645.67, status: "提现成功", remark: "用户提现申请", billId: "BILL2024124006" },
+    { id: rid(), time: "2024-12-25 14:30:00", bizType: "分润", orderNo: "DD202412250021", productName: "高三数学冲刺班", amount: 150.00, balance: 12345.67, status: "已分润", remark: "课程订单分润", billId: "BILL2024125005" },
+    { id: rid(), time: "2024-12-25 10:00:00", bizType: "分润", orderNo: "DD202412250022", productName: "高三数学冲刺班", amount: 200.00, balance: 12195.67, status: "已分润", remark: "课程订单分润", billId: "BILL2024125005" },
     // BILL2024123007 日账单 分润
-    { id: rid(), time: "2024-12-23 14:00:00", bizType: "分润", orderNo: "DD202412230025", amount: 160.00, balance: 12000.00, status: "已分润", remark: "课程订单分润", billId: "BILL2024123007" },
-    { id: rid(), time: "2024-12-23 10:00:00", bizType: "分润", orderNo: "DD202412230026", amount: 180.00, balance: 11840.00, status: "已分润", remark: "学习机订单分润", billId: "BILL2024123007" },
+    { id: rid(), time: "2024-12-23 14:00:00", bizType: "分润", orderNo: "DD202412230025", productName: "高三数学冲刺班", amount: 160.00, balance: 12000.00, status: "已分润", remark: "课程订单分润", billId: "BILL2024123007" },
+    { id: rid(), time: "2024-12-23 10:00:00", bizType: "分润", orderNo: "DD202412230026", productName: "AI 学习机 Pro", amount: 180.00, balance: 11840.00, status: "已分润", remark: "学习机订单分润", billId: "BILL2024123007" },
     // BILL2024122008 周账单 平台技术服务费
-    { id: rid(), time: "2024-12-15 16:00:00", bizType: "平台技术服务费", orderNo: "PT202412150027", amount: -100.00, balance: 11500.00, status: "已完成", remark: "平台技术服务费结算", billId: "BILL2024122008" },
-    { id: rid(), time: "2024-12-14 11:00:00", bizType: "平台技术服务费", orderNo: "PT202412140028", amount: -80.00, balance: 11600.00, status: "已完成", remark: "平台技术服务费结算", billId: "BILL2024122008" },
-    { id: rid(), time: "2024-12-13 09:30:00", bizType: "平台技术服务费", orderNo: "PT202412130029", amount: -90.00, balance: 11680.00, status: "处理中", remark: "平台技术服务费结算", billId: "BILL2024122008" },
+    { id: rid(), time: "2024-12-15 16:00:00", bizType: "平台技术服务费", orderNo: "PT202412150027", productName: "平台技术服务", amount: -100.00, balance: 11500.00, status: "已完成", remark: "平台技术服务费结算", billId: "BILL2024122008" },
+    { id: rid(), time: "2024-12-14 11:00:00", bizType: "平台技术服务费", orderNo: "PT202412140028", productName: "平台技术服务", amount: -80.00, balance: 11600.00, status: "已完成", remark: "平台技术服务费结算", billId: "BILL2024122008" },
+    { id: rid(), time: "2024-12-13 09:30:00", bizType: "平台技术服务费", orderNo: "PT202412130029", productName: "平台技术服务", amount: -90.00, balance: 11680.00, status: "处理中", remark: "平台技术服务费结算", billId: "BILL2024122008" },
     // BILL2024111009 月账单 分润
-    { id: rid(), time: "2024-11-30 14:30:00", bizType: "分润", orderNo: "DD202411300030", amount: 250.00, balance: 11000.00, status: "已分润", remark: "课程订单分润", billId: "BILL2024111009" },
-    { id: rid(), time: "2024-11-29 10:00:00", bizType: "分润", orderNo: "DD202411290031", amount: 300.00, balance: 10750.00, status: "已分润", remark: "课程订单分润", billId: "BILL2024111009" },
-    { id: rid(), time: "2024-11-28 09:00:00", bizType: "分润", orderNo: "DD202411280032", amount: 180.00, balance: 10450.00, status: "已分润", remark: "学习机订单分润", billId: "BILL2024111009" },
+    { id: rid(), time: "2024-11-30 14:30:00", bizType: "分润", orderNo: "DD202411300030", productName: "高三数学冲刺班", amount: 250.00, balance: 11000.00, status: "已分润", remark: "课程订单分润", billId: "BILL2024111009" },
+    { id: rid(), time: "2024-11-29 10:00:00", bizType: "分润", orderNo: "DD202411290031", productName: "高三数学冲刺班", amount: 300.00, balance: 10750.00, status: "已分润", remark: "课程订单分润", billId: "BILL2024111009" },
+    { id: rid(), time: "2024-11-28 09:00:00", bizType: "分润", orderNo: "DD202411280032", productName: "AI 学习机 Pro", amount: 180.00, balance: 10450.00, status: "已分润", remark: "学习机订单分润", billId: "BILL2024111009" },
   ];
 
   const exportTasks: AsyncExportTask[] = [
