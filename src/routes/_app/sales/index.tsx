@@ -13,7 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Download, ArrowUp, ArrowDown, ArrowUpDown, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -196,7 +197,7 @@ function Inner() {
               <TableHead>商品名称</TableHead><TableHead>商品类型</TableHead>
               <TableHead onClick={() => toggleSort("orderAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">订单金额{sortField === "orderAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "orderAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "orderAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
               <TableHead onClick={() => toggleSort("paidAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">实付金额{sortField === "paidAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "paidAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "paidAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
-              <TableHead onClick={() => toggleSort("discountAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">优惠金额{sortField === "discountAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "discountAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "discountAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
+              <TableHead onClick={() => toggleSort("discountAmount")} className="cursor-pointer select-none"><div className="flex items-center gap-1">优惠金额<TooltipProvider><Tooltip><TooltipTrigger asChild><Info className="h-3 w-3 text-muted-foreground" /></TooltipTrigger><TooltipContent><p>优惠金额包含：优惠卷、团购金额，当前订单无团购、无优惠卷，显示'--'</p></TooltipContent></Tooltip></TooltipProvider>{sortField === "discountAmount" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "discountAmount" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "discountAmount" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead>
               <TableHead>机构</TableHead>
               <TableHead>状态</TableHead><TableHead onClick={() => toggleSort("createdAt")} className="cursor-pointer select-none"><div className="flex items-center gap-1">下单时间{sortField === "createdAt" && sortDir === "asc" && <ArrowUp className="h-3 w-3" />}{sortField === "createdAt" && sortDir === "desc" && <ArrowDown className="h-3 w-3" />}{sortField !== "createdAt" && <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}</div></TableHead><TableHead className="text-right">操作</TableHead>
             </TableRow></TableHeader>

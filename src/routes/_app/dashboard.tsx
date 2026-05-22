@@ -52,7 +52,6 @@ const CORE_METRICS: { key: string; label: string; value: string; trend?: string;
     key: "core_alert_count",
     label: "敏感操作预警次数",
     value: "12",
-    trend: "本月",
     icon: ShieldAlert,
     formula: "统计周期内触发敏感操作预警（超量导出、批量查看、越权访问、IP 异常等）的次数合计。",
   },
@@ -73,7 +72,7 @@ const ALL_METRICS: { key: string; module: ModuleKey; label: string; value: strin
   { key: "pending",        module: "profit", label: "待结算金额", value: "¥98,200",  icon: Wallet, formula: "已确认收入但尚未完成结算流程的金额合计（已上课/已确权但未到结算日）。" },
   { key: "estimated",      module: "profit", label: "预估收入",   value: "¥43,800",  icon: Wallet, formula: "按当前规则对未确权订单(如未上课/试听)估算的潜在分成，仅用于预测，不计入财务。" },
   // M5 风险预警
-  { key: "alert_count",    module: "risk", label: "敏感操作预警次数", value: "12",  trend: "本月", icon: ShieldAlert, formula: "周期内触发风控规则的次数合计：超量导出、批量查看、越权访问、IP 异常、验证码失败超阈值等。" },
+  { key: "alert_count",    module: "risk", label: "敏感操作预警次数", value: "12", icon: ShieldAlert, formula: "周期内触发风控规则的次数合计：超量导出、批量查看、越权访问、IP 异常、验证码失败超阈值等。" },
 ];
 
 /* ========== 规划师专属指标（数据已按 planner_id = 当前用户 过滤） ========== */
