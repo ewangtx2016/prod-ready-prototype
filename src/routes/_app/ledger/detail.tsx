@@ -21,7 +21,7 @@ function money(v: number, showPlus = true) {
   return `${sign}¥${abs.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/** 计算单行净额（分润 + 各类费用） */
+/** 计算单行净额（机构分成 + 各类费用） */
 function netAmount(row: ReturnType<typeof db.billDetails>[number]) {
   return row.profit + row.deposit + row.techFee + row.systemFee + row.marketingFee;
 }
@@ -106,7 +106,7 @@ function Page() {
 
   const { paged, Pagination } = usePagination(filtered, 10);
 
-  // 按结算状态统计分润（净值）
+  // 按结算状态统计机构分成（净值）
   const statusNetMap = useMemo(() => {
     return filtered.reduce(
       (acc, d) => {
@@ -181,13 +181,13 @@ function Page() {
       {/* 统计卡片 */}
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">已结算分润</div>
+          <div className="text-xs text-muted-foreground">已结算机构分成</div>
           <div className={`mt-1 text-2xl font-semibold ${statusNetMap.settled >= 0 ? "" : "text-destructive"}`}>
             {money(statusNetMap.settled)}
           </div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">未结算分润</div>
+          <div className="text-xs text-muted-foreground">未结算机构分成</div>
           <div className={`mt-1 text-2xl font-semibold ${statusNetMap.unsettled >= 0 ? "" : "text-destructive"}`}>
             {money(statusNetMap.unsettled)}
           </div>
@@ -239,7 +239,7 @@ function Page() {
               <TableHead className="text-xs font-medium text-right">系统费</TableHead>
               <TableHead className="text-xs font-medium text-right">营销费</TableHead>
               <TableHead className="cursor-pointer select-none text-xs font-medium text-right" onClick={() => toggleSort("netAmount")}>
-                <span className="flex items-center justify-end gap-1">分润 <span className="text-[10px] opacity-60">{sortIcon("netAmount")}</span></span>
+                <span className="flex items-center justify-end gap-1">机构分成 <span className="text-[10px] opacity-60">{sortIcon("netAmount")}</span></span>
               </TableHead>
               <TableHead className="text-xs font-medium">状态</TableHead>
             </TableRow>

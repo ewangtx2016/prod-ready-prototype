@@ -104,7 +104,6 @@ function Page() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [fOrg, setFOrg] = useState(() => defaultOrgValue(role, orgName));
-  const [accountName, setAccountName] = useState("");
 
   // 初始化及切换账单类型时自动填充日期范围
   useEffect(() => {
@@ -140,13 +139,7 @@ function Page() {
       arr = arr.filter((b) => b.cycleStart <= endDate);
     }
 
-    // 4. 按账户名称过滤
-    const kw = accountName.trim();
-    if (kw) {
-      arr = arr.filter((b) => b.accountName.includes(kw));
-    }
-
-    // 5. 按周期聚合：同一 cycleStart|cycleEnd 合并为一行，累加各类费用
+    // 4. 按周期聚合：同一 cycleStart|cycleEnd 合并为一行，累加各类费用
     const grouped = new Map<string, BillSummary[]>();
     arr.forEach((b) => {
       const key = `${b.cycleStart}|${b.cycleEnd}`;
@@ -179,11 +172,11 @@ function Page() {
     aggregated.sort((a, b) => b.cycleStart.localeCompare(a.cycleStart));
 
     return aggregated;
-  }, [allBills, billType, fOrg, startDate, endDate, accountName]);
+  }, [allBills, billType, fOrg, startDate, endDate]);
 
   const { paged, Pagination } = usePagination(filtered, 10);
 
-  // 从明细中按结算状态统计分润（净值）
+  // 从明细中按结算状态统计机构分成（净值）
   const statusNetMap = useMemo(() => {
     const details = db.billDetails().filter((d) => {
       const date = d.time.slice(0, 10);
@@ -203,7 +196,6 @@ function Page() {
   const onReset = () => {
     setBillType("week");
     setFOrg(defaultOrgValue(role, orgName));
-    setAccountName("");
     const weekBills = allBills.filter((b) => b.billType === "week");
     if (weekBills.length > 0) {
       const latest = [...weekBills].sort((a, b) => b.cycleStart.localeCompare(a.cycleStart))[0];
@@ -244,13 +236,13 @@ function Page() {
       {/* 统计卡片 */}
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">已结算分润</div>
+          <div className="text-xs text-muted-foreground">已结算机构分成</div>
           <div className={`mt-1 text-2xl font-semibold ${statusNetMap.settled >= 0 ? "" : "text-destructive"}`}>
             {money(statusNetMap.settled)}
           </div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">未结算分润</div>
+          <div className="text-xs text-muted-foreground">未结算机构分成</div>
           <div className={`mt-1 text-2xl font-semibold ${statusNetMap.unsettled >= 0 ? "" : "text-destructive"}`}>
             {money(statusNetMap.unsettled)}
           </div>
@@ -352,17 +344,6 @@ function Page() {
               />
             </div>
 
-            {/* 账户名称 */}
-            <div className="md:col-span-2">
-              <Label className="mb-1.5 block text-xs text-muted-foreground">账户名称</Label>
-              <Input
-                value={accountName}
-                onChange={(e) => setAccountName(e.target.value)}
-                placeholder="请输入账户名称"
-                className="h-8"
-              />
-            </div>
-
             {/* 按钮 */}
             <div className="md:col-span-2 flex gap-2">
               <Button variant="outline" size="sm" className="h-8" onClick={onReset}>
@@ -391,7 +372,7 @@ function Page() {
                 <TableHead className="text-xs font-medium text-right">平台技术服务费</TableHead>
                 <TableHead className="text-xs font-medium text-right">系统费</TableHead>
                 <TableHead className="text-xs font-medium text-right">营销费</TableHead>
-                <TableHead className="text-xs font-medium text-right">分润</TableHead>
+                <TableHead className="text-xs font-medium text-right">机构分成</TableHead>
                 <TableHead className="text-xs font-medium">笔数</TableHead>
                 <TableHead className="text-xs font-medium">操作</TableHead>
               </TableRow>
