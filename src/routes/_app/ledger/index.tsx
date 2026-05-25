@@ -384,6 +384,7 @@ function Page() {
                 <TableHead className="text-xs font-medium">账单类型</TableHead>
                 <TableHead className="text-xs font-medium">周期</TableHead>
                 <TableHead className="text-xs font-medium">机构名称</TableHead>
+                <TableHead className="text-xs font-medium text-right">订单金额</TableHead>
                 <TableHead className="text-xs font-medium text-right">实付金额</TableHead>
                 <TableHead className="text-xs font-medium text-right">优惠金额</TableHead>
                 <TableHead className="text-xs font-medium text-right">保证金</TableHead>
@@ -404,6 +405,7 @@ function Page() {
                     {formatPeriodLabel(b.billType, b.cycleStart, b.cycleEnd)}
                   </TableCell>
                   <TableCell className="text-sm">{b.orgName}</TableCell>
+                  <TableCell className="text-right text-sm font-medium">{money(b.orderAmount, false)}</TableCell>
                   <TableCell className="text-right text-sm font-medium">{money(b.paidAmount, false)}</TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">{money(b.discountAmount, false)}</TableCell>
                   <TableCell className={`text-right text-sm ${b.deposit !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
@@ -440,7 +442,7 @@ function Page() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={13} className="py-12 text-center text-muted-foreground">
+                  <TableCell colSpan={14} className="py-12 text-center text-muted-foreground">
                     暂无数据
                   </TableCell>
                 </TableRow>
