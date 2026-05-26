@@ -367,7 +367,6 @@ function Page() {
                 <TableHead className="text-xs font-medium text-right">订单金额</TableHead>
                 <TableHead className="text-xs font-medium text-right">实付金额</TableHead>
                 <TableHead className="text-xs font-medium text-right">优惠金额</TableHead>
-                <TableHead className="text-xs font-medium text-right">保证金</TableHead>
                 <TableHead className="text-xs font-medium text-right">平台技术服务费</TableHead>
                 <TableHead className="text-xs font-medium text-right">系统费</TableHead>
                 <TableHead className="text-xs font-medium text-right">营销费</TableHead>
@@ -388,9 +387,6 @@ function Page() {
                   <TableCell className="text-right text-sm font-medium">{money(b.orderAmount, false)}</TableCell>
                   <TableCell className="text-right text-sm font-medium">{money(b.paidAmount, false)}</TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">{money(b.discountAmount, false)}</TableCell>
-                  <TableCell className={`text-right text-sm ${b.deposit !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-                    {b.deposit !== 0 ? money(b.deposit) : "—"}
-                  </TableCell>
                   <TableCell className={`text-right text-sm ${b.techFee !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                     {b.techFee !== 0 ? money(b.techFee) : "—"}
                   </TableCell>

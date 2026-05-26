@@ -23,7 +23,7 @@ function money(v: number, showPlus = true) {
 
 /** 计算单行净额（机构分成 + 各类费用） */
 function netAmount(row: ReturnType<typeof db.billDetails>[number]) {
-  return row.profit + row.deposit + row.techFee + row.systemFee + row.marketingFee;
+  return row.profit + row.techFee + row.systemFee + row.marketingFee;
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -234,7 +234,6 @@ function Page() {
               <TableHead className="cursor-pointer select-none text-xs font-medium text-right" onClick={() => toggleSort("paidAmount")}>
                 <span className="flex items-center justify-end gap-1">实付金额 <span className="text-[10px] opacity-60">{sortIcon("paidAmount")}</span></span>
               </TableHead>
-              <TableHead className="text-xs font-medium text-right">保证金</TableHead>
               <TableHead className="text-xs font-medium text-right">平台技术服务费</TableHead>
               <TableHead className="text-xs font-medium text-right">系统费</TableHead>
               <TableHead className="text-xs font-medium text-right">营销费</TableHead>
@@ -253,9 +252,6 @@ function Page() {
                 <TableCell className="text-right text-sm font-medium">{money(d.orderAmount, false)}</TableCell>
                 <TableCell className="text-right text-sm text-muted-foreground">{money(d.discountAmount, false)}</TableCell>
                 <TableCell className="text-right text-sm font-medium">{money(d.paidAmount, false)}</TableCell>
-                <TableCell className={`text-right text-sm ${d.deposit !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-                  {d.deposit !== 0 ? money(d.deposit) : "—"}
-                </TableCell>
                 <TableCell className={`text-right text-sm ${d.techFee !== 0 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                   {d.techFee !== 0 ? money(d.techFee) : "—"}
                 </TableCell>
