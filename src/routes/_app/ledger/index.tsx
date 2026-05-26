@@ -36,7 +36,7 @@ function money(v: number, showPlus = true) {
 
 /** 计算账单净值 */
 function netValue(b: BillSummary) {
-  return b.profit + b.deposit + b.techFee + b.systemFee + b.marketingFee;
+  return b.profit + b.techFee + b.systemFee + b.marketingFee;
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -157,7 +157,6 @@ function Page() {
         orderAmount: items.reduce((s, b) => s + b.orderAmount, 0),
         paidAmount: items.reduce((s, b) => s + b.paidAmount, 0),
         discountAmount: items.reduce((s, b) => s + b.discountAmount, 0),
-        deposit: items.reduce((s, b) => s + b.deposit, 0),
         profit: items.reduce((s, b) => s + b.profit, 0),
         techFee: items.reduce((s, b) => s + b.techFee, 0),
         systemFee: items.reduce((s, b) => s + b.systemFee, 0),
@@ -184,7 +183,7 @@ function Page() {
     });
     return details.reduce(
       (acc, d) => {
-        const net = d.profit + d.deposit + d.techFee + d.systemFee + d.marketingFee;
+        const net = d.profit + d.techFee + d.systemFee + d.marketingFee;
         if (d.status === "已结算") acc.settled += net;
         else acc.unsettled += net;
         return acc;
